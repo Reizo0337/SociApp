@@ -1,33 +1,48 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { RouterLink } from 'vue-router'
-import logo from '@/public/logo.png'
+import logo from '@/assets/logo.png'
 const emit = defineEmits(['toggle-menu'])
 
 const isOpen = ref(false)
+const isPinned = ref(false)
 
 const toggleMenu = () => {
-  isOpen.value = !isOpen.value
+  isPinned.value = !isPinned.value
+  isOpen.value = isPinned.value
   emit('toggle-menu', isOpen.value)
+}
+
+const handleMouseEnter = () => {
+  if (!isPinned.value) {
+    isOpen.value = true
+    emit('toggle-menu', true)
+  }
+}
+
+const handleMouseLeave = () => {
+  if (!isPinned.value) {
+    isOpen.value = false
+    emit('toggle-menu', false)
+  }
 }
 </script>
 
 <template>
-  <aside class="sidebar" :class="{ 'is-open': isOpen }">
-    <div class="sidebar-header">
-      <RouterLink to="/" class="logo-wrapper">
-        <div class="logo-wrapper">
-          <h2 class="logo-text" v-show="isOpen">SociApp</h2>
-        </div>
-      </RouterLink>
-      <button class="menu-toggle" @click="toggleMenu">
-        <span class="material-symbols-outlined" v-show="!isOpen">menu</span>
-        <span class="material-symbols-outlined close" v-show="isOpen"
-          >close</span
-        >
-      </button>
-    </div>
-
+  <header>
+      <div class="header">
+        <RouterLink to="/" class="logo-wrapper">
+          <button class="menu-toggle" @click="toggleMenu">
+            <span class="material-symbols-outlined">menu</span>
+          </button>
+          <div class="logo-wrapper">
+            <img :src="logo" alt="Logo" class="logo-icon" />
+            <p class="logo-text">Sociapp</p>
+          </div>
+        </RouterLink>
+      </div>
+    </header>
+  <aside class="sidebar" :class="{ 'is-open': isOpen }" @mouseenter="handleMouseEnter" @mouseleave="handleMouseLeave">
     <nav class="sidebar-nav">
       <ul>
         <li>
@@ -62,6 +77,37 @@ const toggleMenu = () => {
 </template>
 
 <style scoped>
+.header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 60px;
+  background: #f8fafd;
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  z-index: 1003;
+}
+
+.header::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  background: #f8fafd;
+  z-index: -1;
+}
+
+.sidebar .header .menu-toggle {
+  transition: background 0.2s ease;
+  cursor: pointer;
+  margin-left:8px;
+}
+
 .close {
   margin-top: 10px;
 }
@@ -73,7 +119,6 @@ const toggleMenu = () => {
   width: 70px;
   height: 100vh;
   background: #f8fafd;
-  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
   transition: width 0.3s ease-in-out;
   z-index: 1002;
   padding: 20px 10px;
@@ -81,6 +126,7 @@ const toggleMenu = () => {
   flex-direction: column;
   overflow-x: hidden;
   white-space: nowrap;
+  margin-top: 40px;
 }
 
 .sidebar.is-open {
@@ -105,12 +151,18 @@ const toggleMenu = () => {
 
 .logo-wrapper {
   display: flex;
+  justify-content: center;
+  text-align: center;
+  align-items: center;
   cursor: pointer;
   text-decoration: none;
   color: #333;
-  font-size: 1.5rem;
-  font-weight: bold;
-  gap: 10px;
+  font-size: 1.3rem;
+}
+
+.logo-wrapper img {
+  width: 100px;
+  height: auto;
 }
 
 .logo-icon {
@@ -119,10 +171,7 @@ const toggleMenu = () => {
 }
 
 .logo-text {
-  margin: 0;
-  font-size: 1.5rem;
-  font-weight: bold;
-  color: #333;
+  font-weight: thin;
 }
 
 .menu-toggle {
@@ -153,8 +202,9 @@ const toggleMenu = () => {
   transition: background 0.2s;
 }
 
-.nav-link:hover {
+.nav-link:hover, .menu-toggle:hover {
   background-color: #f4f4f4;
+  border-radius: 30px;
 }
 
 .icon {

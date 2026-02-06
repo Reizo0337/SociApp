@@ -10,13 +10,14 @@ const props = defineProps<{
   href?: string
   color?: string
   localizacion?: string
+  background?: string
 }>()
 
 const typeClass = computed(() => (props.type ? `type-${props.type}` : ''))
 </script>
 
 <template>
-  <div class="statistics-card" :class="type ? `type-${type}` : ''">
+  <div class="statistics-card" :class=typeClass :style="{ backgroundColor: background }">
     <div class="title">
       <span
         class="material-symbols-outlined"
@@ -33,25 +34,61 @@ const typeClass = computed(() => (props.type ? `type-${props.type}` : ''))
       <div class="localizacion" v-if="localizacion">
         <p>{{ localizacion }}</p>
       </div>
-      <div class="link">
-        <RouterLink :to="href" v-if="href">Ver detalles</RouterLink>
-      </div>
+      <RouterLink v-if="href" class="link" :to="href">
+        Ver detalles
+      </RouterLink>
     </div>
   </div>
 </template>
 
 <style scoped>
-.statistics-card {
-  display: flex;
-  flex-direction: column;
-  border-radius: 8px;
-  padding: 16px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  gap: 16px;
-  margin-bottom: 16px;
-  border: 1px solid #00000056;
+/* Estadisticas card */
+.type-stats{
+  width: 300px;
+  min-height: 150px;
+  color: #fff;
+  border: none;
+  gap: 8px;
 }
 
+.type-stats.statistics-card {
+  gap: 6px;
+}
+
+.type-stats .title {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding-bottom: 8px;
+  color: #fff;
+}
+
+.type-stats .title span {
+  font-size: 24px;
+}
+
+.type-stats .data {
+  font-size: 38px;
+  color: #fff;
+  font-weight: bold;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  padding-bottom: 8px;
+  line-height: 1;
+}
+
+.type-stats .unify {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+
+/* Actividades card */
 .type-activity {
   background-color: #eaebed;
   width: 200px;
@@ -59,6 +96,17 @@ const typeClass = computed(() => (props.type ? `type-${props.type}` : ''))
 
 .type-activity .title {
   color: #000;
+}
+
+
+
+/* Cards comunes */
+.statistics-card {
+  display: flex;
+  flex-direction: column;
+  border-radius: 8px;
+  padding: 8px;
+  margin-bottom: 16px;
 }
 
 .title {
@@ -71,11 +119,8 @@ const typeClass = computed(() => (props.type ? `type-${props.type}` : ''))
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 8px;
   width: 100%;
   /* go bottom */
-  margin-top: auto;
-  margin-bottom: auto;
 }
 
 .separator {

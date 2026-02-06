@@ -19,12 +19,13 @@ const handleToggleMenu = (expanded: boolean) => {
 
 <style scoped>
 .main-content {
-  margin-left: 100px;
-  padding: 20px;
+  margin-left: 90px;
+  margin-top: 60px;
   transition: margin-left 0.3s ease;
 }
 
 .main-content.expanded {
-  margin-left: 300px;
+  margin-left: 270px;
+  transition: margin-left 0.3s ease;
 }
 </style>
