@@ -13,7 +13,7 @@ const proyectosPendientes = 3
     <p>Gestiona todos los proyectos de la asociación desde esta vista.</p>
 
     <h2>Estadisticas del proyecto</h2>
-    0
+
     <div class="statistics-container">
       <StatisticsCard
         type="stats"

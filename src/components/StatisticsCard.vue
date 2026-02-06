@@ -16,7 +16,7 @@ const typeClass = computed(() => (props.type ? `type-${props.type}` : ''))
 </script>
 
 <template>
-  <div class="statistics-card" :class="type ? `type-${type}` : ''">
+  <div class="statistics-card" :class="typeClass ? `type-${type}` : ''">
     <div class="title">
       <span
         class="material-symbols-outlined"

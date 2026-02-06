@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { RouterLink } from 'vue-router'
-import logo from '@/public/logo.png'
+
 const emit = defineEmits(['toggle-menu'])
 
 const isOpen = ref(false)
@@ -72,7 +72,7 @@ const toggleMenu = () => {
   left: 0;
   width: 70px;
   height: 100vh;
-  background: #f8fafd;
+  background: #eaebed;
   box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
   transition: width 0.3s ease-in-out;
   z-index: 1002;
@@ -154,7 +154,7 @@ const toggleMenu = () => {
 }
 
 .nav-link:hover {
-  background-color: #f4f4f4;
+  background-color: #eaebed;
 }
 
 .icon {
