@@ -18,6 +18,11 @@ const router = createRouter({
       path: '/actividades',
       name: 'actividades',
       component: () => import('../views/Actividades.vue'),
+    },
+    {
+      path: '/usuarios',
+      name: 'usuarios',
+      component: () => import('../views/Usuarios.vue'),
     }
   ],
 })

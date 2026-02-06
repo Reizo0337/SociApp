@@ -7,6 +7,7 @@ const stats = ref([
   { title: 'No Socios', data: 0, icon: 'people', href: '/usuarios', background: '#63c2de' },
   { title: 'Actividades', data: 0, icon: 'event', href: '/eventos', background: '#fec106' },
   { title: 'Proyectos', data: 0, icon: 'assignment', background: '#f86c6b' }
+  // Agrega más estadísticas según sea necesario
 ])
 
 onMounted(async () => {
@@ -73,7 +74,7 @@ main {
   display: flex;
   gap: 20px;
   flex-wrap: wrap;
-  justify-content: flex-start;
+  justify-content: center;
   margin-top: 20px;
   margin-left: 50px;
 }

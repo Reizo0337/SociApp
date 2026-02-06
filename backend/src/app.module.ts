@@ -5,6 +5,9 @@ import { AppService } from './app.service';
 import { StatsModule } from './stats/stats.module';
 import { StatsController } from './stats/stats.controller';
 import { StatsService } from './stats/stats.service';
+import { UsersModule } from './users/users.module';
+import { UsersController } from './users/users.controller';
+import { UsersService } from './users/users.service';
 
 // Throttler
 import { ThrottlerModule } from '@nestjs/throttler';
@@ -26,8 +29,9 @@ import { ThrottlerModule } from '@nestjs/throttler';
       limit: 10,
     }]),
     StatsModule,
+    UsersModule,
   ],
-  controllers: [AppController, StatsController],
-  providers: [AppService, StatsService],
+  controllers: [AppController, StatsController, UsersController],
+  providers: [AppService, StatsService, UsersService],
 })
 export class AppModule {}
