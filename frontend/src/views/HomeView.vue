@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import StatisticsCard from '@/components/StatisticsCard.vue'
 import { ref, onMounted } from 'vue'
+import Title from '@/components/Title.vue'
 
 const stats = ref([
   { title: 'Socios', data: 0, icon: 'people', href: '/usuarios', background: '#20a8d8' },
@@ -29,10 +30,7 @@ onMounted(async () => {
 
 <template>
   <main>
-    <div class="title">
-      <span class="material-symbols-outlined">dashboard</span>
-      <h1>Dashboard</h1>
-    </div>
+    <Title title="Estadisticas" icon="bar_chart" />
     <div class="statistics-container">
       <StatisticsCard
         v-for="stat in stats"
@@ -46,29 +44,11 @@ onMounted(async () => {
 
 <style scoped>
 main {
-  padding-top: 20px;
+  padding: 20px 40px;
+  min-height: 100vh;
 }
 
-.title {
-  display: flex;
-  align-items: center;
-  width: 100%;
-  height: 50px;
-  border-radius: 5px;
-}
 
-.title h1 {
-  margin-left: 10px;
-  font-size: 24px;
-  font-weight: 100;
-  color: #333;
-}
-
-.title span {
-  margin-left: 30px;
-  font-size: 32px;
-  color: #2a4ea2;
-}
 
 .statistics-container {
   display: flex;

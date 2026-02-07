@@ -1,8 +1,12 @@
 <script setup lang="js">
 import { ref, onMounted, computed } from 'vue'
+import Title from '../components/Title.vue'
+import ModalForm from '../components/ModalForm.vue'
+import { userSchema } from '@/formSchemas/user.schema'
 
 const users = ref([])
 const searchQuery = ref('')
+const showAddUserModal = ref(false)
 
 onMounted(async () => {
   try {
@@ -25,20 +29,27 @@ const filteredUsers = computed(() => {
   )
 })
 
+const addUsers = () => {
+  // On click open pop up where user can add a new users. we will use a new component.
+  showAddUserModal.value = true
+}
+
 const formatDate = (date) => date ? new Date(date).toLocaleDateString() : ''
 </script>
 
 <template>
   <main>
-    <div class="title">
-      <span class="material-symbols-outlined">people</span>
-      <h1>Usuarios</h1>
-    </div>
-
+    <Title title="Usuarios" icon="people" />
     <div class="showUsers">
       <div class="showUsers-header">
         <h2>Lista de Usuarios</h2>
-        <input type="text" placeholder="Buscar usuario..." v-model="searchQuery" />
+        <div class="options">
+          <button @click="addUsers">Agregar Usuario</button>
+          <transition name="fade-scale" v-if="showAddUserModal">
+            <ModalForm :schema="userSchema" @submit="saveUser" v-if="showAddUserModal" @close="showAddUserModal = false"/>
+          </transition>
+          <input type="text" placeholder="Buscar usuario..." v-model="searchQuery"/>
+        </div>
       </div>
 
       <div class="users-grid">
@@ -66,26 +77,7 @@ const formatDate = (date) => date ? new Date(date).toLocaleDateString() : ''
 <style scoped>
 main {
   padding: 20px 40px;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background-color: #f5f6fa;
   min-height: 100vh;
-}
-
-.title {
-  display: flex;
-  align-items: center;
-  margin-bottom: 30px;
-}
-
-.title h1 {
-  margin-left: 10px;
-  font-size: 28px;
-  color: #2a4ea2;
-}
-
-.title span {
-  font-size: 40px;
-  color: #2a4ea2;
 }
 
 .showUsers-header {
@@ -158,4 +150,26 @@ main {
 .card-body strong {
   color: #333;
 }
+
+.options {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.options button {
+  padding: 10px 15px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  background-color: #2a4ea2;
+  color: #fff;
+}
+
+.options button:hover {
+  background-color: #1b3570;
+}
+
 </style>
