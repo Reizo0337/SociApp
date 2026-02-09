@@ -7,6 +7,7 @@ const emit = defineEmits(['submit', 'close'])
 const model = reactive({})
 
 // Inicializar model basado en el schema
+console.log(Array.isArray(props.schema), props.schema);
 props.schema.forEach(section => {
   section.fields.forEach(field => {
     model[field.key] = ''
@@ -26,12 +27,11 @@ const setToday = (key: string) => {
 </script>
 
 <template>
-
-  <div class="modal" @click="$emit('close')">
+  <div class="modal">
     <div class="modal-content">
       <!-- HEADER -->
       <div class="modal-header">
-        <h2>Agregar Usuario</h2>
+        <h2>SociApp</h2>
         <button class="close-button" @click="$emit('close')">&times;</button>
       </div>
 
@@ -39,30 +39,9 @@ const setToday = (key: string) => {
         <!-- FILA SUPERIOR: Dos columnas -->
         <div class="grid-2">
           <!-- Columna izquierda: Datos personales -->
-          <section class="card">
-            <h3>{{ schema[0].section }}</h3>
-            <div v-for="field in schema[0].fields" :key="field.key" class="form-group">
-              <label>{{ field.label }}</label>
-              <input
-                v-if="field.type !== 'select' && field.type !== 'date'"
-                :type="field.type"
-                v-model="model[field.key]"
-                :required="field.required"
-              />
-              <select v-else-if="field.type === 'select'" v-model="model[field.key]" :required="field.required">
-                <option v-for="opt in field.options" :key="opt" :value="opt">{{ opt }}</option>
-              </select>
-              <div v-else-if="field.type === 'date'" class="inline">
-                <input type="date" v-model="model[field.key]" :required="field.required" />
-                <button type="button" @click="setToday(field.key)">Hoy</button>
-              </div>
-            </div>
-          </section>
-
-          <!-- Columna derecha: Dirección -->
-          <section class="card">
-            <h3>{{ schema[1].section}}</h3>
-            <div v-for="field in schema[1].fields" :key="field.key" class="form-group">
+          <section class="card" v-for="value in schema">
+            <h3>{{ value.section }}</h3>
+            <div v-for="field in value.fields" :key="value.section" class="form-group">
               <label>{{ field.label }}</label>
               <input
                 v-if="field.type !== 'select' && field.type !== 'date'"
@@ -81,32 +60,9 @@ const setToday = (key: string) => {
           </section>
         </div>
 
-        <!-- FILA INFERIOR: Datos de la asociación -->
-        <section class="card">
-          <h3>{{ schema[2].section }}</h3>
-          <div class="grid-3">
-            <div v-for="field in schema[2].fields" :key="field.key" class="form-group">
-              <label>{{ field.label }}</label>
-              <input
-                v-if="field.type !== 'select' && field.type !== 'date'"
-                :type="field.type"
-                v-model="model[field.key]"
-                :required="field.required"
-              />
-              <select v-else-if="field.type === 'select'" v-model="model[field.key]" :required="field.required">
-                <option v-for="opt in field.options" :key="opt" :value="opt">{{ opt }}</option>
-              </select>
-              <div v-else-if="field.type === 'date'" class="inline">
-                <input type="date" v-model="model[field.key]" :required="field.required" />
-                <button type="button" @click="setToday(field.key)">Hoy</button>
-              </div>
-            </div>
-          </div>
-        </section>
-
         <!-- BOTÓN SUBMIT -->
         <div class="actions">
-          <button type="submit">Guardar usuario</button>
+          <button type="submit">GUARDAR</button>
         </div>
       </form>
     </div>

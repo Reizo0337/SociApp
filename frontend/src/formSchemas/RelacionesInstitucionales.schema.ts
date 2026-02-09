@@ -1,4 +1,4 @@
-export const userSchema = [
+export const RelacionesInstitucionalesSchema = [
   {
     section: 'Datos personales',
     fields: [

@@ -4,31 +4,29 @@
 
     <!-- Dashboard cards -->
     <div v-if="!selectedSection" class="cards">
-      <div class="card green" @click="selectSection('junta')">👥 Junta Directiva</div>
-      <div class="card yellow" @click="selectSection('organismos')">🏛️ Otros Organismos</div>
+      <div class="card yellow" @click="selectSection('Datos')">Datos Asociación</div>
+      <div class="card green" @click="selectSection('junta'); console.log(sectionForm[selectedSection])">👥 Junta Directiva</div>
       <div class="card purple" @click="selectSection('relaciones')">🤝 Relaciones Institucionales</div>
+      <div class="card blue" @click="selectSection('bancos')">🏛️ Bancos</div>
+      <div class="card red" @click="selectSection('donativos')">Donativos y herencias</div>
     </div>
 
     <!-- Sección activa -->
     <div v-else class="panel">
       <button @click="selectedSection = null">← VOLVER</button>
       <h2>{{ sectionTitle[selectedSection] }}</h2>
-
-      <!-- Botón para agregar usuario -->
       <div class="options">
         <button @click="showAddUserModal = true">➕ AGREGAR</button>
       </div>
 
-      <!-- Modal para registrar junta directiva -->
       <transition name="fade-scale">
         <ModalForm
-          v-if="showAddUserModal"
-          :schema="juntaDirectiva"
-          @submit="saveUser"
+          v-if="showAddUserModal && sectionForm[selectedSection]"
+          :schema="sectionForm[selectedSection]"
+          @submit=""
           @close="showAddUserModal = false"
         />
       </transition>
-
     </div>
   </main>
 </template>
@@ -36,18 +34,29 @@
 <script setup>
 import { ref } from 'vue'
 import ModalForm from '@/components/ModalForm.vue'
-//import { juntaDirectiva } from '@/formSchemas/juntaDirectiva'
-//import { OtrosOrganismos } from '@/formSchemas/OtrosOrganismos'
-//import { RelacionesInstitucionales } from '@/formSchemas/RelacionesInstitucionales'
-
+import { bancosSchema } from '@/formSchemas/bancos.schema'
+import { juntaDirectivaSchema } from '@/formSchemas/juntaDirectiva.schema'
+import { RelacionesInstitucionalesSchema } from '@/formSchemas/RelacionesInstitucionales.schema'
+import { datosSchema } from '@/formSchemas/datos.schema'
+import { donativosSchema } from '@/formSchemas/donativos.schema'
 
 const selectedSection = ref(null)
 const showAddUserModal = ref(false)
 
 const sectionTitle = {
   junta: 'Junta Directiva',
-  organismos: 'Otros Organismos',
-  relaciones: 'Relaciones Institucionales'
+  datos: 'Datos Asociación',
+  relaciones: 'Relaciones Institucionales',
+  bancos: 'Bancos',
+  donativos: 'Donativos y herencias'
+}
+
+const sectionForm = {
+  junta: juntaDirectivaSchema,
+  datos: datosSchema,
+  relaciones: RelacionesInstitucionalesSchema,
+  bancos: bancosSchema,
+  donativos: donativosSchema
 }
 
 function selectSection(section) {
@@ -85,6 +94,9 @@ main {
 .green { background: #4caf50; }
 .yellow { background: #ffc107; }
 .purple { background: #7e57c2; }
+.blue {background: #240bcb; }
+.red {background: #db1a37; }
+
 
 .panel {
   background: white;

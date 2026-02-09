@@ -11,4 +11,8 @@ export class ActivitiesController {
   getActivitiesData() {
     return this.activitiesService.getActivitiesData();
   }
+  @Post()
+  create(@Body() activity: any) {
+    return this.activitiesService.createActivity(activity);
+  }
 }

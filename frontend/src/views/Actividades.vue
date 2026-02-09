@@ -1,14 +1,14 @@
-<script setup lang="ts">
+<script setup lang="js">
 
 import StatisticsCard from '@/components/StatisticsCard.vue'
 import { ref, onMounted, computed } from 'vue'
 import Title from '../components/Title.vue'
 import ModalForm from '../components/ModalForm.vue'
-import { userSchema } from '@/formSchemas/user.schema'
+import { ActivitySchema } from '@/formSchemas/Activity.schema'
 
 const activities = ref([])
 const searchQuery = ref('')
-const showAddUserModal = ref(false)
+const showAddActivitiesModal = ref(false)
 
 onMounted(async () => {
   try {
@@ -21,6 +21,7 @@ onMounted(async () => {
 
     const data = await response.json()
     activities.value = data.activities || []
+    console.log(data)
   } catch (error) {
     console.error('Error al cargar usuarios:', error)
   }
@@ -33,134 +34,167 @@ const filteredActivities = computed(() => {
     )
   )
 })
+const addActivities = () => {
+  // On click open pop up where user can add a new users. we will use a new component.
+  showAddActivitiesModal.value = true
+}
+const saveActivity = async (newActivity) => {
+  try {
+    const response = await fetch('http://192.168.1.40:3000/activities', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newActivity)
+    });
 
+    if (!response.ok) throw new Error('Error al guardar la actividad');
+
+    const savedActivity = await response.json(); // backend devuelve la actividad guardada con id
+    activities.value.push(savedActivity); // agregamos la actividad con id real
+    showAddActivitiesModal.value = false;
+  } catch (error) {
+    console.error(error);
+    alert('No se pudo guardar la actividad');
+  }
+}
+const formatDate = (date) => date ? new Date(date).toLocaleDateString() : ''
 </script>
 
 <template>
-  <section>
-    <h1>Actividades</h1>
-    <p>Gestiona todas las actividades de la asociación desde esta vista.</p>
-    <div class="actividades">
-      <StatisticsCard
-        type="activity"
-        title="Crear una nueva actividad"
-        data="Pulsa aqui para crear una nueva actividad"
-        icon="add"
-        color="green"
-      />
-      <StatisticsCard
-        type="activity"
-        title="Eliminar una actividad"
-        data="Pulsa aqui para eliminar actividad"
-        icon="delete"
-        color="red"
-      />
-      <StatisticsCard
-        type="activity"
-        title="Editar una actividad"
-        data="Pulsa aqui para editar una actividad"
-        icon="edit"
-        color="#34b1eb"
-      />
+  <main>
+    <Title title="Actividades" icon="Exercise" />
+    <div class="showUsers">
+      <div class="showUsers-header">
+        <h2>Lista de Actividades</h2>
+        <div class="options">
+          <button @click="addActivities">Agregar Actividad</button>
+            <ModalForm :schema="ActivitySchema" @submit="saveActivity" v-if="showAddActivitiesModal" @close="showAddActivitiesModal = false"/>
+          <input type="text" placeholder="Buscando por actividad... " v-model="searchQuery"/>
+        </div>
+      </div>
+
+      <div class="users-grid">
+        <div v-for="activity in filteredActivities" :key="activity.id" class="user-card">
+          <div class="card-header">
+            <div class="icon" v-if="activity.icon != 'null'">
+              <span class="material-symbols-outlined">{{ activity.icon }}</span>
+            </div>
+            <div class="text">
+              <h3>{{activity.name }}</h3>
+            </div>
+          </div>
+          <div class="card-body">
+            <p><strong>Lugar de la actividad:</strong> {{ activity.place }}</p>
+            <p><strong>Horario de la actividad:</strong> {{ activity.horario }}</p>
+
+          </div>
+        </div>
+      </div>
     </div>
-      <h2>Actividades actuales</h2>
-      <p>A continuación se muestran las actividades actuales de la asociación.</p>
-
-    <div class="actividades">
-      <StatisticsCard
-        type="activity"
-        title="Natacion pa abuelos"
-        data="10 inscritos"
-        localizacion="Piscina municipal de Delicias"
-        icon="pool"
-        color="#34b1eb"
-      />
-      <StatisticsCard
-        type="activity"
-        title="Curso de ingles"
-        data="25 inscritos"
-        localizacion="Sala 3"
-        icon="book"
-        color="#4CAF50"
-      />
-      <StatisticsCard
-        type="activity"
-        title="Gimnasia para personas mayores"
-        data="22 inscritos"
-        localizacion="Sala 3"
-        icon="exercise"
-        color="#ebcd34"
-      />
-
-
-      <StatisticsCard
-        type="activity"
-        title="Yoga para personas mayores"
-        data="18 inscritos"
-        localizacion="Sala 1"
-        icon="self_improvement"
-        color="#9c27b0"
-      />
-      <StatisticsCard
-        type="activity"
-        title="Taller de manualidades"
-        data="30 inscritos"
-        localizacion="Sala 2"
-        icon="handyman"
-        color="#ff5722"
-      />
-       <StatisticsCard
-        type="activity"
-        title="Uso basico de ordenador para personas mayores"
-        data="7 inscritos"
-        localizacion="Sala 3"
-        icon="computer"
-        color="black"
-      />
-       <StatisticsCard
-        type="activity"
-        title="Clases de español para extranjeros"
-        data="30 inscritos"
-        localizacion="Sala 2"
-        icon="school"
-        color="red"
-      />
-       <StatisticsCard
-        type="activity"
-        title="Clases de cocina"
-        data="20 inscritos"
-        localizacion="Cocina"
-        icon="cooking"
-        color="purple"
-      />
-       <StatisticsCard
-        type="activity"
-        title="Ajedrez"
-        data="8 inscritos"
-        localizacion="Sala 3"
-        icon="chess"
-        color="green"
-      />
-    </div>
-  </section>
+  </main>
 </template>
 
 <style scoped>
-h1 {
-  text-align: center;
-  margin-bottom: 1rem;
+main {
+  padding: 20px 40px;
+  min-height: 100vh;
 }
 
-.actividades {
-  display: flex;         /* importante para flexbox */
-  flex-wrap: wrap;       /* permite que los elementos se vayan a otra fila */
-  justify-content: center; /* centra horizontalmente */
-  gap: 1rem;             /* separa las cards entre sí */
-  padding: 1rem;         /* opcional, espacio interno */
+.showUsers-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
 }
-.actividades > * {
-  flex: 1 1 300px; /* mínimo 300px, crece si hay espacio */
-  max-width: 400px; /* opcional, para que no se hagan demasiado grandes */
+
+.showUsers-header h2 {
+  font-size: 22px;
+  color: #333;
+}
+
+.showUsers-header input {
+  padding: 10px 15px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  width: 220px;
+  font-size: 14px;
+}
+
+.users-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.user-card {
+  background-color: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.user-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.card-header .text h3 {
+  margin: 0;
+  font-size: 18px;
+  color: #2a4ea2;
+}
+
+.card-header .icon span {
+  margin: 0;
+  color: #2a4ea2;
+  text-align: center;
+}
+
+.role {
+  background-color: #e1e8ff;
+  color: #2a4ea2;
+  font-size: 12px;
+  font-weight: bold;
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+
+.card-body p {
+  margin: 5px 0;
+  font-size: 13px;
+  color: #555;
+}
+
+.card-body strong {
+  color: #333;
+}
+
+.options {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.options button {
+  padding: 10px 15px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  background-color: #2a4ea2;
+  color: #fff;
+}
+
+.options button:hover {
+  background-color: #1b3570;
 }
 
 </style>
+

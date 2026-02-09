@@ -1,12 +1,59 @@
 <script setup lang="ts">
+import { ref, computed } from 'vue'
 import StatisticsCard from '@/components/StatisticsCard.vue'
+import ModalForm from '@/components/ModalForm.vue'
 
 // variables
 const totalProyectos = 8
 const proyectosActivos = 5
 const proyectosPendientes = 3
-</script>
 
+
+//lista de proyectos uwu
+const proyectos = ref([
+  {
+    id: 1,
+    nombre: "Cultura",
+    responsable: "Ana Pérez",
+    estado: "Activo",
+    presupuesto: 5000,
+    subproyectos: ["Promoción de salud"],
+    actividades: ["Yoga", "Dibujo"]
+  },
+  {
+    id: 2,
+    nombre: "Concursos",
+    responsable: "Juan Ruiz",
+    estado: "Pendiente",
+    presupuesto: 2000,
+    subproyectos: [],
+    actividades: []
+  },
+  {
+    id: 3,
+    nombre: "Prevención de adicciones",
+    responsable: "María Gómez",
+    estado: "Activo",
+    presupuesto: 4000,
+    subproyectos: ["Atención a jóvenes"],
+    actividades: ["Charla informativa"]
+  }
+])
+
+//eu busquedinha
+const searchQuery = ref('')
+const filteredProyectos = computed(() => {
+  if (!searchQuery.value) return proyectos.value
+  return proyectos.value.filter(p =>
+    Object.values(p).some(val =>
+      String(val).toLowerCase().includes(searchQuery.value.toLowerCase())
+    )
+  )
+})
+
+const showAddProjectModal = ref(false)
+
+</script>
 <template>
   <main>
     <h1>Proyectos</h1>
