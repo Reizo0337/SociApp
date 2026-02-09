@@ -31,10 +31,10 @@ const handleMouseLeave = () => {
 <template>
   <header>
       <div class="header">
+        <button class="menu-toggle" @click="toggleMenu">
+          <span class="material-symbols-outlined">menu</span>
+        </button>
         <RouterLink to="/" class="logo-wrapper">
-          <button class="menu-toggle" @click="toggleMenu">
-            <span class="material-symbols-outlined">menu</span>
-          </button>
           <div class="logo-wrapper">
             <img :src="logo" alt="Logo" class="logo-icon" />
             <p class="logo-text">Sociapp</p>

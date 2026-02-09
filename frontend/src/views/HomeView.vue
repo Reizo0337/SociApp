@@ -4,11 +4,11 @@ import { ref, onMounted } from 'vue'
 import Title from '@/components/Title.vue'
 
 const stats = ref([
-  { title: 'Socios', data: 0, icon: 'people', href: '/usuarios', background: '#20a8d8' },
-  { title: 'No Socios', data: 0, icon: 'people', href: '/usuarios', background: '#63c2de' },
+  { title: 'Socios', data: 0, icon: 'people', href: '/usuarios?search=Socio', background: '#20a8d8' },
+  { title: 'No Socios', data: 0, icon: 'people', href: '/usuarios?search=noSocio', background: '#63c2de' },
   { title: 'Actividades', data: 0, icon: 'event', href: '/actividades', background: '#fec106' },
   { title: 'Proyectos', data: 0, icon: 'assignment', href:'/proyectos', background: '#f86c6b' },
-  { title: 'Trabajadores', data: 0, icon:'person', href:'/usuarios', background: '#20a8d8' }
+  { title: 'Trabajadores', data: 0, icon:'person', href:'/usuarios?search=trabajador', background: '#20a8d8' }
 ])
 
 onMounted(async () => {

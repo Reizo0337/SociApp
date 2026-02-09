@@ -1,5 +1,6 @@
 <script setup lang="js">
 import { ref, onMounted, computed } from 'vue'
+import { useRoute } from 'vue-router'
 import Title from '../components/Title.vue'
 import ModalForm from '../components/ModalForm.vue'
 import { userSchema } from '@/formSchemas/user.schema'
@@ -7,8 +8,9 @@ import { userSchema } from '@/formSchemas/user.schema'
 const users = ref([])
 const searchQuery = ref('')
 const showAddUserModal = ref(false)
+const route = useRoute()
 
-onMounted(async () => {
+const loadUsers = async () => {
   try {
     const response = await fetch('http://192.168.1.40:3000/users')
 
@@ -22,17 +24,36 @@ onMounted(async () => {
   } catch (error) {
     console.error('Error al cargar usuarios:', error)
   }
+}
+
+onMounted(async () => {
+  if (route.query.search) {
+    searchQuery.value = route.query.search
+  }
+  await loadUsers()
 })
 
 
 const filteredUsers = computed(() => {
-  if (!searchQuery.value) return users.value
+  const query = searchQuery.value.toLowerCase().trim()
+  if (!query) return users.value
+
   return users.value.filter(user =>
-    Object.values(user).some(val =>
-      String(val).toLowerCase().includes(searchQuery.value.toLowerCase())
+    ['name', 'surname', 'dni', 'email', 'role', 'socio'].some(key => {
+      const value = user[key]?.toString().toLowerCase()
+      if (!value) return false;
+
+      if (key === 'socio') {
+        return value === query
+      }
+      else {
+        return value.includes(query)
+      }
+    }
     )
   )
 })
+
 
 const addUsers = () => {
   // On click open pop up where user can add a new users. we will use a new component.

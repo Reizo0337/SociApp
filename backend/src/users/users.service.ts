@@ -17,6 +17,7 @@ interface User {
   paymentMethod: string;
   fee: number;
   role: string;
+  socio: string;
 }
 
 @Injectable()
@@ -29,7 +30,7 @@ export class UsersService {
     try {
       // Una sola query agregada para obtener todos los conteos
       const users = await this.dataSource.query(`
-        SELECT nombre, apellidos, dni, direccion, CP, provincia, poblacion, pais, email, telefono, fechaalta, fechabaja, formadepago, cuota, categoria FROM usuarios;
+        SELECT nombre, apellidos, dni, direccion, CP, provincia, poblacion, pais, email, telefono, fechaalta, fechabaja, formadepago, cuota, categoria, socio FROM usuarios;
       `);
 
       // Parseo seguro a número
@@ -50,6 +51,7 @@ export class UsersService {
           paymentMethod: user.formadepago,
           fee: parseFloat(user.cuota) || 0,
           role: user.categoria,
+          socio: user.socio,
         }))
       };
     } catch (error) {

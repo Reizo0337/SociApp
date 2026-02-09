@@ -50,9 +50,6 @@ const filteredProyectos = computed(() => {
     )
   )
 })
-
-const showAddProjectModal = ref(false)
-
 </script>
 <template>
   <main>
@@ -88,6 +85,30 @@ const showAddProjectModal = ref(false)
         href="/proyectos/pendientes"
       />
     </div>
+
+    <!-- Buscador y boton -->
+
+    <div class ="projects-header">
+      <input type="text" placeholder="buscar proyecto..." v-model="searchQuery"/>
+      <button @click="showAddProjectModal = true">Agregar Proyecto</button>
+      <ModalForm v-if="showAddProjectModal" @close="showAddProjectModal = false"/>
+    </div>
+
+        <!-- Grid de proyectos -->
+    <div class="projects-grid">
+      <div v-for="proyecto in filteredProyectos" :key="proyecto.id" class="project-card">
+        <div class="card-header">
+          <h3>{{ proyecto.nombre }}</h3>
+          <span class="status" :class="proyecto.estado.toLowerCase()">{{ proyecto.estado }}</span>
+        </div>
+        <div class="card-body">
+          <p><strong>Responsable:</strong> {{ proyecto.responsable }}</p>
+          <p><strong>Presupuesto:</strong> {{ proyecto.presupuesto }} €</p>
+          <p><strong>Subproyectos:</strong> {{ proyecto.subproyectos?.length || 0 }}</p>
+          <p><strong>Actividades:</strong> {{ proyecto.actividades?.length || 0 }}</p>
+        </div>
+      </div>
+    </div>
   </main>
 </template>
 
@@ -96,5 +117,73 @@ const showAddProjectModal = ref(false)
   display: flex;
   gap: 20px;
   flex-wrap: wrap;
+  margin-bottom: 20px;
 }
+
+.projects-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  gap: 10px;
+}
+
+.projects-header input{
+  padding: 10px 15px;
+  border-radius: 8px;
+  border: 1px solid #2a4ea2;
+  background-color: #2a4ea2;
+  color: #fff;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.projects-header button:hover {
+  background-color: #1b3570;
+}
+
+.projects-grid {
+ display: grid;
+ grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+ gap: 20px;
+}
+
+.project-card{
+ background-color: #fff;
+ border-radius: 12px;
+ padding: 20px;
+ box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+ transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.project-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+}
+
+.card-header{
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.card-header h3{
+  margin: 0;
+  font-size: 18px;
+  color: #2a4ea2;
+}
+
+.status{
+  font-size: 12px;
+  font-weight: bold;
+  color: #fff;
+  padding: 2px 8px;
+  border-radius: 6px;
+  text-transform: uppercase;
+}
+
+.status.activo { background-color: #4CAF50; }
+.status.pendiente { background-color: #FF9800; }
 </style>

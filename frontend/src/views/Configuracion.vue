@@ -3,21 +3,23 @@
     <h2 class="title">Configuración</h2>
 
     <!-- Dashboard cards -->
-    <div v-if="!selectedSection" class="cards">
-      <div class="card yellow" @click="selectSection('Datos')">Datos Asociación</div>
+    <div class="cards">
+      <div class="card yellow" @click="selectSection('datos')">Datos Asociación</div>
       <div class="card green" @click="selectSection('junta'); console.log(sectionForm[selectedSection])">👥 Junta Directiva</div>
       <div class="card purple" @click="selectSection('relaciones')">🤝 Relaciones Institucionales</div>
       <div class="card blue" @click="selectSection('bancos')">🏛️ Bancos</div>
       <div class="card red" @click="selectSection('donativos')">Donativos y herencias</div>
     </div>
-
     <!-- Sección activa -->
-    <div v-else class="panel">
-      <button @click="selectedSection = null">← VOLVER</button>
+    <div v-if="selectedSection" class="panel">
       <h2>{{ sectionTitle[selectedSection] }}</h2>
+
       <div class="options">
-        <button @click="showAddUserModal = true">➕ AGREGAR</button>
+        <button class="btn-primary"@click="showAddUserModal = true">➕ AGREGAR</button>
       </div>
+
+      <div class="content-placeholder">
+        </div>
 
       <transition name="fade-scale">
         <ModalForm
@@ -74,51 +76,84 @@ main {
   padding: 20px 40px;
 }
 
+/* Títulos */
+.title {
+  font-size: 28px;
+  margin-bottom: 20px;
+}
+
+/* Grid de Cards */
 .cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 20px;
+  display: flex;
   margin-top: 20px;
+  gap: 20px;
+  justify-content: center;
+  align-items: center;
 }
 
 .card {
-  padding: 30px;
-  border-radius: 12px;
-  color: white;
-  font-weight: 600;
-  cursor: pointer;
-  text-align: center;
-  font-size: 18px;
+  width: 200px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  min-width: 150px;
+  border-radius: 8px;
+  padding: 8px;
+  height: 50px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: bold;
+  color: #fff;
 }
 
-.green { background: #4caf50; }
-.yellow { background: #ffc107; }
-.purple { background: #7e57c2; }
-.blue {background: #240bcb; }
-.red {background: #db1a37; }
 
+.card:hover { transform: scale(1.02); }
 
-.panel {
-  background: white;
-  padding: 24px;
-  border-radius: 12px;
-  margin-top: 20px;
+/* Colores de las cards según tus capturas */
+.yellow { background-color: #f1c40f; }
+.green { background-color: #6ab04c; }
+.purple { background-color: #7d5fff; }
+.blue { background-color: #1a0dab; }
+.red { background-color: #cf3a3a; }
+
+/* Panel interno */
+.panel h2 {
+  font-size: 26px;
+  margin-bottom: 25px;
 }
 
-.options {
+.options, .actions-footer {
   margin: 20px 0;
 }
 
-.options button {
-  padding: 10px 15px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-  cursor: pointer;
-  background-color: #2a4ea2;
-  color: white;
+.actions-footer {
+  margin-top: 50px; /* Separación para que quede al final */
+  border-top: 1px solid #eee;
+  padding-top: 20px;
 }
 
-.options button:hover {
-  background-color: #1b3570;
+/* Estilo unificado de botones */
+.btn-primary, .btn-secondary {
+  padding: 12px 24px;
+  border-radius: 8px;
+  border: none;
+  font-weight: 700;
+  cursor: pointer;
+  color: white;
+  min-width: 150px;
+  transition: background 0.3s;
+    background-color: #2a4ea2;
+
+}
+
+.btn-primary:hover { background-color: #1b3570; }
+
+.btn-secondary {
+  background-color: #636e72; /* Un gris profesional, pero con la misma forma */
+}
+
+.btn-secondary:hover { background-color: #2d3436; }
+
+.content-placeholder {
+  min-height: 200px;
 }
 </style>
