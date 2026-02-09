@@ -6,20 +6,22 @@ import Title from '@/components/Title.vue'
 const stats = ref([
   { title: 'Socios', data: 0, icon: 'people', href: '/usuarios', background: '#20a8d8' },
   { title: 'No Socios', data: 0, icon: 'people', href: '/usuarios', background: '#63c2de' },
-  { title: 'Actividades', data: 0, icon: 'event', href: '/eventos', background: '#fec106' },
-  { title: 'Proyectos', data: 0, icon: 'assignment', background: '#f86c6b' }
-  // Agrega más estadísticas según sea necesario
+  { title: 'Actividades', data: 0, icon: 'event', href: '/actividades', background: '#fec106' },
+  { title: 'Proyectos', data: 0, icon: 'assignment', href:'/proyectos', background: '#f86c6b' },
+  { title: 'Trabajadores', data: 0, icon:'person', href:'/usuarios', background: '#20a8d8' }
 ])
 
 onMounted(async () => {
   try {
-    const response = await fetch('http://localhost:3000/stats')
+    const response = await fetch('http://192.168.1.40:3000/stats')
     if (response.ok) {
       const data = await response.json()
+      // añadir a data un mini texto en un futuro
       if (stats?.value?.[0]) stats.value[0].data = data.socios ?? 0;
       if (stats?.value?.[1]) stats.value[1].data = data.noSocios ?? 0;
       if (stats?.value?.[2]) stats.value[2].data = data.actividades ?? 0;
       if (stats?.value?.[3]) stats.value[3].data = data.proyectos ?? 0;
+      if (stats?.value?.[4]) stats.value[4].data = data.trabajadores ?? 0;
     }
   } catch (error) {
     console.error('Error al cargar estadísticas:', error)
@@ -53,10 +55,9 @@ main {
 .statistics-container {
   display: flex;
   gap: 20px;
-  flex-wrap: wrap;
-  justify-content: center;
   margin-top: 20px;
   margin-left: 50px;
+  margin-right: 50px;
 }
 
 .statistics-container > *:hover {

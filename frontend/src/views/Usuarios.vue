@@ -10,15 +10,20 @@ const showAddUserModal = ref(false)
 
 onMounted(async () => {
   try {
-    const response = await fetch('http://localhost:3000/users')
-    if (response.ok) {
-      const data = await response.json()
-      users.value = data.users || []
+    const response = await fetch('http://192.168.1.40:3000/users')
+
+    const contentType = response.headers.get('content-type')
+    if (!contentType?.includes('application/json')) {
+      throw new Error('La respuesta no es JSON')
     }
+
+    const data = await response.json()
+    users.value = data.users || []
   } catch (error) {
     console.error('Error al cargar usuarios:', error)
   }
 })
+
 
 const filteredUsers = computed(() => {
   if (!searchQuery.value) return users.value

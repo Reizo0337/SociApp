@@ -1,6 +1,38 @@
 <script setup lang="ts">
 
 import StatisticsCard from '@/components/StatisticsCard.vue'
+import { ref, onMounted, computed } from 'vue'
+import Title from '../components/Title.vue'
+import ModalForm from '../components/ModalForm.vue'
+import { userSchema } from '@/formSchemas/user.schema'
+
+const activities = ref([])
+const searchQuery = ref('')
+const showAddUserModal = ref(false)
+
+onMounted(async () => {
+  try {
+    const response = await fetch('http://192.168.1.40:3000/activities')
+
+    const contentType = response.headers.get('content-type')
+    if (!contentType?.includes('application/json')) {
+      throw new Error('La respuesta no es JSON')
+    }
+
+    const data = await response.json()
+    activities.value = data.activities || []
+  } catch (error) {
+    console.error('Error al cargar usuarios:', error)
+  }
+})
+const filteredActivities = computed(() => {
+  if (!searchQuery.value) return activities.value
+  return activities.value.filter(activity =>
+    Object.values(activity).some(val =>
+      String(val).toLowerCase().includes(searchQuery.value.toLowerCase())
+    )
+  )
+})
 
 </script>
 

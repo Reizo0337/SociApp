@@ -27,7 +27,7 @@ const setToday = (key: string) => {
 
 <template>
 
-  <div class="modal">
+  <div class="modal" @click="$emit('close')">
     <div class="modal-content">
       <!-- HEADER -->
       <div class="modal-header">
@@ -40,7 +40,7 @@ const setToday = (key: string) => {
         <div class="grid-2">
           <!-- Columna izquierda: Datos personales -->
           <section class="card">
-            <h3>Datos personales</h3>
+            <h3>{{ schema[0].section }}</h3>
             <div v-for="field in schema[0].fields" :key="field.key" class="form-group">
               <label>{{ field.label }}</label>
               <input
@@ -61,7 +61,7 @@ const setToday = (key: string) => {
 
           <!-- Columna derecha: Dirección -->
           <section class="card">
-            <h3>Dirección</h3>
+            <h3>{{ schema[1].section}}</h3>
             <div v-for="field in schema[1].fields" :key="field.key" class="form-group">
               <label>{{ field.label }}</label>
               <input
@@ -83,7 +83,7 @@ const setToday = (key: string) => {
 
         <!-- FILA INFERIOR: Datos de la asociación -->
         <section class="card">
-          <h3>Datos de la asociación</h3>
+          <h3>{{ schema[2].section }}</h3>
           <div class="grid-3">
             <div v-for="field in schema[2].fields" :key="field.key" class="form-group">
               <label>{{ field.label }}</label>
@@ -121,20 +121,29 @@ const setToday = (key: string) => {
   background-color: rgba(0,0,0,0.45);
   display: flex;
   justify-content: center;
-  align-items: center;
   z-index: 9999;
   padding: 20px;
   overflow-y: auto;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
 }
 
 .modal-content {
   background: #fff;
   border-radius: 12px;
   width: 100%;
+  position: relative;
+  max-height: 100vh;
   max-width: 900px;
   padding: 24px;
   box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-  position: relative;
+  min-height: 900px;
+
 }
 
 .close-button {
@@ -232,11 +241,6 @@ input:focus, select:focus {
 
 .actions button:hover {
   background-color: #1d4ed8;
-}
-
-.modal {
-  /*animation*/
-
 }
 
 @media (max-width: 768px) {

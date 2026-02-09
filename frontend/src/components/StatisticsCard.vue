@@ -45,7 +45,9 @@ const typeClass = computed(() => (props.type ? `type-${props.type}` : ''))
 /* Estadisticas card */
 .type-stats{
   width: 300px;
-  min-height: 150px;
+  min-height: 100px;
+  height: 150px;
+  position: relative;
   color: #fff;
   border: none;
   gap: 8px;
@@ -53,6 +55,16 @@ const typeClass = computed(() => (props.type ? `type-${props.type}` : ''))
 
 .type-stats.statistics-card {
   gap: 6px;
+}
+
+.type-stats .link {
+  position: absolute;
+  /* it must be down */
+  bottom: 0;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-decoration: none;
+  color: #fff;
 }
 
 .type-stats .title {
@@ -63,6 +75,8 @@ const typeClass = computed(() => (props.type ? `type-${props.type}` : ''))
   width: 100%;
   padding-bottom: 8px;
   color: #fff;
+  font-weight: bold;
+  line-height: 1;
 }
 
 .type-stats .title span {
@@ -70,15 +84,13 @@ const typeClass = computed(() => (props.type ? `type-${props.type}` : ''))
 }
 
 .type-stats .data {
+  position: absolute;
   font-size: 38px;
   color: #fff;
   font-weight: bold;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 100%;
-  padding-bottom: 8px;
-  line-height: 1;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
 }
 
 .type-stats .unify {

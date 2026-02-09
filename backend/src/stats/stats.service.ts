@@ -15,8 +15,9 @@ export class StatsService {
           SUM(CASE WHEN socio = 1 THEN 1 ELSE 0 END) AS "socios",
           SUM(CASE WHEN socio = 2 THEN 1 ELSE 0 END) AS "noSocios",
           (SELECT COUNT(*) FROM actividades) AS "actividades",
-          (SELECT COUNT(*) FROM proyectos) AS "proyectos"
-        FROM usuarios
+          (SELECT COUNT(*) FROM proyectos) AS "proyectos",
+          (SELECT COUNT(*) FROM usuarios WHERE categoria = "Trabajador") AS "trabajadores"
+        FROM usuarios;
       `);
 
       // Parseo seguro a número
@@ -25,6 +26,7 @@ export class StatsService {
         noSocios: parseInt(stats.noSocios, 10) || 0,
         actividades: parseInt(stats.actividades, 10) || 0,
         proyectos: parseInt(stats.proyectos, 10) || 0,
+        trabajadores: parseInt(stats.trabajadores, 10) || 0,
       };
     } catch (error) {
       this.logger.error('Failed to fetch dashboard stats', error.stack);

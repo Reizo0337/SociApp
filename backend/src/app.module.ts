@@ -8,6 +8,8 @@ import { StatsService } from './stats/stats.service';
 import { UsersModule } from './users/users.module';
 import { UsersController } from './users/users.controller';
 import { UsersService } from './users/users.service';
+import  { ActivitiesController } from './activities/activities.controller';
+import  { ActivitiesService } from './activities/activities.service';
 
 // Throttler
 import { ThrottlerModule } from '@nestjs/throttler';
@@ -31,7 +33,7 @@ import { ThrottlerModule } from '@nestjs/throttler';
     StatsModule,
     UsersModule,
   ],
-  controllers: [AppController, StatsController, UsersController],
-  providers: [AppService, StatsService, UsersService],
+  controllers: [AppController, StatsController, UsersController, ActivitiesController],
+  providers: [AppService, StatsService, UsersService, ActivitiesService], 
 })
 export class AppModule {}
