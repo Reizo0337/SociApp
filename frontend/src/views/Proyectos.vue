@@ -13,10 +13,9 @@ const proyectosPendientes = 3
     <p>Gestiona todos los proyectos de la asociación desde esta vista.</p>
 
     <h2>Estadisticas del proyecto</h2>
-    0
     <div class="statistics-container">
       <StatisticsCard
-        type="stats"
+        type="project"
         title="Total de Proyectos"
         :data="totalProyectos"
         icon="folder"
@@ -25,7 +24,7 @@ const proyectosPendientes = 3
       />
 
       <StatisticsCard
-        type="stats"
+        type="project"
         title="Proyectos Activos"
         :data="proyectosActivos"
         icon="play_circle"
@@ -34,7 +33,7 @@ const proyectosPendientes = 3
       />
 
       <StatisticsCard
-        type="stats"
+        type="project"
         title="Proyectos Pendientes"
         :data="proyectosPendientes"
         icon="hourglass_empty"
