@@ -157,6 +157,11 @@ const filteredProyectos = computed(() => {
  transition: transform 0.2s, box-shadow 0.2s;
 }
 
+:global(.dark) .project-card {
+  background-color: #1e1e1e;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
 .project-card:hover {
   transform: translateY(-3px);
   box-shadow: 0 8px 20px rgba(0,0,0,0.12);
@@ -173,6 +178,10 @@ const filteredProyectos = computed(() => {
   margin: 0;
   font-size: 18px;
   color: #2a4ea2;
+}
+
+:global(.dark) .card-header h3 {
+  color: #63c2de;
 }
 
 .status{

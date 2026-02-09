@@ -13,7 +13,7 @@ const stats = ref([
 
 onMounted(async () => {
   try {
-    const response = await fetch('http://192.168.1.40:3000/stats')
+    const response = await fetch('http://192.168.1.49:3000/stats')
     if (response.ok) {
       const data = await response.json()
       // añadir a data un mini texto en un futuro
@@ -68,5 +68,9 @@ main {
 
 .statistics-container > *:hover {
   transform: translateY(-3px);
+}
+
+:global(.dark) .statistics-container > *:hover {
+  box-shadow: 0 6px 14px rgba(0,0,0,.5);
 }
 </style>

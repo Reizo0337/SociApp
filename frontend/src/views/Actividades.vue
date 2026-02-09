@@ -12,7 +12,7 @@ const showAddActivitiesModal = ref(false)
 
 onMounted(async () => {
   try {
-    const response = await fetch('http://192.168.1.40:3000/activities')
+    const response = await fetch('http://192.168.1.49:3000/activities')
 
     const contentType = response.headers.get('content-type')
     if (!contentType?.includes('application/json')) {
@@ -40,7 +40,7 @@ const addActivities = () => {
 }
 const saveActivity = async (newActivity) => {
   try {
-    const response = await fetch('http://192.168.1.40:3000/activities', {
+    const response = await fetch('http://192.168.1.49:3000/activities', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(newActivity)
@@ -111,6 +111,10 @@ main {
   color: #333;
 }
 
+:global(.dark) .showUsers-header h2 {
+  color: #e0e0e0;
+}
+
 .showUsers-header input {
   padding: 10px 15px;
   border-radius: 8px;
@@ -133,6 +137,11 @@ main {
   transition: transform 0.2s, box-shadow 0.2s;
 }
 
+:global(.dark) .user-card {
+  background-color: #1e1e1e;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
 .user-card:hover {
   transform: translateY(-3px);
   box-shadow: 0 8px 20px rgba(0,0,0,0.12);
@@ -148,6 +157,10 @@ main {
   margin: 0;
   font-size: 18px;
   color: #2a4ea2;
+}
+
+:global(.dark) .card-header .text h3 {
+  color: #63c2de;
 }
 
 .card-header .icon span {
@@ -171,8 +184,16 @@ main {
   color: #555;
 }
 
+:global(.dark) .card-body p {
+  color: #bbb;
+}
+
 .card-body strong {
   color: #333;
+}
+
+:global(.dark) .card-body strong {
+  color: #e0e0e0;
 }
 
 .options {
@@ -197,4 +218,3 @@ main {
 }
 
 </style>
-

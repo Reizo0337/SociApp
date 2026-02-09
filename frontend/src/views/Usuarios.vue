@@ -12,7 +12,7 @@ const route = useRoute()
 
 const loadUsers = async () => {
   try {
-    const response = await fetch('http://192.168.1.40:3000/users')
+    const response = await fetch('http://192.168.1.49:3000/users')
 
     const contentType = response.headers.get('content-type')
     if (!contentType?.includes('application/json')) {

@@ -106,11 +106,18 @@ const typeClass = computed(() => (props.type ? `type-${props.type}` : ''))
   width: 200px;
 }
 
+:global(.dark) .type-activity {
+  background-color: #2c2c2c;
+}
+
 .type-activity .title {
   color: #000;
 }
 
 
+:global(.dark) .type-activity .title {
+  color: #e0e0e0;
+}
 
 /* Cards comunes */
 .statistics-card {
@@ -119,6 +126,10 @@ const typeClass = computed(() => (props.type ? `type-${props.type}` : ''))
   border-radius: 8px;
   padding: 8px;
   margin-bottom: 16px;
+}
+
+:global(.dark) .statistics-card {
+  color: #e0e0e0;
 }
 
 .title {

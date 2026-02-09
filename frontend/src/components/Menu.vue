@@ -2,6 +2,8 @@
 import { ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import logo from '@/assets/logo.png'
+import ToggleSwitch from '@/components/ToggleSwitch.vue'
+
 const emit = defineEmits(['toggle-menu'])
 
 const isOpen = ref(false)
@@ -30,18 +32,19 @@ const handleMouseLeave = () => {
 
 <template>
   <header>
-      <div class="header">
-        <button class="menu-toggle" @click="toggleMenu">
-          <span class="material-symbols-outlined">menu</span>
-        </button>
-        <RouterLink to="/" class="logo-wrapper">
-          <div class="logo-wrapper">
-            <img :src="logo" alt="Logo" class="logo-icon" />
-            <p class="logo-text">Sociapp</p>
-          </div>
-        </RouterLink>
-      </div>
-    </header>
+    <div class="header">
+      <button class="menu-toggle" @click="toggleMenu">
+        <span class="material-symbols-outlined">menu</span>
+      </button>
+      <RouterLink to="/" class="logo-wrapper">
+        <div class="logo-wrapper">
+          <img :src="logo" alt="Logo" class="logo-icon" />
+          <p class="logo-text">Sociapp</p>
+        </div>
+      </RouterLink>
+      <ToggleSwitch class="theme-toggle" />
+    </div>
+  </header>
   <aside class="sidebar" :class="{ 'is-open': isOpen }" @mouseenter="handleMouseEnter" @mouseleave="handleMouseLeave">
     <nav class="sidebar-nav">
       <ul>
@@ -102,6 +105,11 @@ const handleMouseLeave = () => {
   z-index: -1;
 }
 
+:global(.dark) .header, :global(.dark) .header::after {
+  background: #1e1e1e;
+  border-bottom: 1px solid #333;
+}
+
 .sidebar .header .menu-toggle {
   transition: background 0.2s ease;
   cursor: pointer;
@@ -127,6 +135,11 @@ const handleMouseLeave = () => {
   overflow-x: hidden;
   white-space: nowrap;
   margin-top: 40px;
+}
+
+:global(.dark) .sidebar {
+  background: #1e1e1e;
+  border-right: 1px solid #333;
 }
 
 .sidebar.is-open {
@@ -170,6 +183,10 @@ const handleMouseLeave = () => {
   color: #333;
 }
 
+:global(.dark) .logo-wrapper, :global(.dark) .logo-icon, :global(.dark) .menu-toggle {
+  color: #e0e0e0;
+}
+
 .logo-text {
   font-weight: thin;
 }
@@ -180,6 +197,11 @@ const handleMouseLeave = () => {
   font-size: 2rem;
   cursor: pointer;
   color: #333;
+}
+
+.theme-toggle {
+  margin-left: auto;
+  margin-right: 50px;
 }
 
 .sidebar-nav ul {
@@ -202,8 +224,22 @@ const handleMouseLeave = () => {
   transition: background 0.2s;
 }
 
+:global(.dark) .nav-link {
+  color: #e0e0e0;
+}
+
 .nav-link:hover, .menu-toggle:hover {
   background-color: #f4f4f4;
+  border-radius: 30px;
+}
+
+:global(.dark) .nav-link:hover, :global(.dark) .menu-toggle:hover {
+  background-color: #333;
+}
+
+.nav-link.router-link-active {
+  background-color: #e1e8ff;
+  color: #2a4ea2;
   border-radius: 30px;
 }
 

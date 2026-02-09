@@ -156,4 +156,12 @@ main {
 .content-placeholder {
   min-height: 200px;
 }
+
+:global(.dark) .panel h2 {
+  color: #e0e0e0;
+}
+
+:global(.dark) .title {
+  color: #e0e0e0;
+}
 </style>
