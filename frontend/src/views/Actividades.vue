@@ -2,7 +2,6 @@
 
 import StatisticsCard from '@/components/StatisticsCard.vue'
 
-// Datos de ejemplo (mock)
 </script>
 
 <template>
