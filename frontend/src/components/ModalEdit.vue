@@ -1,74 +1,77 @@
 <script lang="ts" setup>
-import { reactive } from 'vue'
+import { reactive, watch } from 'vue'
 
-const props = defineProps<{ schema: any[]; error?: string; initial?: Record<string, any> }>()
+const props = defineProps<{ schema: any[]; initial?: Record<string, any>; error?: string }>()
 const emit = defineEmits(['submit', 'close'])
 
 const model = reactive({})
 
-// Inicializar model basado en el schema
-console.log(Array.isArray(props.schema), props.schema);
+// Inicializar model con valores iniciales (si hay)
 props.schema.forEach(section => {
   section.fields.forEach(field => {
-    model[field.key] = ''
+    model[field.key] = props.initial && props.initial[field.key] != null ? props.initial[field.key] : ''
   })
 })
 
-// Función submit
-const submit = () => {
-  emit('submit', { ...model })
-}
+watch(() => props.initial, (next) => {
+  if (!next) return
+  props.schema.forEach(section => {
+    section.fields.forEach(field => {
+      model[field.key] = next[field.key] ?? ''
+    })
+  })
+}, { deep: true })
 
-// Fecha actual
-const setToday = (key: string) => {
-  const today = new Date()
-  model[key] = today.toISOString().split('T')[0]
+const submit = () => {
+  // Incluir id si existe en initial
+  const payload = { ...(props.initial?.id ? { id: props.initial.id } : {}), ...model }
+  emit('submit', payload)
 }
 </script>
 
 <template>
   <div class="modal">
     <div class="modal-content">
-      <!-- HEADER -->
       <div class="modal-header">
-        <h2>SociApp</h2>
+        <h2>Editar actividad</h2>
         <button class="close-button" @click="$emit('close')">&times;</button>
       </div>
 
       <form @submit.prevent="submit">
         <div v-if="props.error" class="form-error">{{ props.error }}</div>
-        <!-- FILA SUPERIOR: Dos columnas -->
+
         <div class="grid-2">
-          <!-- Columna izquierda: Datos personales -->
-          <section class="card" v-for="value in schema">
+          <section class="card" v-for="value in schema" :key="value.section">
             <h3>{{ value.section }}</h3>
-            <div v-for="field in value.fields" :key="value.section" class="form-group">
+            <div v-for="field in value.fields" :key="field.key" class="form-group">
               <label>{{ field.label }}</label>
+
               <input
                 v-if="field.type !== 'select' && field.type !== 'date'"
                 :type="field.type"
                 v-model="model[field.key]"
                 :required="field.required"
               />
+
               <select v-else-if="field.type === 'select'" v-model="model[field.key]" :required="field.required">
                 <option v-for="opt in field.options" :key="opt" :value="opt">{{ opt }}</option>
               </select>
+
               <div v-else-if="field.type === 'date'" class="inline">
                 <input type="date" v-model="model[field.key]" :required="field.required" />
-                <button type="button" @click="setToday(field.key)">Hoy</button>
+                <button type="button" @click="() => { const today = new Date(); model[field.key] = today.toISOString().split('T')[0] }">Hoy</button>
               </div>
             </div>
           </section>
         </div>
 
-        <!-- BOTÓN SUBMIT -->
         <div class="actions">
-          <button type="submit">GUARDAR</button>
+          <button type="button" class="secondary" @click="$emit('close')">CANCELAR</button>
+          <button type="submit">GUARDAR CAMBIOS</button>
         </div>
       </form>
     </div>
   </div>
-
 </template>
 
 <style scoped>
@@ -78,10 +81,9 @@ const setToday = (key: string) => {
   background-color: rgba(0,0,0,0.45);
   display: flex;
   justify-content: center;
-  align-items: flex-start; /* para que el modal empiece desde arriba */
   z-index: 999999;
   padding: 20px;
-  overflow-y: auto; /* permite scroll si el contenido es más alto que la pantalla */
+  overflow-y: auto;
 }
 
 .modal-header {
@@ -95,11 +97,11 @@ const setToday = (key: string) => {
   background: #fff;
   border-radius: 12px;
   width: 100%;
+  position: relative;
+  max-height: 100vh;
   max-width: 1000px;
   padding: 24px;
   box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-  position: relative;
-  /* eliminar max-height para que pueda crecer */
 }
 
 .close-button {
@@ -138,7 +140,7 @@ const setToday = (key: string) => {
 }
 
 input, select {
-  width: 90%;
+  width: 100%;
   padding: 10px 12px;
   border-radius: 8px;
   border: 1px solid #d1d5db;

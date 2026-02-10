@@ -3,13 +3,11 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { StatsModule } from './stats/stats.module';
-import { StatsController } from './stats/stats.controller';
-import { StatsService } from './stats/stats.service';
 import { UsersModule } from './users/users.module';
-import { UsersController } from './users/users.controller';
-import { UsersService } from './users/users.service';
-import  { ActivitiesController } from './activities/activities.controller';
-import  { ActivitiesService } from './activities/activities.service';
+import { ActivitiesModule } from './activities/activities.module';
+
+
+import { Usuarios as User } from './users/user.entity';
 
 // Throttler
 import { ThrottlerModule } from '@nestjs/throttler';
@@ -23,7 +21,7 @@ import { ThrottlerModule } from '@nestjs/throttler';
       username: 'root',
       password: 'reizonr1',
       database: 'sociappdb', // Asegúrate de que coincida con tu BD local
-      entities: [],
+      entities: [User],
       synchronize: false,
     }),
     ThrottlerModule.forRoot([{
@@ -32,8 +30,9 @@ import { ThrottlerModule } from '@nestjs/throttler';
     }]),
     StatsModule,
     UsersModule,
+    ActivitiesModule,
   ],
-  controllers: [AppController, StatsController, UsersController, ActivitiesController],
-  providers: [AppService, StatsService, UsersService, ActivitiesService], 
+  controllers: [AppController],
+  providers: [AppService], 
 })
 export class AppModule {}

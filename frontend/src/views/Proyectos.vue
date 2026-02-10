@@ -2,14 +2,16 @@
 import { ref, computed } from 'vue'
 import StatisticsCard from '@/components/StatisticsCard.vue'
 import ModalForm from '@/components/ModalForm.vue'
+import { projectSchema } from '@/formSchemas/project.schema'
 
 // variables
 const totalProyectos = 8
 const proyectosActivos = 5
 const proyectosPendientes = 3
+const showAddProjectModal = ref(false)
 
 
-//lista de proyectos uwu
+//lista de proyectos
 const proyectos = ref([
   {
     id: 1,
@@ -40,7 +42,7 @@ const proyectos = ref([
   }
 ])
 
-//eu busquedinha
+//busqueda
 const searchQuery = ref('')
 const filteredProyectos = computed(() => {
   if (!searchQuery.value) return proyectos.value
@@ -91,7 +93,11 @@ const filteredProyectos = computed(() => {
     <div class ="projects-header">
       <input type="text" placeholder="buscar proyecto..." v-model="searchQuery"/>
       <button @click="showAddProjectModal = true">Agregar Proyecto</button>
-      <ModalForm v-if="showAddProjectModal" @close="showAddProjectModal = false"/>
+    <ModalForm
+       v-if="showAddProjectModal"
+      :schema="projectSchema"
+      :onClose="() => (showAddProjectModal = false)"
+    />
     </div>
 
         <!-- Grid de proyectos -->

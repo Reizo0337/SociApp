@@ -44,3 +44,167 @@ body {
 .dark h1, .dark h2, .dark h3, .dark h4, .dark h5, .dark h6 {
   color: #e0e0e0;
 }
+
+.showUsers-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.showUsers-header h2 {
+  font-size: 22px;
+  color: #333;
+}
+
+:global(.dark) .showUsers-header h2 {
+  color: #e0e0e0;
+}
+
+.showUsers-header input {
+  padding: 10px 15px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  width: 220px;
+  font-size: 14px;
+}
+
+.users-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.user-card {
+  background-color: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+:global(.dark) .user-card {
+  background-color: #1e1e1e;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+.user-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+}
+
+.card-header .left {
+  display: flex;
+  align-items: center;
+  width: 80%;
+  min-width: 0;
+
+  .text {
+    flex: 1 1 auto;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+.action-buttons {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+
+  .edit {
+    color: #2563eb;
+  }
+
+  .delete {
+    color: #ef4444;
+  }
+}
+
+.action-buttons button {
+  padding: 2px 5px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  background: none;
+  color: #000;
+}
+
+.card-header .text h3 {
+  margin: 0;
+  font-size: 18px;
+  color: #2a4ea2;
+}
+
+:global(.dark) .card-header .text h3 {
+  color: #63c2de;
+}
+
+.role {
+  background-color: #e1e8ff;
+  color: #2a4ea2;
+  font-size: 12px;
+  font-weight: bold;
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+
+.card-body p {
+  margin: 5px 0;
+  font-size: 13px;
+  color: #555;
+}
+
+:global(.dark) .card-body p {
+  color: #bbb;
+}
+
+.card-body strong {
+  color: #333;
+}
+
+:global(.dark) .card-body strong {
+  color: #e0e0e0;
+}
+
+.options {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.options button {
+  padding: 10px 15px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  background-color: #2a4ea2;
+  color: #fff;
+}
+
+.card-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+.card-actions button {
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  background: #2563eb;
+  color: #fff;
+}
+.card-actions button.danger {
+  background: #ef4444;
+}

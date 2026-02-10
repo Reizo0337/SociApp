@@ -1,62 +1,54 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { DataSource } from 'typeorm';
-
-interface User {
-  name: string;
-  surname: string;
-  dni: string;
-  address: string;
-  postalCode: string;
-  province: string;
-  locality: string;
-  country: string;
-  email: string;
-  phone: string;
-  registrationDate: Date;
-  deregistrationDate: Date | null;
-  paymentMethod: string;
-  fee: number;
-  role: string;
-  socio: string;
-}
+import { DataSource, Repository } from 'typeorm';
+import { Usuarios as User } from './user.entity';
+import { InjectRepository } from '@nestjs/typeorm';
+import { CreateUserDto } from './create-user.dto';
 
 @Injectable()
 export class UsersService {
   private readonly logger = new Logger(UsersService.name);
 
-  constructor(private dataSource: DataSource) {}
+  constructor(
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
+  ) {}
 
   async getUsersData() {
     try {
-      // Una sola query agregada para obtener todos los conteos
-      const users = await this.dataSource.query(`
-        SELECT nombre, apellidos, dni, direccion, CP, provincia, poblacion, pais, email, telefono, fechaalta, fechabaja, formadepago, cuota, categoria, socio FROM usuarios;
-      `);
-
-      // Parseo seguro a número
+      const users = await this.userRepository.find();
       return {
         users: users.map(user => ({
-          name: user.nombre,
-          surname: user.apellidos,
+          nombre: user.nombre,
+          apellidos: user.apellidos,
           dni: user.dni,
-          address: user.direccion,
-          postalCode: user.CP,
-          province: user.provincia,
-          locality: user.poblacion,
-          country: user.pais,
+          direccion: user.direccion,
+          CP: user.CP,
+          provincia: user.provincia,
+          localidad: user.poblacion,
+          pais: user.pais,
           email: user.email,
-          phone: user.telefono,
-          registrationDate: user.fechaalta,
-          deregistrationDate: user.fechabaja,
-          paymentMethod: user.formadepago,
-          fee: parseFloat(user.cuota) || 0,
-          role: user.categoria,
+          telefono: user.telefono,
+          fechadealta: user.fechaalta,
+          fechadebaja: user.fechabaja,
+          formadepago: user.formadepago,
+          cuota: Number(user.cuota) || 0,
+          categoria: user.categoria,
           socio: user.socio,
-        }))
+        })),
       };
     } catch (error) {
-      this.logger.error('Failed to fetch users data');
+      this.logger.error('Failed to fetch users data', error);
       throw error;
+    }
+  }
+
+  async createUser(dto: CreateUserDto) {
+    try {
+      const user = this.userRepository.create(dto);
+      return await this.userRepository.save(user);
+    } catch (err) {
+      this.logger.error('Failed to create user', err);
+      throw err;
     }
   }
 }

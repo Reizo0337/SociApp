@@ -4,15 +4,23 @@ import StatisticsCard from '@/components/StatisticsCard.vue'
 import { ref, onMounted, computed } from 'vue'
 import Title from '../components/Title.vue'
 import ModalForm from '../components/ModalForm.vue'
+import ModalDelete from '../components/ModalDelete.vue'
+import ModalEdit from '../components/ModalEdit.vue'
 import { ActivitySchema } from '@/formSchemas/Activity.schema'
 
 const activities = ref([])
 const searchQuery = ref('')
 const showAddActivitiesModal = ref(false)
+const formError = ref('')
+const showDeleteModal = ref(false)
+const activityToDelete = ref(null)
+const showEditModal = ref(false)
+const editingActivity = ref(null)
+const editError = ref('')
 
 onMounted(async () => {
   try {
-    const response = await fetch('http://192.168.1.49:3000/activities')
+    const response = await fetch('http://192.168.1.45:3000/activities')
 
     const contentType = response.headers.get('content-type')
     if (!contentType?.includes('application/json')) {
@@ -36,24 +44,102 @@ const filteredActivities = computed(() => {
 })
 const addActivities = () => {
   // On click open pop up where user can add a new users. we will use a new component.
+  formError.value = ''
   showAddActivitiesModal.value = true
 }
 const saveActivity = async (newActivity) => {
   try {
-    const response = await fetch('http://192.168.1.49:3000/activities', {
+    // Los selects del formulario envían `horaInicio` y `horaFin`.
+    // Asegurarse de que existan y mantenerlos tal cual para el backend.
+    if (!newActivity.horaInicio || !newActivity.horaFin) {
+      throw new Error('Debe seleccionar hora de inicio y fin');
+    }
+
+    const response = await fetch('http://192.168.1.45:3000/activities', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(newActivity)
     });
 
-    if (!response.ok) throw new Error('Error al guardar la actividad');
+    if (!response.ok) {
+      let errMsg = 'No se pudo guardar la actividad';
+      try {
+        const errBody = await response.json();
+        if (errBody?.message) {
+          errMsg = Array.isArray(errBody.message) ? errBody.message.join(', ') : errBody.message;
+        } else if (errBody?.error) {
+          errMsg = errBody.error;
+        }
+      } catch (e) {
+        // ignore JSON parse errors
+      }
+      formError.value = errMsg;
+      return;
+    }
 
     const savedActivity = await response.json(); // backend devuelve la actividad guardada con id
-    activities.value.push(savedActivity); // agregamos la actividad con id real
+    activities.value.push(savedActivity)
     showAddActivitiesModal.value = false;
+    formError.value = '';
   } catch (error) {
     console.error(error);
-    alert('No se pudo guardar la actividad');
+    formError.value = error?.message || String(error) || 'No se pudo guardar la actividad';
+  }
+}
+const editActivity = (activity) => {
+  editingActivity.value = activity
+  showEditModal.value = true
+}
+
+const saveEdit = async (payload) => {
+  try {
+    if (!payload.horaInicio || !payload.horaFin) {
+      throw new Error('Debe seleccionar hora de inicio y fin');
+    }
+    const res = await fetch(`http://192.168.1.45:3000/activities/${payload.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    })
+    if (!res.ok) {
+      let errMsg = 'No se pudo actualizar la actividad'
+      try {
+        const errBody = await res.json()
+        if (errBody?.message) errMsg = Array.isArray(errBody.message) ? errBody.message.join(', ') : errBody.message
+        else if (errBody?.error) errMsg = errBody.error
+      } catch {}
+      editError.value = errMsg
+      return
+    }
+    const updated = await res.json()
+    const idx = activities.value.findIndex(a => a.id === updated.id)
+    if (idx !== -1) activities.value.splice(idx, 1, updated)
+    showEditModal.value = false
+    editingActivity.value = null
+    editError.value = ''
+  } catch (e) {
+    editError.value = e?.message || String(e) || 'No se pudo actualizar la actividad'
+  }
+}
+
+const openDeleteModal = (activity) => {
+  activityToDelete.value = activity
+  showDeleteModal.value = true
+}
+
+const confirmDelete = async () => {
+  if (!activityToDelete.value) return
+  try {
+    const res = await fetch(`http://192.168.1.45:3000/activities/${activityToDelete.value.id}`, { method: 'DELETE' })
+    if (!res.ok) throw new Error('No se pudo eliminar la actividad')
+    const idx = activities.value.findIndex(a => a.id === activityToDelete.value.id)
+    if (idx !== -1) activities.value.splice(idx, 1)
+    showDeleteModal.value = false
+    activityToDelete.value = null
+  } catch (e) {
+    alert(e?.message || String(e))
+    showDeleteModal.value = false
+    activityToDelete.value = null
   }
 }
 const formatDate = (date) => date ? new Date(date).toLocaleDateString() : ''
@@ -67,7 +153,9 @@ const formatDate = (date) => date ? new Date(date).toLocaleDateString() : ''
         <h2>Lista de Actividades</h2>
         <div class="options">
           <button @click="addActivities">Agregar Actividad</button>
-            <ModalForm :schema="ActivitySchema" @submit="saveActivity" v-if="showAddActivitiesModal" @close="showAddActivitiesModal = false"/>
+          <ModalForm :schema="ActivitySchema" :error="formError" @submit="saveActivity" v-if="showAddActivitiesModal" @close="() => { showAddActivitiesModal = false; formError = '' }"/>
+          <ModalEdit :schema="ActivitySchema" :initial="editingActivity" :error="editError" @submit="saveEdit" v-if="showEditModal" @close="() => { showEditModal = false; editingActivity = null; editError = '' }"/>
+          <ModalDelete :title="'Eliminar Actividad'" :message="'¿Está seguro de que desea eliminar esta actividad? Esta acción no se puede deshacer.'" :itemName="activityToDelete?.name" @confirm="confirmDelete" @close="() => { showDeleteModal = false; activityToDelete = null }" v-if="showDeleteModal"/>
           <input type="text" placeholder="Buscando por actividad... " v-model="searchQuery"/>
         </div>
       </div>
@@ -75,16 +163,23 @@ const formatDate = (date) => date ? new Date(date).toLocaleDateString() : ''
       <div class="users-grid">
         <div v-for="activity in filteredActivities" :key="activity.id" class="user-card">
           <div class="card-header">
-            <div class="icon" v-if="activity.icon != 'null'">
-              <span class="material-symbols-outlined">{{ activity.icon }}</span>
+            <div class="left">
+              <div class="text">
+                <h3 :title="activity.name" }}>{{activity.name }}</h3>
+              </div>
             </div>
-            <div class="text">
-              <h3>{{activity.name }}</h3>
+            <div class="right">
+              <div class="action-buttons">
+                <button @click="editActivity(activity)"><span class="material-symbols-outlined edit">edit</span></button>
+                <button @click="openDeleteModal(activity)"><span class="material-symbols-outlined delete">delete</span></button>
+              </div>
             </div>
-          </div>
+            </div>
           <div class="card-body">
             <p><strong>Lugar de la actividad:</strong> {{ activity.place }}</p>
-            <p><strong>Horario de la actividad:</strong> {{ activity.horario }}</p>
+            <p><strong>Hora de inicio:</strong> {{ activity.horaInicio }} <strong> Hora de fin: </strong> {{activity.horaFin}} </p>
+            <div class="card-actions">
+            </div>
 
           </div>
         </div>
@@ -99,122 +194,9 @@ main {
   min-height: 100vh;
 }
 
-.showUsers-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-.showUsers-header h2 {
-  font-size: 22px;
-  color: #333;
-}
-
-:global(.dark) .showUsers-header h2 {
-  color: #e0e0e0;
-}
-
-.showUsers-header input {
-  padding: 10px 15px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-  width: 220px;
-  font-size: 14px;
-}
-
 .users-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 20px;
 }
-
-.user-card {
-  background-color: #fff;
-  border-radius: 12px;
-  padding: 20px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-  transition: transform 0.2s, box-shadow 0.2s;
-}
-
-:global(.dark) .user-card {
-  background-color: #1e1e1e;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-}
-
-.user-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 20px rgba(0,0,0,0.12);
-}
-
-.card-header {
-  display: flex;
-  align-items: center;
-  margin-bottom: 12px;
-}
-
-.card-header .text h3 {
-  margin: 0;
-  font-size: 18px;
-  color: #2a4ea2;
-}
-
-:global(.dark) .card-header .text h3 {
-  color: #63c2de;
-}
-
-.card-header .icon span {
-  margin: 0;
-  color: #2a4ea2;
-  text-align: center;
-}
-
-.role {
-  background-color: #e1e8ff;
-  color: #2a4ea2;
-  font-size: 12px;
-  font-weight: bold;
-  padding: 2px 8px;
-  border-radius: 6px;
-}
-
-.card-body p {
-  margin: 5px 0;
-  font-size: 13px;
-  color: #555;
-}
-
-:global(.dark) .card-body p {
-  color: #bbb;
-}
-
-.card-body strong {
-  color: #333;
-}
-
-:global(.dark) .card-body strong {
-  color: #e0e0e0;
-}
-
-.options {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-}
-
-.options button {
-  padding: 10px 15px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-  font-size: 14px;
-  cursor: pointer;
-  transition: background-color 0.2s;
-  background-color: #2a4ea2;
-  color: #fff;
-}
-
-.options button:hover {
-  background-color: #1b3570;
-}
-
 </style>

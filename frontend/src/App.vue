@@ -28,4 +28,6 @@ const handleToggleMenu = (expanded: boolean) => {
   margin-left: 270px;
   transition: margin-left 0.3s ease;
 }
+
+
 </style>
