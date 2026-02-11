@@ -20,7 +20,7 @@ const editError = ref('')
 
 onMounted(async () => {
   try {
-    const response = await fetch('http://192.168.1.45:3000/activities')
+    const response = await fetch('http://192.168.1.55:3000/activities')
 
     const contentType = response.headers.get('content-type')
     if (!contentType?.includes('application/json')) {
@@ -55,7 +55,7 @@ const saveActivity = async (newActivity) => {
       throw new Error('Debe seleccionar hora de inicio y fin');
     }
 
-    const response = await fetch('http://192.168.1.45:3000/activities', {
+    const response = await fetch('http://192.168.1.55:3000/activities', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(newActivity)
@@ -96,7 +96,7 @@ const saveEdit = async (payload) => {
     if (!payload.horaInicio || !payload.horaFin) {
       throw new Error('Debe seleccionar hora de inicio y fin');
     }
-    const res = await fetch(`http://192.168.1.45:3000/activities/${payload.id}`, {
+    const res = await fetch(`http://192.168.1.55:3000/activities/${payload.id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
@@ -130,7 +130,7 @@ const openDeleteModal = (activity) => {
 const confirmDelete = async () => {
   if (!activityToDelete.value) return
   try {
-    const res = await fetch(`http://192.168.1.45:3000/activities/${activityToDelete.value.id}`, { method: 'DELETE' })
+    const res = await fetch(`http://192.168.1.55:3000/activities/${activityToDelete.value.id}`, { method: 'DELETE' })
     if (!res.ok) throw new Error('No se pudo eliminar la actividad')
     const idx = activities.value.findIndex(a => a.id === activityToDelete.value.id)
     if (idx !== -1) activities.value.splice(idx, 1)

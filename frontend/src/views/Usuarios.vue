@@ -13,7 +13,7 @@ const route = useRoute()
 
 const loadUsers = async () => {
   try {
-    const response = await fetch('http://192.168.1.45:3000/users')
+    const response = await fetch('http://192.168.1.55:3000/users')
 
     const contentType = response.headers.get('content-type')
     if (!contentType?.includes('application/json')) {
@@ -64,7 +64,7 @@ const addUsers = () => {
 const saveUser = async (newUser) => {
   try {
     console.log('Nuevo usuario a enviar:', newUser);
-    const response = await fetch('http://192.168.1.45:3000/users', {
+    const response = await fetch('http://192.168.1.55:3000/users', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(newUser)
