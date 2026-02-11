@@ -90,7 +90,7 @@ const typeClass = computed(() => (props.type ? `type-${props.type}` : ''))
 }
 
 :global(.dark) .type-activity {
-  background-color: #2c2c2c !important;
+  background-color: #514bc2 !important;
 }
 
 /* --- 4. STATS (Específicos) --- */
@@ -102,7 +102,6 @@ const typeClass = computed(() => (props.type ? `type-${props.type}` : ''))
   color: #fff;
   border: none;
 }
-
 .type-stats .title { justify-content: center; color: #fff; }
 .type-stats .data {
   position: absolute;

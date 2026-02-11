@@ -317,13 +317,11 @@ function handleSave(data) {
   align-items: center !important;
   width: 100%;
 }
-
 .setting-item:hover {
-  background-color: #2f334d !important; /* El color que pediste */
-  border-color: #162683;
-  transform: translateY(-2px); /* Un pequeño salto hacia arriba para dar feedback */
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.12);
 }
+
 
 /* 5. EL TEXTO A LA DERECHA */
 .setting-item .setting-info {
@@ -337,6 +335,7 @@ function handleSave(data) {
 
 .settings-list {
   display: flex;
+  justify-content: center;
   flex-wrap: wrap;
   gap: 15px;
 }
