@@ -220,7 +220,7 @@ main {
   color: #60a5fa;
 }
 
-:global(.dark) .action-buttons button:hover span.delete {
+:global(.dark) .action-buttons button:w span.delete {
   color: #f87171;
 }
 </style>
