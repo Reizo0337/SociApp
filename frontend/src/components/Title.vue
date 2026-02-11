@@ -17,17 +17,17 @@ const props = defineProps<{
   display: flex;
   align-items: center;
   width: 100%;
-  background-color: #f8fafd;
   padding: 15px 20px;
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.08);
   margin-bottom: 30px;
-}
+  justify-content: center;
 
+}
 .title h1 {
   margin-left: 10px;
   font-size: 28px;
-  color: #2a4ea2;
+  color: #0d5ba9;
 }
 
 .title span {
