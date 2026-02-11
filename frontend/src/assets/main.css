@@ -16,7 +16,7 @@ body {
 
 .dark body {
   background-color: #121212;
-  color: #e0e0e0;
+  color: #fff;
 }
 
 .back-button {
@@ -41,8 +41,12 @@ body {
   border: 1px solid #444;
 }
 
+.dark .title {
+  color: #fff;
+}
+
 .dark h1, .dark h2, .dark h3, .dark h4, .dark h5, .dark h6 {
-  color: #e0e0e0;
+  color: #ffffff;
 }
 
 .showUsers-header {
@@ -86,6 +90,11 @@ body {
 :global(.dark) .user-card {
   background-color: #1e1e1e;
   box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+.dark .title {
+  background-color: #1c1e5f;
+
 }
 
 .user-card:hover {

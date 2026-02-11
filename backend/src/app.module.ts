@@ -31,6 +31,8 @@ import { ThrottlerModule } from '@nestjs/throttler';
     StatsModule,
     UsersModule,
     ActivitiesModule,
+    // Otros módulos
+    
   ],
   controllers: [AppController],
   providers: [AppService], 

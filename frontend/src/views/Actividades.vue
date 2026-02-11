@@ -178,6 +178,7 @@ const formatDate = (date) => date ? new Date(date).toLocaleDateString() : ''
           <div class="card-body">
             <p><strong>Lugar de la actividad:</strong> {{ activity.place }}</p>
             <p><strong>Hora de inicio:</strong> {{ activity.horaInicio }} <strong> Hora de fin: </strong> {{activity.horaFin}} </p>
+             <p><strong>Monitor:</strong> {{ activity.monitor }} </p>
             <div class="card-actions">
             </div>
 

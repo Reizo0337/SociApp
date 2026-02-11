@@ -85,7 +85,7 @@ const currentIcon = computed(() => {
 }
 
 .sun { color: #fbc02d; }
-.dark { color: #90caf9; }
+.dark { color: #ffffff; }
 .auto { color: #546e7a; }
 .track.dark .auto { color: #cfd8dc; }
 

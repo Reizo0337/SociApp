@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import StatisticsCard from '@/components/StatisticsCard.vue'
 import ModalForm from '@/components/ModalForm.vue'
 import { projectSchema } from '@/formSchemas/project.schema'
+import Title from '../components/Title.vue'
 
 // variables
 const totalProyectos = 8
@@ -55,8 +56,7 @@ const filteredProyectos = computed(() => {
 </script>
 <template>
   <main>
-    <h1>Proyectos</h1>
-    <p>Gestiona todos los proyectos de la asociación desde esta vista.</p>
+    <Title title="Proyectos" icon="Folder" />
 
     <h2>Estadisticas del proyecto</h2>
     <div class="statistics-container">

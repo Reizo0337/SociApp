@@ -47,11 +47,12 @@ const typeClass = computed(() => (props.type ? `type-${props.type}` : ''))
 /* --- 1. BASE COMÚN (Luz) --- */
 .statistics-card {
   display: flex;
+  flex-direction: column;
   border-radius: 8px;
-  padding: 8px; 
+  padding: 8px;
   margin-bottom: 16px;
   border: 1px solid #e2e8f0;
-  box-sizing: border-box; 
+  box-sizing: border-box;
 }
 
 .title {
@@ -77,20 +78,11 @@ const typeClass = computed(() => (props.type ? `type-${props.type}` : ''))
   color: #f8fafc !important;
 }
 
-:global(.dark) .statistics-card h3,
-:global(.dark) .statistics-card p {
-  color: #f8fafc !important;
-  margin: 0; /* Evita que márgenes por defecto muevan el botón */
-}
 
 /* --- 3. VARIANTES --- */
 .type-activity {
   background-color: #eaebed;
   width: 200px;
-}
-
-:global(.dark) .type-activity {
-  background-color: #514bc2 !important;
 }
 
 /* --- 4. STATS (Específicos) --- */

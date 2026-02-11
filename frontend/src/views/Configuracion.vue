@@ -1,7 +1,7 @@
 <template>
   <main class="config-app">
     <Title title="Configuración" icon="Settings" />
-    
+
     <header v-if="!selectedSection" class="profile-header">
       <div class="association-card">
         <div class="avatar-circle">
@@ -20,11 +20,11 @@
     </header>
 
     <section v-if="!selectedSection" class="settings-list">
-      <StatisticsCard 
-        v-for="(title, key) in sectionTitle" 
+      <StatisticsCard
+        v-for="(title, key) in sectionTitle"
         :key="key"
         @click="selectSection(key)"
-        class="setting-item" 
+        class="setting-item"
       >
         <template #content>
           <div class="icon-box" :class="getColorClass(key)">
@@ -66,8 +66,8 @@
 
         <div v-if="selectedSection === 'junta' && listaJunta.length > 0" class="records-list">
           <h3 class="list-title">Miembros de la Junta</h3>
-          <StatisticsCard 
-            v-for="(miembro, index) in listaJunta" 
+          <StatisticsCard
+            v-for="(miembro, index) in listaJunta"
             :key="index"
             class="record-card"
           >
@@ -131,8 +131,8 @@
 
         <div v-if="selectedSection === 'bancos' && listaBancos.length > 0" class="records-list">
           <h3 class="list-title">Cuentas Registradas</h3>
-          <StatisticsCard 
-            v-for="(banco, index) in listaBancos" 
+          <StatisticsCard
+            v-for="(banco, index) in listaBancos"
             :key="index"
             class="record-card"
           >
@@ -184,7 +184,7 @@ const editingIndex = ref(null)
 const asociacionData = ref(null)
 const listaBancos = ref([])
 const listaJunta = ref([])
-const listaDonativos = ref([]) 
+const listaDonativos = ref([])
 const listaRelaciones = ref([])
 
 const sectionTitle = {
@@ -195,7 +195,7 @@ const sectionTitle = {
   donativos: 'Donativos y herencias'
 }
 const getIcon = (key) => {
-  const icons = { 
+  const icons = {
     datos: 'corporate_fare',
     junta: 'groups',
     relaciones: 'handshake',
@@ -263,7 +263,7 @@ function handleSave(data) {
       donativos: listaDonativos.value,
       relaciones: listaRelaciones.value
     }
-    
+
     const targetList = listMap[section]
     if (targetList) {
       if (editingIndex.value !== null) {
