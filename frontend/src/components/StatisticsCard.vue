@@ -17,7 +17,7 @@ const typeClass = computed(() => (props.type ? `type-${props.type}` : ''))
 </script>
 
 <template>
-  <div class="statistics-card" :class=typeClass :style="{ backgroundColor: background }">
+  <div class="statistics-card" :class="typeClass" :style="background ? { backgroundColor: background } : {}">
     <div class="title">
       <span
         class="material-symbols-outlined"
@@ -26,10 +26,12 @@ const typeClass = computed(() => (props.type ? `type-${props.type}` : ''))
         >{{ icon }}</span
       >
       <h3>{{ title }}</h3>
+      <slot name="actions"></slot>
     </div>
     <div class="unify">
       <div class="data">
-        <p>{{ data }}</p>
+        <p v-if="data">{{ data }}</p>
+        <slot name="content"></slot>
       </div>
       <div class="localizacion" v-if="localizacion">
         <p>{{ localizacion }}</p>
@@ -42,94 +44,14 @@ const typeClass = computed(() => (props.type ? `type-${props.type}` : ''))
 </template>
 
 <style scoped>
-/* Estadisticas card */
-.type-stats{
-  width: 300px;
-  min-height: 100px;
-  height: 150px;
-  position: relative;
-  color: #fff;
-  border: none;
-  gap: 8px;
-}
-
-.type-stats.statistics-card {
-  gap: 6px;
-}
-
-.type-stats .link {
-  position: absolute;
-  /* it must be down */
-  bottom: 0;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  text-decoration: none;
-  color: #fff;
-}
-
-.type-stats .title {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  padding-bottom: 8px;
-  color: #fff;
-  font-weight: bold;
-  line-height: 1;
-}
-
-.type-stats .title span {
-  font-size: 24px;
-}
-
-.type-stats .data {
-  position: absolute;
-  font-size: 38px;
-  color: #fff;
-  font-weight: bold;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-}
-
-.type-stats .unify {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-
-/* Actividades card */
-.type-activity {
-  background-color: #eaebed;
-  width: 200px;
-}
-
-:global(.dark) .type-activity {
-  background-color: #2c2c2c;
-}
-
-.type-activity .title {
-  color: #000;
-}
-
-
-:global(.dark) .type-activity .title {
-  color: #e0e0e0;
-}
-
-/* Cards comunes */
+/* --- 1. BASE COMÚN (Luz) --- */
 .statistics-card {
   display: flex;
-  flex-direction: column;
   border-radius: 8px;
-  padding: 8px;
+  padding: 8px; 
   margin-bottom: 16px;
-}
-
-:global(.dark) .statistics-card {
-  color: #e0e0e0;
+  border: 1px solid #e2e8f0;
+  box-sizing: border-box; 
 }
 
 .title {
@@ -143,22 +65,57 @@ const typeClass = computed(() => (props.type ? `type-${props.type}` : ''))
   justify-content: space-between;
   align-items: center;
   width: 100%;
-  /* go bottom */
 }
 
-.separator {
-  width: 1px;
-  height: 100%;
-  gap: 8px;
+.data { color: #2196f3; }
+.link { font-size: 14px; color: #2196f3; text-decoration: none; }
+
+/* --- 2. MODO OSCURO GLOBAL --- */
+:global(.dark) .statistics-card {
+  background-color: #1e1e2d !important;
+  border-color: #2f334d !important;
+  color: #f8fafc !important;
 }
 
-.data {
-  color: #2196f3;
+:global(.dark) .statistics-card h3,
+:global(.dark) .statistics-card p {
+  color: #f8fafc !important;
+  margin: 0; /* Evita que márgenes por defecto muevan el botón */
 }
 
-.link {
-  font-size: 14px;
-  color: #2196f3;
-  text-decoration: none;
+/* --- 3. VARIANTES --- */
+.type-activity {
+  background-color: #eaebed;
+  width: 200px;
+}
+
+:global(.dark) .type-activity {
+  background-color: #2c2c2c !important;
+}
+
+/* --- 4. STATS (Específicos) --- */
+.type-stats {
+  width: 300px;
+  min-height: 100px;
+  height: 150px;
+  position: relative;
+  color: #fff;
+  border: none;
+}
+
+.type-stats .title { justify-content: center; color: #fff; }
+.type-stats .data {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 38px;
+  font-weight: bold;
+  color: #fff;
+}
+.type-stats .link {
+  position: absolute;
+  bottom: 8px; left: 50%;
+  transform: translateX(-50%);
+  color: #fff;
 }
 </style>
