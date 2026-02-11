@@ -4,6 +4,19 @@ import StatisticsCard from '@/components/StatisticsCard.vue'
 import ModalForm from '@/components/ModalForm.vue'
 import { projectSchema } from '@/formSchemas/project.schema'
 import Title from '../components/Title.vue'
+import ModalEdit from '../components/ModalEdit.vue'
+import ModalDelete from '../components/ModalDelete.vue'
+
+// --- INTERFAZ DEL PROYECTO ---
+interface Proyecto {
+  id: number
+  nombre: string
+  responsable: string
+  estado: string
+  presupuesto: number
+  subproyectos: string[]
+  actividades: string[]
+}
 
 // variables
 const totalProyectos = 8
@@ -11,6 +24,13 @@ const proyectosActivos = 5
 const proyectosPendientes = 3
 const showAddProjectModal = ref(false)
 
+// Para los modales de editar y borrar
+const editingProject = ref<Proyecto | null>(null)
+const showEditProjectModal = ref(false)
+const editError = ref('')
+
+const projectToDelete = ref<Proyecto | null>(null)
+const showDeleteProjectModal = ref(false)
 
 //lista de proyectos
 const proyectos = ref([
@@ -53,6 +73,55 @@ const filteredProyectos = computed(() => {
     )
   )
 })
+
+const editProject = (proyecto: Proyecto) => {
+  editingProject.value = { ...proyecto } // TS ya sabe que editingProject es Proyecto | null
+  showEditProjectModal.value = true
+}
+const saveEdit = async (updatedProject: Proyecto) => {
+  try {
+    const res = await fetch(`http://localhost:3000/projects/${updatedProject.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updatedProject)
+    })
+    const updated: Proyecto = await res.json()
+    const idx = proyectos.value.findIndex(p => p.id === updated.id)
+    if (idx !== -1) proyectos.value.splice(idx, 1, updated)
+
+    showEditProjectModal.value = false
+    editingProject.value = null
+    editError.value = ''
+  } catch (e: unknown) {
+    editError.value = (e as Error).message || 'No se pudo actualizar el proyecto'
+  }
+}
+
+const deleteProject = (id: number) => {
+  // Buscamos el proyecto; si no existe, asignamos null
+  projectToDelete.value = proyectos.value.find(p => p.id === id) || null
+  showDeleteProjectModal.value = true
+}
+
+const confirmDelete = async () => {
+  if (!projectToDelete.value) return
+
+  try {
+    // Borramos del backend
+    await fetch(`http://localhost:3000/projects/${projectToDelete.value.id}`, { method: 'DELETE' })
+
+    // Borramos del frontend
+    proyectos.value = proyectos.value.filter(p => p.id !== projectToDelete.value!.id)
+
+  } catch (e) {
+    console.error('No se pudo borrar el proyecto', e)
+  } finally {
+    // Cerramos modal y reseteamos valor
+    showDeleteProjectModal.value = false
+    projectToDelete.value = null
+  }
+}
+
 </script>
 <template>
   <main>
@@ -92,7 +161,11 @@ const filteredProyectos = computed(() => {
 
     <div class ="projects-header">
       <input type="text" placeholder="buscar proyecto..." v-model="searchQuery"/>
-      <button @click="showAddProjectModal = true">Agregar Proyecto</button>
+      <button
+      class="primary-button"
+      @click="showAddProjectModal = true">
+      Agregar Proyecto
+      </button>
     <ModalForm
        v-if="showAddProjectModal"
       :schema="projectSchema"
@@ -100,22 +173,57 @@ const filteredProyectos = computed(() => {
     />
     </div>
 
+
+
         <!-- Grid de proyectos -->
-    <div class="projects-grid">
-      <div v-for="proyecto in filteredProyectos" :key="proyecto.id" class="project-card">
-        <div class="card-header">
-          <h3>{{ proyecto.nombre }}</h3>
-          <span class="status" :class="proyecto.estado.toLowerCase()">{{ proyecto.estado }}</span>
-        </div>
-        <div class="card-body">
-          <p><strong>Responsable:</strong> {{ proyecto.responsable }}</p>
-          <p><strong>Presupuesto:</strong> {{ proyecto.presupuesto }} €</p>
-          <p><strong>Subproyectos:</strong> {{ proyecto.subproyectos?.length || 0 }}</p>
-          <p><strong>Actividades:</strong> {{ proyecto.actividades?.length || 0 }}</p>
-        </div>
+<div class="projects-grid">
+  <div v-for="proyecto in filteredProyectos" :key="proyecto.id" class="project-card">
+    <div class="card-header">
+      <h3>{{ proyecto.nombre }}</h3>
+
+      <!-- BOTONES -->
+      <div class="action-buttons">
+        <button @click="editProject(proyecto)">
+          <span class="material-symbols-outlined edit">edit</span>
+        </button>
+        <button @click="deleteProject(proyecto.id)">
+          <span class="material-symbols-outlined delete">delete</span>
+        </button>
       </div>
+
+      <span class="status" :class="proyecto.estado.toLowerCase()">{{ proyecto.estado }}</span>
     </div>
+
+    <div class="card-body">
+      <p><strong>Responsable:</strong> {{ proyecto.responsable }}</p>
+      <p><strong>Presupuesto:</strong> {{ proyecto.presupuesto }} €</p>
+      <p><strong>Subproyectos:</strong> {{ proyecto.subproyectos?.length || 0 }}</p>
+      <p><strong>Actividades:</strong> {{ proyecto.actividades?.length || 0 }}</p>
+    </div>
+  </div>
+</div>
   </main>
+
+  <!-- Modal de edición -->
+<ModalEdit
+  v-if="showEditProjectModal"
+  :schema="projectSchema"
+  :initial="editingProject ?? {}"
+  :error="editError"
+  @submit="saveEdit"
+  @close="() => { showEditProjectModal = false; editingProject = null; editError = '' }"
+/>
+
+<!-- Modal de borrado -->
+<ModalDelete
+  v-if="showDeleteProjectModal"
+  title="Eliminar proyecto"
+  message="¿Estás seguro que quieres eliminar este proyecto?"
+  :itemName="projectToDelete?.nombre"
+  @confirm="confirmDelete"
+  @close="() => { showDeleteProjectModal = false; projectToDelete = null }"
+/>
+
 </template>
 
 <style scoped>
@@ -134,19 +242,20 @@ const filteredProyectos = computed(() => {
   gap: 10px;
 }
 
-.projects-header input{
+.projects-header input {
   padding: 10px 15px;
   border-radius: 8px;
-  border: 1px solid #2a4ea2;
-  background-color: #2a4ea2;
-  color: #fff;
+  border: 1px solid #ccc; /* un gris neutro */
+  background-color: #fff;   /* fondo blanco */
+  color: #111;              /* texto oscuro */
   font-size: 14px;
-  cursor: pointer;
-  transition: background-color 0.2s;
+  cursor: text;             /* mejor que pointer en input */
+  transition: background-color 0.2s, border-color 0.2s;
 }
 
-.projects-header button:hover {
-  background-color: #1b3570;
+.projects-header input:focus {
+  border-color: #2a4ea2;   /* azul cuando está activo */
+  outline: none;
 }
 
 .projects-grid {
@@ -197,6 +306,28 @@ const filteredProyectos = computed(() => {
   padding: 2px 8px;
   border-radius: 6px;
   text-transform: uppercase;
+}
+
+.primary-button {
+  padding: 10px 15px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  background-color: #2a4ea2;
+  color: #fff;
+}
+
+.primary-button:hover {
+  background-color: #1b3570;
+}
+
+main {
+  padding: 20px; /* menos margen lateral */
+  min-height: 100vh;
+  box-sizing: border-box;
+  overflow-x: hidden; /* esto quita el scroll horizontal */
 }
 
 .status.activo { background-color: #4CAF50; }

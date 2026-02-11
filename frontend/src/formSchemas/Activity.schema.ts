@@ -29,6 +29,17 @@ export const ActivitySchema = [
           '10:00','11:00','12:00','13:00','17:00','18:00','19:00','20:00'
         ]
       },
+      {
+        key: 'monitorId',          // <-- clave en model
+        label: 'Monitor',
+        type: 'select',
+        required: true,
+        options: async () => {
+          const response = await fetch('/api/monitors');
+          const data: { id: number; nombre: string }[] = await response.json();
+          return data.map((monitor) => ({ value: monitor.id, label: monitor.nombre }));
+        }
+      }
     ],
   },
 ]

@@ -9,6 +9,7 @@ import ModalEdit from '../components/ModalEdit.vue'
 import { ActivitySchema } from '@/formSchemas/Activity.schema'
 
 const activities = ref([])
+const monitors = ref([]) // Lista de monitores
 const searchQuery = ref('')
 const showAddActivitiesModal = ref(false)
 const formError = ref('')
@@ -20,18 +21,25 @@ const editError = ref('')
 
 onMounted(async () => {
   try {
-    const response = await fetch('http://192.168.1.55:3000/activities')
-
-    const contentType = response.headers.get('content-type')
-    if (!contentType?.includes('application/json')) {
-      throw new Error('La respuesta no es JSON')
+    // Cargar actividades
+    const activitiesResponse = await fetch('http://192.168.1.55:3000/activities')
+    const activitiesContentType = activitiesResponse.headers.get('content-type')
+    if (!activitiesContentType?.includes('application/json')) {
+      throw new Error('La respuesta de actividades no es JSON')
     }
+    const activitiesData = await activitiesResponse.json()
+    activities.value = activitiesData.activities || []
 
-    const data = await response.json()
-    activities.value = data.activities || []
-    console.log(data)
+    // Cargar monitores
+    const monitorsResponse = await fetch('http://192.168.1.55:3000/api/monitors')
+    const monitorsContentType = monitorsResponse.headers.get('content-type')
+    if (!monitorsContentType?.includes('application/json')) {
+      throw new Error('La respuesta de monitores no es JSON')
+    }
+    const monitorsData = await monitorsResponse.json()
+    monitors.value = monitorsData || []
   } catch (error) {
-    console.error('Error al cargar usuarios:', error)
+    console.error('Error al cargar datos:', error)
   }
 })
 const filteredActivities = computed(() => {
@@ -43,14 +51,11 @@ const filteredActivities = computed(() => {
   )
 })
 const addActivities = () => {
-  // On click open pop up where user can add a new users. we will use a new component.
   formError.value = ''
   showAddActivitiesModal.value = true
 }
 const saveActivity = async (newActivity) => {
   try {
-    // Los selects del formulario envían `horaInicio` y `horaFin`.
-    // Asegurarse de que existan y mantenerlos tal cual para el backend.
     if (!newActivity.horaInicio || !newActivity.horaFin) {
       throw new Error('Debe seleccionar hora de inicio y fin');
     }
@@ -70,14 +75,12 @@ const saveActivity = async (newActivity) => {
         } else if (errBody?.error) {
           errMsg = errBody.error;
         }
-      } catch (e) {
-        // ignore JSON parse errors
-      }
+      } catch {}
       formError.value = errMsg;
       return;
     }
 
-    const savedActivity = await response.json(); // backend devuelve la actividad guardada con id
+    const savedActivity = await response.json();
     activities.value.push(savedActivity)
     showAddActivitiesModal.value = false;
     formError.value = '';
@@ -87,7 +90,7 @@ const saveActivity = async (newActivity) => {
   }
 }
 const editActivity = (activity) => {
-  editingActivity.value = activity
+  editingActivity.value = { ...activity }; // Crear una copia para evitar mutaciones
   showEditModal.value = true
 }
 
@@ -96,29 +99,35 @@ const saveEdit = async (payload) => {
     if (!payload.horaInicio || !payload.horaFin) {
       throw new Error('Debe seleccionar hora de inicio y fin');
     }
+
     const res = await fetch(`http://192.168.1.55:3000/activities/${payload.id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
-    })
+    });
+
     if (!res.ok) {
-      let errMsg = 'No se pudo actualizar la actividad'
+      let errMsg = 'No se pudo actualizar la actividad';
       try {
-        const errBody = await res.json()
-        if (errBody?.message) errMsg = Array.isArray(errBody.message) ? errBody.message.join(', ') : errBody.message
-        else if (errBody?.error) errMsg = errBody.error
+        const errBody = await res.json();
+        if (errBody?.message) {
+          errMsg = Array.isArray(errBody.message) ? errBody.message.join(', ') : errBody.message;
+        } else if (errBody?.error) {
+          errMsg = errBody.error;
+        }
       } catch {}
-      editError.value = errMsg
-      return
+      editError.value = errMsg;
+      return;
     }
-    const updated = await res.json()
-    const idx = activities.value.findIndex(a => a.id === updated.id)
-    if (idx !== -1) activities.value.splice(idx, 1, updated)
-    showEditModal.value = false
-    editingActivity.value = null
-    editError.value = ''
+
+    const updated = await res.json();
+    const idx = activities.value.findIndex((a) => a.id === updated.id);
+    if (idx !== -1) activities.value.splice(idx, 1, updated);
+    showEditModal.value = false;
+    editingActivity.value = null;
+    editError.value = '';
   } catch (e) {
-    editError.value = e?.message || String(e) || 'No se pudo actualizar la actividad'
+    editError.value = e?.message || String(e) || 'No se pudo actualizar la actividad';
   }
 }
 
@@ -130,19 +139,21 @@ const openDeleteModal = (activity) => {
 const confirmDelete = async () => {
   if (!activityToDelete.value) return
   try {
-    const res = await fetch(`http://192.168.1.55:3000/activities/${activityToDelete.value.id}`, { method: 'DELETE' })
-    if (!res.ok) throw new Error('No se pudo eliminar la actividad')
-    const idx = activities.value.findIndex(a => a.id === activityToDelete.value.id)
-    if (idx !== -1) activities.value.splice(idx, 1)
-    showDeleteModal.value = false
-    activityToDelete.value = null
+    const res = await fetch(`http://192.168.1.55:3000/activities/${activityToDelete.value.id}`, {
+      method: 'DELETE',
+    });
+    if (!res.ok) throw new Error('No se pudo eliminar la actividad');
+    const idx = activities.value.findIndex((a) => a.id === activityToDelete.value.id);
+    if (idx !== -1) activities.value.splice(idx, 1);
+    showDeleteModal.value = false;
+    activityToDelete.value = null;
   } catch (e) {
-    alert(e?.message || String(e))
-    showDeleteModal.value = false
-    activityToDelete.value = null
+    alert(e?.message || String(e));
+    showDeleteModal.value = false;
+    activityToDelete.value = null;
   }
 }
-const formatDate = (date) => date ? new Date(date).toLocaleDateString() : ''
+const formatDate = (date) => (date ? new Date(date).toLocaleDateString() : '')
 </script>
 
 <template>

@@ -3,12 +3,19 @@ import { ref, onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import Title from '../components/Title.vue'
 import ModalForm from '../components/ModalForm.vue'
+import ModalEdit from '../components/ModalEdit.vue'
+import ModalDelete from '../components/ModalDelete.vue'
 import { userSchema } from '@/formSchemas/user.schema'
-
+import { userEditSchema } from '@/formSchemas/userEdit.schema'
 
 const users = ref([])
 const searchQuery = ref('')
 const showAddUserModal = ref(false)
+const showEditModal = ref(false)
+const showDeleteModal = ref(false)
+const userToDelete = ref(null)
+const editError = ref('')
+const editingUsers = ref(null)
 const route = useRoute()
 
 const loadUsers = async () => {
@@ -41,7 +48,7 @@ const filteredUsers = computed(() => {
   if (!query) return users.value
 
   return users.value.filter(user =>
-    ['name', 'surname', 'dni', 'email', 'role', 'socio'].some(key => {
+    ['nombre', 'apellidos', 'dni', 'email', 'categoria', 'socio'].some(key => {
       const value = user[key]?.toString().toLowerCase()
       if (!value) return false;
 
@@ -86,6 +93,87 @@ const saveUser = async (newUser) => {
   }
 }
 
+const editUser = (user) => {
+  editingUsers.value = user
+  showEditModal.value = true
+}
+
+const saveEdit = async (payload) => {
+  try {
+    // El backend espera 'poblacion', pero el frontend usa 'localidad'.
+    // Hacemos el mapeo inverso antes de enviar.
+    const payloadForBackend = { ...payload };
+    if (payloadForBackend.localidad) {
+      payloadForBackend.poblacion = payloadForBackend.localidad;
+      delete payloadForBackend.localidad;
+    }
+    const res = await fetch(`http://192.168.1.55:3000/users/edit`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payloadForBackend)
+    })
+    if (!res.ok) {
+      let errMsg = 'No se pudo actualizar el usuario'
+      try {
+        const errBody = await res.json()
+        if (errBody?.message) errMsg = Array.isArray(errBody.message) ? errBody.message.join(', ') : errBody.message
+        else if (errBody?.error) errMsg = errBody.error
+      } catch {}
+      editError.value = errMsg
+      return
+    }
+    const updatedUser = await res.json()
+    const idx = users.value.findIndex(u => u.dni === updatedUser.dni)
+    if (idx !== -1) {
+      // El backend devuelve la entidad sin procesar. Necesitamos mapearla al modelo de la vista.
+      const userForView = {
+        nombre: updatedUser.nombre,
+        apellidos: updatedUser.apellidos,
+        dni: updatedUser.dni,
+        direccion: updatedUser.direccion,
+        CP: updatedUser.CP,
+        provincia: updatedUser.provincia,
+        localidad: updatedUser.poblacion, // Mapeo de poblacion a localidad
+        pais: updatedUser.pais,
+        email: updatedUser.email,
+        telefono: updatedUser.telefono,
+        fechadealta: updatedUser.fechadealta,
+        fechadebaja: updatedUser.fechabaja,
+        formadepago: updatedUser.formadepago,
+        cuota: Number(updatedUser.cuota) || 0,
+        categoria: updatedUser.categoria,
+        socio: updatedUser.socio
+      }
+      users.value.splice(idx, 1, userForView)
+    }
+    showEditModal.value = false
+    editingUsers.value = null
+    editError.value = ''
+  } catch (e) {
+    editError.value = e?.message || String(e) || 'No se pudo actualizar el usuario'
+  }
+}
+
+const openDeleteModal = (user) => {
+  userToDelete.value = user
+  showDeleteModal.value = true
+}
+
+const confirmDelete = async () => {
+  if (!userToDelete.value) return
+  try {
+    const res = await fetch(`http://192.168.1.55:3000/users/delete`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ dni: userToDelete.value.dni })
+    })
+  } catch (error) {
+    console.error('Error al eliminar el usuario:', error)
+  }
+  // TODO: FINISH DELETE....
+}
+
+
 const formatDate = (date) => date ? new Date(date).toLocaleDateString() : ''
 </script>
 
@@ -101,6 +189,8 @@ const formatDate = (date) => date ? new Date(date).toLocaleDateString() : ''
           <transition name="fade-scale" v-if="showAddUserModal">
             <ModalForm :schema="userSchema" @submit="saveUser" v-if="showAddUserModal" @close="showAddUserModal = false"/>
           </transition>
+          <ModalEdit :schema="userEditSchema" :initial="editingUsers" :error="editError" @submit="saveEdit" v-if="showEditModal" @close="() => { showEditModal = false; editingUsers = null; editError = '' }"/>
+          <ModalDelete :title="'Eliminar Usuario'" :message="'¿Está seguro de que desea eliminar este Usuario? Esta acción no se puede deshacer.'" :itemName="userToDelete?.name" @confirm="confirmDelete" @close="() => { showDeleteModal = false; userToDelete = null }" v-if="showDeleteModal"/>
           <input type="text" placeholder="Buscar usuario..." v-model="searchQuery"/>
         </div>
       </div>
@@ -110,9 +200,10 @@ const formatDate = (date) => date ? new Date(date).toLocaleDateString() : ''
           <div class="card-header">
             <h3>{{ user.nombre }} {{ user.apellidos }}</h3>
             <div class="action-buttons">
-              <button @click="editActivity(activity)"><span class="material-symbols-outlined edit">edit</span></button>
-              <button @click="openDeleteModal(activity)"><span class="material-symbols-outlined delete">delete</span></button>
+              <button @click="editUser(user)"><span class="material-symbols-outlined edit">edit</span></button>
+              <button @click="openDeleteModal(user)"><span class="material-symbols-outlined delete">delete</span></button>
             </div>
+
 
             <span class="role">{{ user.categoria }}</span>
           </div>

@@ -1,46 +1,85 @@
 export const projectSchema = [
   {
-    section: 'Datos del proyecto',
+    section: 'Información general del proyecto',
     fields: [
       {
-        key: 'nombre',
+        key: 'name',
         label: 'Nombre del proyecto',
         type: 'text',
         required: true
       },
       {
-        key: 'responsable',
-        label: 'Responsable',
+        key: 'description',
+        label: 'Descripción',
         type: 'text',
-        required: true
+        placeholder: 'Breve descripción del proyecto'
       },
       {
-        key: 'estado',
-        label: 'Estado',
+        key: 'status',
+        label: 'Estado del proyecto',
         type: 'select',
-        options: ['Activo', 'Pendiente', 'Finalizado'],
-        required: true
-      },
-      {
-        key: 'presupuesto',
-        label: 'Presupuesto (€)',
-        type: 'number',
-        required: true
+        required: true,
+        options: ['Activo', 'Pendiente', 'Finalizado']
       }
     ]
   },
   {
-    section: 'Fechas',
+    section: 'Responsables y organización',
     fields: [
       {
-        key: 'fechaInicio',
-        label: 'Fecha de inicio',
-        type: 'date'
+        key: 'responsible',
+        label: 'Responsable del proyecto',
+        type: 'text',
+        required: true
       },
       {
-        key: 'fechaFin',
-        label: 'Fecha de fin',
+        key: 'department',
+        label: 'Área / Departamento',
+        type: 'select',
+        options: ['Cultura', 'Educación', 'Salud', 'Inclusión Social', 'Otros']
+      }
+    ]
+  },
+  {
+    section: 'Datos económicos',
+    fields: [
+      {
+        key: 'budget',
+        label: 'Presupuesto (€)',
+        type: 'number',
+        required: true
+      },
+      {
+        key: 'fundingSource',
+        label: 'Fuente de financiación',
+        type: 'select',
+        options: ['Fondos propios', 'Subvención', 'Donaciones', 'Mixto']
+      }
+    ]
+  },
+  {
+    section: 'Fechas del proyecto',
+    fields: [
+      {
+        key: 'startDate',
+        label: 'Fecha de inicio',
+        type: 'date',
+        required: true
+      },
+      {
+        key: 'endDate',
+        label: 'Fecha de finalización',
         type: 'date'
+      }
+    ]
+  },
+  {
+    section: 'Seguimiento',
+    fields: [
+      {
+        key: 'notes',
+        label: 'Observaciones',
+        type: 'text'
       }
     ]
   }
