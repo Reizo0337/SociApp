@@ -71,6 +71,7 @@ export class UsersService {
   async removeUser(dto: RemoveUserDto) {
     try {
       const user = await this.userRepository.findOne({ where: { dni: dto.dni } });
+      console.log(user)
       if (!user) {
         throw new Error('User not found');
       }

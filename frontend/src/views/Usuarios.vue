@@ -162,6 +162,7 @@ const openDeleteModal = (user) => {
 const confirmDelete = async () => {
   if (!userToDelete.value) return
   try {
+    console.log('DNI a eliminar:', userToDelete.value.dni)
     const res = await fetch(`http://192.168.1.55:3000/users/delete`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -171,6 +172,12 @@ const confirmDelete = async () => {
     console.error('Error al eliminar el usuario:', error)
   }
   // TODO: FINISH DELETE....
+  const idx = users.value.findIndex(u => u.dni === userToDelete.value.dni)
+  if (idx !== -1) {
+    users.value.splice(idx, 1)
+  }
+  userToDelete.value = null
+  showDeleteModal.value = false
 }
 
 
