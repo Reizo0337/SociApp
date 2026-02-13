@@ -316,17 +316,20 @@ async function handleSave(data) {
 <style scoped>
 .config-app {
   min-height: 100vh;
-  color: #162683;
+  color: var(--text-primary);
   padding: 10px 60px;
+  background-color: var(--bg-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .sub-label {
-  color: #64748b;
+  color: var(--text-secondary);
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 1px;
   text-transform: uppercase;
   margin-top: 5px;
+  transition: color 0.3s ease;
 }
 
 .profile-header {
@@ -335,8 +338,15 @@ async function handleSave(data) {
   gap: 20px;
   margin-bottom: 30px;
   padding: 15px;
-  border-left: 4px solid #2563eb;
+  border-left: 4px solid var(--button-primary);
   border-radius: 0 16px 16px 0;
+  background-color: var(--bg-secondary);
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.association-name {
+  color: var(--text-primary);
+  transition: color 0.3s ease;
 }
 
 .avatar-circle {
@@ -355,7 +365,7 @@ async function handleSave(data) {
 }
 .setting-item:hover {
   transform: translateY(-3px);
-  box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+  box-shadow: 0 8px 20px var(--card-shadow-hover);
 }
 
 
@@ -409,14 +419,14 @@ async function handleSave(data) {
 .btn-back {
   background: none;
   border: none;
-  color: #2563eb;
+  color: var(--button-primary);
   font-weight: 700;
   display: flex;
   align-items: center;
   gap: 8px;
   cursor: pointer;
   padding: 5px 0;
-  transition: opacity 0.2s;
+  transition: opacity 0.2s, color 0.3s ease;
 }
 
 .btn-back:hover {
@@ -429,14 +439,44 @@ async function handleSave(data) {
   align-items: center;
   margin-bottom: 20px;
   padding-bottom: 15px;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--border-color);
+  transition: border-color 0.3s ease;
+}
+
+.view-title {
+  color: var(--text-primary);
+  transition: color 0.3s ease;
 }
 .records-list { margin-top: 30px; display: flex; flex-direction: column; gap: 10px; }
-.list-title { font-size: 16px; font-weight: 700; color: #1e293b; margin-bottom: 10px; }
-.record-card { width: 100% !important; height: auto !important; padding: 15px !important; border-radius: 12px !important; }
+.list-title { 
+  font-size: 16px; 
+  font-weight: 700; 
+  color: var(--text-primary); 
+  margin-bottom: 10px;
+  transition: color 0.3s ease;
+}
+.record-card { 
+  width: 100% !important; 
+  height: auto !important; 
+  padding: 15px !important; 
+  border-radius: 12px !important;
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  transition: all 0.3s ease;
+}
 .record-icon { font-size: 24px; margin-right: 15px; }
-.record-main { font-weight: 700; color: #1e293b; margin: 0; }
-.record-sub { font-size: 13px; color: #64748b; margin: 0; }
+.record-main { 
+  font-weight: 700; 
+  color: var(--text-primary); 
+  margin: 0;
+  transition: color 0.3s ease;
+}
+.record-sub { 
+  font-size: 13px; 
+  color: var(--text-secondary); 
+  margin: 0;
+  transition: color 0.3s ease;
+}
 .action-buttons { display: flex; gap: 10px; }
 .edit-icon { color: #2563eb; background: none; border: none; cursor: pointer; }
 .delete-icon { color: #dc2626; background: none; border: none; cursor: pointer; }
@@ -447,22 +487,27 @@ async function handleSave(data) {
 .purple { background: #faf5ff; color: #7c3aed; }
 .blue   { background: #eff6ff; color: #2563eb; }
 .red    { background: #fef2f2; color: #dc2626; }
+.label { 
+  font-size: 11px; 
+  color: var(--button-primary); 
+  font-weight: 700;
+  transition: color 0.3s ease;
+}
+.value { 
+  font-size: 13px; 
+  color: var(--text-secondary);
+  transition: color 0.3s ease;
+}
 
-.label { font-size: 16px; color: #2563eb; font-weight: 700; }
-.value { font-size: 16px; color: #64748b; }
-
-/* MODO OSCURO */
-:global(.dark) .config-app { background-color: #000000; color: #ffffff; }
-:global(.dark) .setting-item { background-color: #1a1b26; border-color: #2f334d; }
-:global(.dark) .label { color: #7aa2f7; }
-:global(.dark) .view-header { border-color: #2f334d; }
-:global(.dark) .btn-back { color: #7aa2f7; }
+/* Los estilos de modo oscuro ahora se manejan con variables CSS */
 
 .view-panel {
   padding: 20px;
   border-radius: 20px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-secondary);
   animation: fadeIn 0.3s ease-out;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 @keyframes fadeIn {

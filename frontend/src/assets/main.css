@@ -1,3 +1,47 @@
+/* Variables CSS para modo claro */
+:root {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8fafd;
+  --bg-tertiary: #f0f0f0;
+  --text-primary: #121212;
+  --text-secondary: #666666;
+  --text-tertiary: #999999;
+  --border-color: #e2e8f0;
+  --border-color-hover: #cbd5e0;
+  --card-bg: #ffffff;
+  --card-shadow: rgba(0, 0, 0, 0.08);
+  --card-shadow-hover: rgba(0, 0, 0, 0.12);
+  --input-bg: #ffffff;
+  --input-border: #ccc;
+  --button-primary: #2a4ea2;
+  --button-primary-hover: #1b3570;
+  --button-secondary: #f0f0f0;
+  --button-secondary-hover: #e0e0e0;
+  --icon-primary: #121212;
+  --stats-primary: #ffffff;
+}
+
+/* Variables CSS para modo oscuro */
+.dark {
+  --bg-primary: #121212;
+  --bg-secondary: #1e1e1e;
+  --bg-tertiary: #2c2c2c;
+  --text-primary: #e0e0e0;
+  --text-secondary: #b0b0b0;
+  --text-tertiary: #808080;
+  --border-color: #333333;
+  --border-color-hover: #444444;
+  --card-bg: #1e1e2d;
+  --card-shadow: rgba(0, 0, 0, 0.3);
+  --card-shadow-hover: rgba(0, 0, 0, 0.5);
+  --input-bg: #2c2c2c;
+  --input-border: #444444;
+  --button-primary: #3b5fcf;
+  --button-primary-hover: #2a4ea2;
+  --button-secondary: #333333;
+  --button-secondary-hover: #444444;
+}
+
 .material-symbols-outlined {
   font-variation-settings:
     'FILL' 0,
@@ -14,22 +58,20 @@
 }
 
 body {
-  background-color: #ffffff;
+  background-color: var(--bg-primary);
   margin: 0;
   padding: 0;
   font-family: 'Roboto', sans-serif;
-  color: #333;
-}
-
-.dark body {
-  background-color: #121212;
-  color: #fff;
+  color: var(--text-primary);
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease;
 }
 
 .back-button {
-  font-size: 18px;       /* Aumenta el tamaño de la letra */
-  padding: 10px 20px;    /* Más espacio dentro del botón */
-  border-radius: 8px;    /* Bordes redondeados */
+  font-size: 18px; /* Aumenta el tamaño de la letra */
+  padding: 10px 20px; /* Más espacio dentro del botón */
+  border-radius: 8px; /* Bordes redondeados */
   border: 1px solid #ccc;
   background-color: #2a4ea2;
   color: white;
@@ -42,18 +84,32 @@ body {
 }
 
 /* Global Dark Mode Inputs */
-.dark input, .dark select, .dark textarea {
-  background-color: #2c2c2c;
-  color: #e0e0e0;
-  border: 1px solid #444;
+input,
+select,
+textarea {
+  background-color: var(--input-bg);
+  color: var(--text-primary);
+  border: 1px solid var(--input-border);
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease,
+    border-color 0.3s ease;
 }
 
-.dark .title {
-  color: #fff;
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--button-primary);
 }
 
-.dark h1, .dark h2, .dark h3, .dark h4, .dark h5, .dark h6 {
-  color: #ffffff;
+.dark h1,
+.dark h2,
+.dark h3,
+.dark h4,
+.dark h5,
+.dark h6 {
+  color: var(--text-primary);
 }
 
 .showUsers-header {
@@ -64,11 +120,7 @@ body {
 
 .showUsers-header h2 {
   font-size: 22px;
-  color: #333;
-}
-
-:global(.dark) .showUsers-header h2 {
-  color: #e0e0e0;
+  color: var(--text-primary);
 }
 
 .showUsers-header input {
@@ -87,26 +139,20 @@ body {
 }
 
 .user-card {
-  background-color: #fff;
+  background-color: var(--card-bg);
   border-radius: 12px;
   padding: 20px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-  transition: transform 0.2s, box-shadow 0.2s;
-}
-
-:global(.dark) .user-card {
-  background-color: #1e1e1e;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-}
-
-.dark .title {
-  background-color: #1c1e5f;
-
+  box-shadow: 0 4px 12px var(--card-shadow);
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s,
+    background-color 0.3s ease;
+  border: 1px solid var(--border-color);
 }
 
 .user-card:hover {
   transform: translateY(-3px);
-  box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+  box-shadow: 0 8px 20px var(--card-shadow-hover);
 }
 
 .card-header {
@@ -135,7 +181,6 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-
 
   .edit {
     color: #2563eb;

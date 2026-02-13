@@ -7,7 +7,12 @@ import ModalForm from '../components/ModalForm.vue'
 import ModalDelete from '../components/ModalDelete.vue'
 import ModalEdit from '../components/ModalEdit.vue'
 import ExpandableListItem from '../components/ExpandableListItem.vue'
+import ActionButtons from '../components/ActionButtons.vue'
+import DataDisplay from '../components/DataDisplay.vue'
+import PrimaryButton from '../components/PrimaryButton.vue'
+import SearchInput from '../components/SearchInput.vue'
 import { ActivitySchema } from '@/formSchemas/Activity.schema'
+import { api } from '@/api'
 
 const activities = ref([])
 const monitors = ref([]) // Lista de monitores
@@ -24,22 +29,8 @@ const expandedActivity = ref([])
 onMounted(async () => {
   try {
     // Cargar actividades
-    const activitiesResponse = await fetch('http://localhost:3000/activities')
-    const activitiesContentType = activitiesResponse.headers.get('content-type')
-    if (!activitiesContentType?.includes('application/json')) {
-      throw new Error('La respuesta de actividades no es JSON')
-    }
-    const activitiesData = await activitiesResponse.json()
-    activities.value = activitiesData.activities || []
-
-    // Cargar monitores
-    const monitorsResponse = await fetch('http://localhost:3000/api/monitors')
-    const monitorsContentType = monitorsResponse.headers.get('content-type')
-    if (!monitorsContentType?.includes('application/json')) {
-      throw new Error('La respuesta de monitores no es JSON')
-    }
-    const monitorsData = await monitorsResponse.json()
-    monitors.value = monitorsData || []
+    const response = await api.get('/activities')
+    activities.value = response.data.activities || []
   } catch (error) {
     console.error('Error al cargar datos:', error)
   }
@@ -71,33 +62,15 @@ const saveActivity = async (newActivity) => {
       throw new Error('Debe seleccionar hora de inicio y fin');
     }
 
-    const response = await fetch('http://localhost:3000/activities', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(newActivity)
-    });
-
-    if (!response.ok) {
-      let errMsg = 'No se pudo guardar la actividad';
-      try {
-        const errBody = await response.json();
-        if (errBody?.message) {
-          errMsg = Array.isArray(errBody.message) ? errBody.message.join(', ') : errBody.message;
-        } else if (errBody?.error) {
-          errMsg = errBody.error;
-        }
-      } catch {}
-      formError.value = errMsg;
-      return;
-    }
-
-    const savedActivity = await response.json();
+    const response = await api.post('/activities', newActivity);
+    const savedActivity = response.data;
     activities.value.push(savedActivity)
     showAddActivitiesModal.value = false;
     formError.value = '';
   } catch (error) {
     console.error(error);
-    formError.value = error?.message || String(error) || 'No se pudo guardar la actividad';
+    const errMsg = error.response?.data?.message || error.response?.data?.error || error?.message || 'No se pudo guardar la actividad';
+    formError.value = Array.isArray(errMsg) ? errMsg.join(', ') : errMsg;
   }
 }
 const editActivity = (activity) => {
@@ -111,34 +84,16 @@ const saveEdit = async (payload) => {
       throw new Error('Debe seleccionar hora de inicio y fin');
     }
 
-    const res = await fetch(`http://localhost:3000/activities/${payload.id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-
-    if (!res.ok) {
-      let errMsg = 'No se pudo actualizar la actividad';
-      try {
-        const errBody = await res.json();
-        if (errBody?.message) {
-          errMsg = Array.isArray(errBody.message) ? errBody.message.join(', ') : errBody.message;
-        } else if (errBody?.error) {
-          errMsg = errBody.error;
-        }
-      } catch {}
-      editError.value = errMsg;
-      return;
-    }
-
-    const updated = await res.json();
+    const res = await api.put(`/activities/${payload.id}`, payload);
+    const updated = res.data;
     const idx = activities.value.findIndex((a) => a.id === updated.id);
     if (idx !== -1) activities.value.splice(idx, 1, updated);
     showEditModal.value = false;
     editingActivity.value = null;
     editError.value = '';
   } catch (e) {
-    editError.value = e?.message || String(e) || 'No se pudo actualizar la actividad';
+    const errMsg = e.response?.data?.message || e.response?.data?.error || e?.message || String(e) || 'No se pudo actualizar la actividad';
+    editError.value = Array.isArray(errMsg) ? errMsg.join(', ') : errMsg;
   }
 }
 
@@ -150,16 +105,14 @@ const openDeleteModal = (activity) => {
 const confirmDelete = async () => {
   if (!activityToDelete.value) return
   try {
-    const res = await fetch(`http://localhost:3000/activities/${activityToDelete.value.id}`, {
-      method: 'DELETE',
-    });
-    if (!res.ok) throw new Error('No se pudo eliminar la actividad');
+    await api.delete(`/activities/${activityToDelete.value.id}`);
     const idx = activities.value.findIndex((a) => a.id === activityToDelete.value.id);
     if (idx !== -1) activities.value.splice(idx, 1);
     showDeleteModal.value = false;
     activityToDelete.value = null;
   } catch (e) {
-    alert(e?.message || String(e));
+    const errMsg = e.response?.data?.message || e?.message || String(e) || 'No se pudo eliminar la actividad';
+    alert(errMsg);
     showDeleteModal.value = false;
     activityToDelete.value = null;
   }
@@ -181,11 +134,11 @@ const formatDate = (date) => (date ? new Date(date).toLocaleDateString() : '')
       <div class="showUsers-header">
         <h2>Lista de Actividades</h2>
         <div class="options">
-          <button @click="addActivities">Agregar Actividad</button>
+          <PrimaryButton @click="addActivities">Agregar Actividad</PrimaryButton>
           <ModalForm :schema="ActivitySchema" :error="formError" @submit="saveActivity" v-if="showAddActivitiesModal" @close="() => { showAddActivitiesModal = false; formError = '' }"/>
           <ModalEdit :schema="ActivitySchema" :initial="editingActivity" :error="editError" @submit="saveEdit" v-if="showEditModal" @close="() => { showEditModal = false; editingActivity = null; editError = '' }"/>
           <ModalDelete :title="'Eliminar Actividad'" :message="'¿Está seguro de que desea eliminar esta actividad? Esta acción no se puede deshacer.'" :itemName="activityToDelete?.name" @confirm="confirmDelete" @close="() => { showDeleteModal = false; activityToDelete = null }" v-if="showDeleteModal"/>
-          <input type="text" placeholder="Buscando por actividad... " v-model="searchQuery"/>
+          <SearchInput placeholder="Buscando por actividad..." v-model="searchQuery"/>
         </div>
       </div>
 
@@ -201,15 +154,20 @@ const formatDate = (date) => (date ? new Date(date).toLocaleDateString() : '')
           </template>
           <template #details>
             <div class="card-body between">
-              <div class="data">
-                <p><strong>Lugar de la actividad:</strong> {{ activity.place }}</p>
-                <p><strong>Hora de inicio:</strong> {{ activity.horaInicio }} <strong> Hora de fin: </strong> {{activity.horaFin}} </p>
-                <p><strong>Monitor:</strong> {{ activity.monitor }} </p>
-              </div>
-              <div class="action-buttons">
-                <button @click.stop="editActivity(activity)"><span class="material-symbols-outlined edit">edit</span></button>
-                <button @click.stop="openDeleteModal(activity)"><span class="material-symbols-outlined delete">delete</span></button>
-              </div>
+              <DataDisplay
+                :items="[
+                  { label: 'Lugar de la actividad', value: activity.place },
+                  { label: 'Hora de inicio', value: activity.horaInicio },
+                  { label: 'Hora de fin', value: activity.horaFin },
+                  { label: 'Monitor', value: activity.monitor }
+                ]"
+              />
+              <ActionButtons
+                showEdit
+                showDelete
+                @edit="editActivity(activity)"
+                @delete="openDeleteModal(activity)"
+              />
             </div>
           </template>
         </ExpandableListItem>
@@ -222,6 +180,8 @@ const formatDate = (date) => (date ? new Date(date).toLocaleDateString() : '')
 main {
   padding: 20px 40px;
   min-height: 100vh;
+  background-color: var(--bg-primary);
+  transition: background-color 0.3s ease;
 }
 
 .activities-list {
@@ -234,40 +194,13 @@ main {
 .activity-name {
   font-weight: 600;
   font-size: 1.1rem;
-  color: #333;
+  color: var(--text-primary);
+  transition: color 0.3s ease;
 }
 
 .between {
   display: flex;
   justify-content: space-between;
-}
-
-.action-buttons {
-  display: flex;
-  justify-content: start;
-  align-items: start;
-}
-
-.action-buttons button {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 5px;
-}
-
-:global(.dark) .activity-name {
-  color: #f8fafc;
-}
-
-:global(.dark) .card-body strong {
-  color: #60a5fa;
-}
-
-:global(.dark) .card-body p {
-  color: #94a3b8;
-}
-
-:global(.dark) .action-buttons button span {
-  color: #94a3b8;
+  gap: 20px;
 }
 </style>

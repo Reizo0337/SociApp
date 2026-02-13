@@ -6,6 +6,11 @@ import { projectSchema } from '@/formSchemas/project.schema'
 import Title from '../components/Title.vue'
 import ModalEdit from '../components/ModalEdit.vue'
 import ModalDelete from '../components/ModalDelete.vue'
+import ActionButtons from '../components/ActionButtons.vue'
+import DataDisplay from '../components/DataDisplay.vue'
+import PrimaryButton from '../components/PrimaryButton.vue'
+import SearchInput from '../components/SearchInput.vue'
+import { api } from '@/api'
 
 // --- INTERFAZ DEL PROYECTO ---
 interface Proyecto {
@@ -80,12 +85,8 @@ const editProject = (proyecto: Proyecto) => {
 }
 const saveEdit = async (updatedProject: Proyecto) => {
   try {
-    const res = await fetch(`http://localhost:3000/projects/${updatedProject.id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(updatedProject)
-    })
-    const updated: Proyecto = await res.json()
+    const res = await api.put(`/projects/${updatedProject.id}`, updatedProject)
+    const updated: Proyecto = res.data
     const idx = proyectos.value.findIndex(p => p.id === updated.id)
     if (idx !== -1) proyectos.value.splice(idx, 1, updated)
 
@@ -93,7 +94,8 @@ const saveEdit = async (updatedProject: Proyecto) => {
     editingProject.value = null
     editError.value = ''
   } catch (e: unknown) {
-    editError.value = (e as Error).message || 'No se pudo actualizar el proyecto'
+    const errMsg = (e as any)?.response?.data?.message || (e as any)?.response?.data?.error || (e as Error).message || 'No se pudo actualizar el proyecto'
+    editError.value = Array.isArray(errMsg) ? errMsg.join(', ') : errMsg
   }
 }
 
@@ -108,13 +110,15 @@ const confirmDelete = async () => {
 
   try {
     // Borramos del backend
-    await fetch(`http://localhost:3000/projects/${projectToDelete.value.id}`, { method: 'DELETE' })
+    await api.delete(`/projects/${projectToDelete.value.id}`)
 
     // Borramos del frontend
     proyectos.value = proyectos.value.filter(p => p.id !== projectToDelete.value!.id)
 
   } catch (e) {
     console.error('No se pudo borrar el proyecto', e)
+    const errMsg = (e as any)?.response?.data?.message || (e as any)?.message || 'No se pudo eliminar el proyecto'
+    alert(errMsg)
   } finally {
     // Cerramos modal y reseteamos valor
     showDeleteProjectModal.value = false
@@ -160,12 +164,10 @@ const confirmDelete = async () => {
     <!-- Buscador y boton -->
 
     <div class ="projects-header">
-      <input type="text" placeholder="buscar proyecto..." v-model="searchQuery"/>
-      <button
-      class="primary-button"
-      @click="showAddProjectModal = true">
-      Agregar Proyecto
-      </button>
+      <SearchInput placeholder="buscar proyecto..." v-model="searchQuery"/>
+      <PrimaryButton @click="showAddProjectModal = true">
+        Agregar Proyecto
+      </PrimaryButton>
     <ModalForm
        v-if="showAddProjectModal"
       :schema="projectSchema"
@@ -182,24 +184,22 @@ const confirmDelete = async () => {
       <h3>{{ proyecto.nombre }}</h3>
 
       <!-- BOTONES -->
-      <div class="action-buttons">
-        <button @click="editProject(proyecto)">
-          <span class="material-symbols-outlined edit">edit</span>
-        </button>
-        <button @click="deleteProject(proyecto.id)">
-          <span class="material-symbols-outlined delete">delete</span>
-        </button>
-      </div>
+      <ActionButtons
+        @edit="editProject(proyecto)"
+        @delete="deleteProject(proyecto.id)"
+      />
 
       <span class="status" :class="proyecto.estado.toLowerCase()">{{ proyecto.estado }}</span>
     </div>
 
-    <div class="card-body">
-      <p><strong>Responsable:</strong> {{ proyecto.responsable }}</p>
-      <p><strong>Presupuesto:</strong> {{ proyecto.presupuesto }} €</p>
-      <p><strong>Subproyectos:</strong> {{ proyecto.subproyectos?.length || 0 }}</p>
-      <p><strong>Actividades:</strong> {{ proyecto.actividades?.length || 0 }}</p>
-    </div>
+    <DataDisplay
+      :items="[
+        { label: 'Responsable', value: proyecto.responsable },
+        { label: 'Presupuesto', value: `${proyecto.presupuesto} €` },
+        { label: 'Subproyectos', value: proyecto.subproyectos?.length || 0 },
+        { label: 'Actividades', value: proyecto.actividades?.length || 0 }
+      ]"
+    />
   </div>
 </div>
   </main>
@@ -242,21 +242,7 @@ const confirmDelete = async () => {
   gap: 10px;
 }
 
-.projects-header input {
-  padding: 10px 15px;
-  border-radius: 8px;
-  border: 1px solid #ccc; /* un gris neutro */
-  background-color: #fff;   /* fondo blanco */
-  color: #111;              /* texto oscuro */
-  font-size: 14px;
-  cursor: text;             /* mejor que pointer en input */
-  transition: background-color 0.2s, border-color 0.2s;
-}
-
-.projects-header input:focus {
-  border-color: #2a4ea2;   /* azul cuando está activo */
-  outline: none;
-}
+/* SearchInput component ahora maneja estos estilos */
 
 .projects-grid {
  display: grid;
@@ -265,21 +251,17 @@ const confirmDelete = async () => {
 }
 
 .project-card{
- background-color: #fff;
+ background-color: var(--card-bg);
  border-radius: 12px;
  padding: 20px;
- box-shadow: 0 4px 12px rgba(0,0,0,0.08);
- transition: transform 0.2s, box-shadow 0.2s;
-}
-
-:global(.dark) .project-card {
-  background-color: #1e1e1e;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+ box-shadow: 0 4px 12px var(--card-shadow);
+ transition: transform 0.2s, box-shadow 0.2s, background-color 0.3s ease;
+ border: 1px solid var(--border-color);
 }
 
 .project-card:hover {
   transform: translateY(-3px);
-  box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+  box-shadow: 0 8px 20px var(--card-shadow-hover);
 }
 
 .card-header{
@@ -292,11 +274,8 @@ const confirmDelete = async () => {
 .card-header h3{
   margin: 0;
   font-size: 18px;
-  color: #2a4ea2;
-}
-
-:global(.dark) .card-header h3 {
-  color: #63c2de;
+  color: var(--button-primary);
+  transition: color 0.3s ease;
 }
 
 .status{
@@ -308,27 +287,23 @@ const confirmDelete = async () => {
   text-transform: uppercase;
 }
 
-.primary-button {
-  padding: 10px 15px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-  font-size: 14px;
-  cursor: pointer;
-  transition: background-color 0.2s;
-  background-color: #2a4ea2;
-  color: #fff;
-}
-
-.primary-button:hover {
-  background-color: #1b3570;
-}
+/* PrimaryButton component ahora maneja estos estilos */
 
 main {
-  padding: 20px; /* menos margen lateral */
+  padding: 20px;
   min-height: 100vh;
   box-sizing: border-box;
-  overflow-x: hidden; /* esto quita el scroll horizontal */
+  overflow-x: hidden;
+  background-color: var(--bg-primary);
+  transition: background-color 0.3s ease;
 }
+
+main h2 {
+  color: var(--text-primary);
+  transition: color 0.3s ease;
+}
+
+/* DataDisplay component ahora maneja estos estilos */
 
 .status.activo { background-color: #4CAF50; }
 .status.pendiente { background-color: #FF9800; }

@@ -1,20 +1,23 @@
+// src/users/dto/register.dto.ts
 import {
   IsString,
   IsEmail,
-  IsOptional,
-  IsBoolean,
-  IsDateString,
   IsNumber,
+  IsDateString,
   IsEnum,
+  IsOptional,
 } from 'class-validator';
 import { Type, Transform } from 'class-transformer';
 
-export class CreateUserDto {
+export class RegisterDto {
   @IsString()
   nombre: string;
 
   @IsString()
   apellidos: string;
+
+  @IsString()
+  password: string;
 
   @IsString()
   dni: string;
@@ -41,11 +44,11 @@ export class CreateUserDto {
   telefono: string;
 
   @IsDateString()
-  fechaalta: string;
+  fechaalta: Date;
 
   @IsOptional()
   @IsDateString()
-  fechabaja?: string;
+  fechabaja?: Date;
 
   @IsString()
   formadepago: string;
@@ -59,9 +62,9 @@ export class CreateUserDto {
 
   @IsEnum(['Socio', 'NoSocio'])
   @Transform(({ value }) => {
-    if (value === 0) return 'NoSocio';  // si frontend envía 0
-    if (value === 1) return 'Socio';    // si frontend envía 1
-    return value;                        // si ya es 'Socio'/'NoSocio'
+    if (value === 0) return 'NoSocio';
+    if (value === 1) return 'Socio';
+    return value;
   })
   socio: 'Socio' | 'NoSocio';
 }

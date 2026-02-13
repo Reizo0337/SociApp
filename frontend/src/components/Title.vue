@@ -19,19 +19,23 @@ const props = defineProps<{
   width: 100%;
   padding: 15px 20px;
   border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  box-shadow: 0 4px 12px var(--card-shadow);
   margin-bottom: 30px;
   justify-content: center;
-
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  transition: all 0.3s ease;
 }
 .title h1 {
   margin-left: 10px;
   font-size: 28px;
-  color: #0d5ba9;
+  color: var(--button-primary);
+  transition: color 0.3s ease;
 }
 
 .title span {
   font-size: 40px;
-  color: #2a4ea2;
+  color: var(--button-primary);
+  transition: color 0.3s ease;
 }
 </style>

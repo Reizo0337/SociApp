@@ -2,9 +2,9 @@ import { Injectable, Logger } from '@nestjs/common';
 import { DataSource, Repository } from 'typeorm';
 import { Usuarios as User } from './user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { CreateUserDto } from './create-user.dto';
-import { EditUserDto } from './edit-user.dto';
-import { RemoveUserDto } from './remove-user.dto';
+import { CreateUserDto } from './dto/create-user.dto';
+import { EditUserDto } from './dto/edit-user.dto';
+import { RemoveUserDto } from './dto/remove-user.dto';
 
 @Injectable()
 export class UsersService {
@@ -22,6 +22,7 @@ export class UsersService {
       const sortedUsers = users
         .sort((a, b) => a.nombre.localeCompare(b.nombre))
         .map(user => ({
+          id: user.IdUsuario,
           nombre: user.nombre,
           apellidos: user.apellidos,
           dni: user.dni,
@@ -47,6 +48,27 @@ export class UsersService {
       throw error;
     }
   }
+
+  // auth part
+  async findByEmail(email: string): Promise<User | null> {
+    return this.userRepository.findOne({
+      where: { email },
+    });
+  }
+
+  async findById(id: number): Promise<User | null> {
+    return this.userRepository.findOne({
+      where: { IdUsuario: id },
+    });
+  }
+
+  async create(data: Partial<User>): Promise<User> {
+    const user = this.userRepository.create(data);
+    return this.userRepository.save(user);
+  }
+
+
+  // auth part
 
 
   async createUser(dto: CreateUserDto) {
@@ -76,7 +98,7 @@ export class UsersService {
   async removeUser(dto: RemoveUserDto) {
     try {
       const user = await this.userRepository.findOne({ where: { dni: dto.dni } });
-      console.log(user)
+      // ⚠️ SEGURIDAD: No hacer console.log de objetos con datos sensibles
       if (!user) {
         throw new Error('User not found');
       }

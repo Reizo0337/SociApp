@@ -12,6 +12,9 @@ export class Usuarios {
   apellidos: string;
 
   @Column()
+  password: string;
+
+  @Column()
   dni: string;
 
   @Column()
