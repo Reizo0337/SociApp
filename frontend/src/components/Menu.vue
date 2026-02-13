@@ -113,7 +113,14 @@ const handleMouseLeave = () => {
 .sidebar .header .menu-toggle {
   transition: background 0.2s ease;
   cursor: pointer;
-  margin-left:8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 10px;
+}
+
+.menu-toggle span {
+  margin-left: 3px;
 }
 
 .close {
@@ -204,6 +211,9 @@ const handleMouseLeave = () => {
   margin-right: 50px;
 }
 
+.sidebar-nav {
+}
+
 .sidebar-nav ul {
   list-style: none;
   padding: 0;
@@ -248,7 +258,7 @@ const handleMouseLeave = () => {
   min-width: 30px;
   display: flex;
   justify-content: center;
-  margin-right: 15px;
-  margin-left: 10px;
+  align-items: center;
+  margin-right: 10px;
 }
 </style>
