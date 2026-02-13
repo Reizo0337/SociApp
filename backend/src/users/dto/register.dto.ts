@@ -44,11 +44,11 @@ export class RegisterDto {
   telefono: string;
 
   @IsDateString()
-  fechaalta: Date;
+  fechaalta: string;
 
   @IsOptional()
   @IsDateString()
-  fechabaja?: Date;
+  fechabaja?: string;
 
   @IsString()
   formadepago: string;

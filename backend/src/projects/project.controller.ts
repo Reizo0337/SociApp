@@ -1,14 +1,16 @@
 import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards } from '@nestjs/common';
-import { ProjectService, Proyecto } from './project.service';
+import { ProjectService } from './project.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
+import { CreateProjectDto } from './dto/create-project.dto';
+import { UpdateProjectDto } from './dto/update-project.dto';
 
 // ⚠️ SEGURIDAD: Todos los endpoints protegidos - solo administradores pueden acceder
 @Controller('projects')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class ProjectController {
-  constructor(private readonly projectService: ProjectService) {}
+  constructor(private readonly projectService: ProjectService) { }
 
   @Get()
   @Roles('monitor', 'admin')
@@ -18,14 +20,14 @@ export class ProjectController {
 
   @Post()
   @Roles('monitor', 'admin')
-  create(@Body() proyecto: any) {
-    return this.projectService.createProject(proyecto);
+  create(@Body() createProjectDto: CreateProjectDto) {
+    return this.projectService.createProject(createProjectDto);
   }
 
   @Put(':id')
   @Roles('monitor', 'admin')
-  update(@Param('id') id: string, @Body() data: Partial<Proyecto>) {
-    return this.projectService.updateProject(Number(id), data);
+  update(@Param('id') id: string, @Body() updateProjectDto: UpdateProjectDto) {
+    return this.projectService.updateProject(Number(id), updateProjectDto);
   }
 
   @Delete(':id')

@@ -5,6 +5,7 @@ import { AppService } from './app.service';
 import { StatsModule } from './stats/stats.module';
 import { UsersModule } from './users/users.module';
 import { ActivitiesModule } from './activities/activities.module';
+import { ProjectModule } from './projects/project.module';
 import { AuthModule } from './auth/auth.module';
 
 import { ConfigModule, ConfigService } from '@nestjs/config';
@@ -42,12 +43,13 @@ import { ThrottlerModule } from '@nestjs/throttler';
     StatsModule,
     UsersModule,
     ActivitiesModule,
+    ProjectModule,
     AuthModule,
 
     // Otros módulos
-    
+
   ],
   controllers: [AppController],
-  providers: [AppService], 
+  providers: [AppService],
 })
-export class AppModule {}
+export class AppModule { }

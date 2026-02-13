@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import StatisticsCard from '@/components/StatisticsCard.vue'
 import ModalForm from '@/components/ModalForm.vue'
 import { projectSchema } from '@/formSchemas/project.schema'
@@ -10,85 +10,103 @@ import ActionButtons from '../components/ActionButtons.vue'
 import DataDisplay from '../components/DataDisplay.vue'
 import PrimaryButton from '../components/PrimaryButton.vue'
 import SearchInput from '../components/SearchInput.vue'
-import { api } from '@/api'
+import ExpandableListItem from '../components/ExpandableListItem.vue'
+import { useRoute } from 'vue-router'
+import { useProjectStore } from '@/stores/projects'
+
+const projectStore = useProjectStore()
+const route = useRoute()
 
 // --- INTERFAZ DEL PROYECTO ---
 interface Proyecto {
-  id: number
+  idProyecto: number
   nombre: string
-  responsable: string
+  responsable?: {
+    IdUsuario: number
+    nombre: string
+    apellidos?: string
+  }
+  responsableId?: number
   estado: string
   presupuesto: number
-  subproyectos: string[]
-  actividades: string[]
+  departamento?: string
+  fuenteFinanciacion?: string
+  startDate: string
+  endDate?: string
+  descripcion?: string
+  notas?: string
+  subproyectos?: string[]
+  actividades?: string[]
 }
 
-// variables
-const totalProyectos = 8
-const proyectosActivos = 5
-const proyectosPendientes = 3
-const showAddProjectModal = ref(false)
+// Variables reactivas
+const projects = computed(() => projectStore.projects)
+const selectedProject = ref<Proyecto | null>(null)
+const searchQuery = ref('')
+const currentPage = ref(1)
+const itemsPerPage = 10
 
-// Para los modales de editar y borrar
-const editingProject = ref<Proyecto | null>(null)
+const showAddProjectModal = ref(false)
 const showEditProjectModal = ref(false)
+const showDeleteProjectModal = ref(false)
+const editingProject = ref<Proyecto | null>(null)
+const projectToDelete = ref<Proyecto | null>(null)
 const editError = ref('')
 
-const projectToDelete = ref<Proyecto | null>(null)
-const showDeleteProjectModal = ref(false)
+// Computed properties
+const totalProyectos = computed(() => projects.value.length)
+const proyectosActivos = computed(() => projects.value.filter(p => p.estado === 'Activo').length)
+const proyectosPendientes = computed(() => projects.value.filter(p => p.estado === 'Pendiente').length)
 
-//lista de proyectos
-const proyectos = ref([
-  {
-    id: 1,
-    nombre: "Cultura",
-    responsable: "Ana Pérez",
-    estado: "Activo",
-    presupuesto: 5000,
-    subproyectos: ["Promoción de salud"],
-    actividades: ["Yoga", "Dibujo"]
-  },
-  {
-    id: 2,
-    nombre: "Concursos",
-    responsable: "Juan Ruiz",
-    estado: "Pendiente",
-    presupuesto: 2000,
-    subproyectos: [],
-    actividades: []
-  },
-  {
-    id: 3,
-    nombre: "Prevención de adicciones",
-    responsable: "María Gómez",
-    estado: "Activo",
-    presupuesto: 4000,
-    subproyectos: ["Atención a jóvenes"],
-    actividades: ["Charla informativa"]
-  }
-])
-
-//busqueda
-const searchQuery = ref('')
 const filteredProyectos = computed(() => {
-  if (!searchQuery.value) return proyectos.value
-  return proyectos.value.filter(p =>
+  if (!searchQuery.value) return projects.value
+  const query = searchQuery.value.toLowerCase().trim()
+  return projects.value.filter(p =>
     Object.values(p).some(val =>
-      String(val).toLowerCase().includes(searchQuery.value.toLowerCase())
+      String(val).toLowerCase().includes(query)
     )
   )
 })
 
+const paginatedProyectos = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage
+  const end = start + itemsPerPage
+  return filteredProyectos.value.slice(start, end)
+})
+
+const totalPages = computed(() => Math.ceil(filteredProyectos.value.length / itemsPerPage))
+
+const showingRange = computed(() => {
+  if (filteredProyectos.value.length === 0) return '0 - 0'
+  const start = (currentPage.value - 1) * itemsPerPage + 1
+  const end = Math.min(start + itemsPerPage - 1, filteredProyectos.value.length)
+  return `${start} - ${end}`
+})
+
+// Metodos
+const fetchProjects = async () => {
+  await projectStore.fetchProjects()
+}
+
+const createProject = async (newProject: any) => {
+  try {
+    await projectStore.addProject(newProject)
+    showAddProjectModal.value = false
+  } catch (error: any) {
+    console.error('Error creating project:', error)
+    alert(error?.response?.data?.message || 'Error al crear proyecto')
+  }
+}
+
 const editProject = (proyecto: Proyecto) => {
-  editingProject.value = { ...proyecto } // TS ya sabe que editingProject es Proyecto | null
+  editingProject.value = { ...proyecto }
   showEditProjectModal.value = true
 }
+
 const saveEdit = async (updatedProject: Proyecto) => {
   try {
-    const res = await api.put(`/projects/${updatedProject.id}`, updatedProject)
-    const updated: Proyecto = res.data
-    const idx = proyectos.value.findIndex(p => p.id === updated.id)
-    if (idx !== -1) proyectos.value.splice(idx, 1, updated)
+    const idToUpdate = updatedProject.idProyecto
+    await projectStore.updateProject(idToUpdate, updatedProject)
 
     showEditProjectModal.value = false
     editingProject.value = null
@@ -99,212 +117,757 @@ const saveEdit = async (updatedProject: Proyecto) => {
   }
 }
 
-const deleteProject = (id: number) => {
-  // Buscamos el proyecto; si no existe, asignamos null
-  projectToDelete.value = proyectos.value.find(p => p.id === id) || null
+const deleteProjectBtn = (id: number) => {
+  projectToDelete.value = projects.value.find(p => p.idProyecto === id) || null
   showDeleteProjectModal.value = true
 }
 
 const confirmDelete = async () => {
   if (!projectToDelete.value) return
-
+  const idToDelete = projectToDelete.value.idProyecto
   try {
-    // Borramos del backend
-    await api.delete(`/projects/${projectToDelete.value.id}`)
-
-    // Borramos del frontend
-    proyectos.value = proyectos.value.filter(p => p.id !== projectToDelete.value!.id)
-
+    await projectStore.removeProject(idToDelete)
   } catch (e) {
     console.error('No se pudo borrar el proyecto', e)
     const errMsg = (e as any)?.response?.data?.message || (e as any)?.message || 'No se pudo eliminar el proyecto'
     alert(errMsg)
   } finally {
-    // Cerramos modal y reseteamos valor
     showDeleteProjectModal.value = false
     projectToDelete.value = null
   }
 }
 
+const openProjectDetails = (project: Proyecto) => {
+  selectedProject.value = project
+}
+
+const closeProjectDetails = () => {
+  selectedProject.value = null
+}
+
+const nextPage = () => {
+  if (currentPage.value < totalPages.value) currentPage.value++
+}
+
+const prevPage = () => {
+  if (currentPage.value > 1) currentPage.value--
+}
+
+// Watchers
+watch(searchQuery, () => {
+  currentPage.value = 1
+})
+
+onMounted(() => {
+  if (route.query.search) {
+    searchQuery.value = route.query.search as string
+  }
+  fetchProjects()
+})
 </script>
+
 <template>
   <main>
     <Title title="Proyectos" icon="Folder" />
 
-    <h2>Estadisticas del proyecto</h2>
-    <div class="statistics-container">
-      <StatisticsCard
-        type="project"
-        title="Total de Proyectos"
-        :data="totalProyectos"
-        icon="folder"
-        color="#4CAF50"
-        href="/proyectos"
-      />
+    <div v-if="!selectedProject">
+      <div class="projects-header">
+        <div class="options">
+          <div class="pagination-controls" v-if="filteredProyectos.length > 0">
+            <span>{{ showingRange }} de {{ filteredProyectos.length }}</span>
+            <button @click="prevPage" :disabled="currentPage === 1" class="page-btn">
+              <span class="material-symbols-outlined">chevron_left</span>
+            </button>
+            <button @click="nextPage" :disabled="currentPage === totalPages" class="page-btn">
+              <span class="material-symbols-outlined">chevron_right</span>
+            </button>
+          </div>
+          <PrimaryButton @click="showAddProjectModal = true">
+            Agregar Proyecto
+          </PrimaryButton>
+        </div>
+        <SearchInput placeholder="Buscar proyecto..." v-model="searchQuery"/>
+      </div>
 
-      <StatisticsCard
-        type="project"
-        title="Proyectos Activos"
-        :data="proyectosActivos"
-        icon="play_circle"
-        color="#2196F3"
-        href="/proyectos/activos"
-      />
+      <div class="projects-list">
+        <ExpandableListItem
+          v-for="proyecto in paginatedProyectos"
+          :key="proyecto.idProyecto"
+          :expanded="false"
+          :show-arrow="false"
+          @toggle="openProjectDetails(proyecto)"
+        >
+          <template #summary-left>
+            <div class="project-info">
+              <span class="project-name">{{ proyecto.nombre }}</span>
+              <span class="project-responsable">{{ proyecto.responsable?.nombre || 'Sin asignar' }}</span>
+            </div>
+          </template>
+          <template #summary-right>
+            <div class="project-actions">
+              <span class="status-badge" :class="proyecto.estado.toLowerCase()">{{ proyecto.estado }}</span>
+              <ActionButtons
+                showEdit
+                showDelete
+                @edit="editProject(proyecto)"
+                @delete="deleteProjectBtn(proyecto.idProyecto)"
+              />
+              <span class="material-symbols-outlined arrow">chevron_right</span>
+            </div>
+          </template>
+        </ExpandableListItem>
+      </div>
 
-      <StatisticsCard
-        type="project"
-        title="Proyectos Pendientes"
-        :data="proyectosPendientes"
-        icon="hourglass_empty"
-        color="#FF9800"
-        href="/proyectos/pendientes"
+      <ModalForm
+        v-if="showAddProjectModal"
+        :schema="projectSchema"
+        @close="() => (showAddProjectModal = false)"
+        @submit="createProject"
       />
     </div>
 
-    <!-- Buscador y boton -->
+    <!-- PÁGINA VIRTUAL: DETALLES -->
+    <div v-else class="project-detail-view">
+      <div class="detail-header">
+        <button class="back-btn" @click="closeProjectDetails">
+          <span class="material-symbols-outlined">arrow_back</span>
+          Volver a la lista
+        </button>
+        <div class="header-actions">
+           <ActionButtons
+              showEdit
+              showDelete
+              @edit="editProject(selectedProject!); closeProjectDetails()"
+              @delete="deleteProjectBtn(selectedProject!.idProyecto); closeProjectDetails()"
+            />
+        </div>
+      </div>
 
-    <div class ="projects-header">
-      <SearchInput placeholder="buscar proyecto..." v-model="searchQuery"/>
-      <PrimaryButton @click="showAddProjectModal = true">
-        Agregar Proyecto
-      </PrimaryButton>
-    <ModalForm
-       v-if="showAddProjectModal"
+      <div class="detail-content card">
+        <div class="detail-title-section">
+          <div class="title-with-icon">
+            <span class="material-symbols-outlined project-hero-icon">folder_open</span>
+            <div class="title-text-group">
+              <h1>{{ selectedProject.nombre }}</h1>
+              <p class="project-subtitle">{{ selectedProject.departamento || 'Sin departamento' }}</p>
+            </div>
+          </div>
+          <span class="status-badge large" :class="selectedProject.estado.toLowerCase()">{{ selectedProject.estado }}</span>
+        </div>
+
+        <div class="detail-metrics">
+          <div class="metric-card budget">
+            <span class="material-symbols-outlined">payments</span>
+            <div class="metric-info">
+              <span class="metric-label">Presupuesto Total</span>
+              <span class="metric-value">{{ selectedProject.presupuesto }} €</span>
+            </div>
+          </div>
+          <div class="metric-card timeline">
+            <span class="material-symbols-outlined">calendar_today</span>
+            <div class="metric-info">
+              <span class="metric-label">Fecha de Inicio</span>
+              <span class="metric-value">{{ selectedProject.startDate }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="detail-grid">
+          <div class="info-section box-item">
+            <h3>
+              <span class="material-symbols-outlined">person</span>
+              Responsable
+            </h3>
+            <div class="detail-item">
+              <p class="detail-value primary">{{ selectedProject.responsable?.nombre || 'Sin asignar' }}</p>
+              <p class="detail-sub">{{ selectedProject.responsable?.apellidos || '' }}</p>
+            </div>
+          </div>
+
+          <div class="info-section box-item">
+            <h3>
+              <span class="material-symbols-outlined">source</span>
+              Financiación
+            </h3>
+            <DataDisplay
+              :items="[
+                { label: 'Fuente', value: selectedProject.fuenteFinanciacion || 'No especificada' }
+              ]"
+            />
+          </div>
+
+          <div class="info-section full-width box-item highlight-block">
+            <h3>
+              <span class="material-symbols-outlined">description</span>
+              Descripción del Proyecto
+            </h3>
+            <p class="description-text">{{ selectedProject.descripcion || 'Sin descripción' }}</p>
+          </div>
+
+          <div class="info-section box-item">
+             <h3>
+               <span class="material-symbols-outlined">event_note</span>
+               Seguimiento y Notas
+             </h3>
+             <p class="notes-text">{{ selectedProject.notas || 'Sin notas' }}</p>
+          </div>
+
+          <div class="info-section box-item">
+            <h3>
+              <span class="material-symbols-outlined">analytics</span>
+              Capacidad y Vínculos
+            </h3>
+            <div class="stat-mini-grid">
+              <div class="mini-stat">
+                <span class="stat-num">{{ selectedProject.subproyectos?.length || 0 }}</span>
+                <span class="stat-label">Subproyectos</span>
+              </div>
+              <div class="mini-stat">
+                <span class="stat-num">{{ selectedProject.actividades?.length || 0 }}</span>
+                <span class="stat-label">Actividades</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <ModalEdit
+      v-if="showEditProjectModal"
       :schema="projectSchema"
-      :onClose="() => (showAddProjectModal = false)"
+      :initial="editingProject ?? {}"
+      :error="editError"
+      @submit="saveEdit"
+      @close="() => { showEditProjectModal = false; editingProject = null; editError = '' }"
     />
-    </div>
 
-
-
-        <!-- Grid de proyectos -->
-<div class="projects-grid">
-  <div v-for="proyecto in filteredProyectos" :key="proyecto.id" class="project-card">
-    <div class="card-header">
-      <h3>{{ proyecto.nombre }}</h3>
-
-      <!-- BOTONES -->
-      <ActionButtons
-        @edit="editProject(proyecto)"
-        @delete="deleteProject(proyecto.id)"
-      />
-
-      <span class="status" :class="proyecto.estado.toLowerCase()">{{ proyecto.estado }}</span>
-    </div>
-
-    <DataDisplay
-      :items="[
-        { label: 'Responsable', value: proyecto.responsable },
-        { label: 'Presupuesto', value: `${proyecto.presupuesto} €` },
-        { label: 'Subproyectos', value: proyecto.subproyectos?.length || 0 },
-        { label: 'Actividades', value: proyecto.actividades?.length || 0 }
-      ]"
+    <ModalDelete
+      v-if="showDeleteProjectModal"
+      title="Eliminar proyecto"
+      message="¿Estás seguro que quieres eliminar este proyecto?"
+      :itemName="projectToDelete?.nombre"
+      @confirm="confirmDelete"
+      @close="() => { showDeleteProjectModal = false; projectToDelete = null }"
     />
-  </div>
-</div>
   </main>
-
-  <!-- Modal de edición -->
-<ModalEdit
-  v-if="showEditProjectModal"
-  :schema="projectSchema"
-  :initial="editingProject ?? {}"
-  :error="editError"
-  @submit="saveEdit"
-  @close="() => { showEditProjectModal = false; editingProject = null; editError = '' }"
-/>
-
-<!-- Modal de borrado -->
-<ModalDelete
-  v-if="showDeleteProjectModal"
-  title="Eliminar proyecto"
-  message="¿Estás seguro que quieres eliminar este proyecto?"
-  :itemName="projectToDelete?.nombre"
-  @confirm="confirmDelete"
-  @close="() => { showDeleteProjectModal = false; projectToDelete = null }"
-/>
-
 </template>
 
 <style scoped>
-.statistics-container {
-  display: flex;
-  gap: 20px;
-  flex-wrap: wrap;
-  margin-bottom: 20px;
-}
-
 .projects-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
-  gap: 10px;
+  margin-bottom: 25px;
+  gap: 20px;
 }
 
-/* SearchInput component ahora maneja estos estilos */
-
-.projects-grid {
- display: grid;
- grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
- gap: 20px;
+@media (max-width: 768px) {
+  .projects-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
 }
 
-.project-card{
- background-color: var(--card-bg);
- border-radius: 12px;
- padding: 20px;
- box-shadow: 0 4px 12px var(--card-shadow);
- transition: transform 0.2s, box-shadow 0.2s, background-color 0.3s ease;
- border: 1px solid var(--border-color);
-}
-
-.project-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 20px var(--card-shadow-hover);
-}
-
-.card-header{
+.options {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
+  gap: 20px;
 }
 
-.card-header h3{
-  margin: 0;
-  font-size: 18px;
-  color: var(--button-primary);
-  transition: color 0.3s ease;
+@media (max-width: 768px) {
+  .options {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
 }
 
-.status{
-  font-size: 12px;
-  font-weight: bold;
-  color: #fff;
-  padding: 2px 8px;
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  background: var(--card-bg);
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+}
+
+@media (max-width: 768px) {
+  .main-content.collapsed,
+  .main-content.expanded {
+    margin-left: 0;
+  }
+}
+
+.main-content {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
+@media (max-width: 480px) {
+  .pagination-controls {
+    justify-content: space-between;
+    width: 100%;
+  }
+}
+
+.page-btn {
+  background: transparent;
+  border: 1px solid var(--border-color);
   border-radius: 6px;
+  padding: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  color: var(--text-primary);
+  transition: all 0.2s;
+}
+
+.page-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.page-btn:hover:not(:disabled) {
+  background: var(--button-secondary-hover);
+  border-color: var(--button-primary);
+}
+
+.page-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.projects-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.project-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.info-section .data-display p {
+  overflow-wrap: break-word;
+  word-break: break-word;
+  max-width: 100%;
+}
+
+.project-name {
+  font-weight: 600;
+  font-size: 1.1rem;
+  color: var(--text-primary);
+  transition: color 0.3s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+}
+
+@media (max-width: 480px) {
+  .project-name {
+    max-width: 100%;
+  }
+}
+
+.project-responsable {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.project-actions {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.status-badge {
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: bold;
   text-transform: uppercase;
 }
 
-/* PrimaryButton component ahora maneja estos estilos */
+.status-badge.activo { background-color: rgba(76, 175, 80, 0.2); color: #4CAF50; }
+.status-badge.pendiente { background-color: rgba(255, 152, 0, 0.2); color: #FF9800; }
+.status-badge.finalizado { background-color: rgba(158, 158, 158, 0.2); color: #9E9E9E; }
+
+.status-badge.large {
+  font-size: 0.9rem;
+  padding: 6px 14px;
+}
+
+.arrow {
+  color: var(--text-secondary);
+  opacity: 0.5;
+}
+
+/* Detail View Styles */
+.project-detail-view {
+  animation: fadeIn 0.3s ease-out;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.project-detail-view * {
+  box-sizing: border-box;
+}
+
+.detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+}
+
+.back-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: none;
+  color: var(--button-primary);
+  font-weight: 600;
+  cursor: pointer;
+  padding: 8px 0;
+  transition: transform 0.2s;
+}
+
+.back-btn:hover {
+  transform: translateX(-5px);
+}
+
+.detail-content.card {
+  background: var(--card-bg);
+  padding: 40px;
+  border-radius: 16px;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 10px 30px var(--card-shadow);
+}
+
+.detail-title-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 40px;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 20px;
+}
+
+.detail-title-section h1 {
+  margin: 0;
+  font-size: 2.5rem;
+  color: var(--text-primary);
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 40px;
+}
+
+
+
+.title-with-icon {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.project-hero-icon {
+  font-size: 4rem;
+  color: var(--button-primary);
+  opacity: 0.8;
+}
+
+.title-text-group h1 {
+  margin: 0;
+  font-size: 2.2rem;
+  color: var(--text-primary);
+}
+
+.project-subtitle {
+  margin: 4px 0 0 0;
+  color: var(--text-secondary);
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.detail-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+  margin-bottom: 40px;
+}
+
+.metric-card {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 20px;
+  background: var(--bg-secondary);
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  transition: all 0.3s ease;
+}
+
+:global(.dark) .metric-card {
+  background: #0a0a0b;
+}
+
+.metric-card:hover {
+  border-color: var(--button-primary);
+  transform: translateY(-2px);
+}
+
+.metric-card span.material-symbols-outlined {
+  font-size: 2rem;
+  color: var(--button-primary);
+}
+
+.metric-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.metric-label {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.metric-value {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.info-section.box-item {
+  background: var(--bg-secondary);
+  padding: 24px;
+  border-radius: 16px;
+  border: 1px solid var(--border-color);
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px var(--card-shadow);
+}
+
+:global(.dark) .info-section.box-item {
+  background: #0a0a0b;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+}
+
+.info-section.box-item:hover {
+  border-color: var(--button-primary);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px var(--card-shadow-hover);
+}
+
+.highlight-block {
+  border: 1px dashed var(--button-primary) !important;
+  background: var(--bg-tertiary) !important;
+}
+
+:global(.dark) .highlight-block {
+  background: #000000 !important;
+}
+
+.info-section h3 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 15px 0;
+  color: var(--button-primary);
+  font-size: 1.2rem;
+  font-weight: 600;
+  border-left: 4px solid var(--button-primary);
+  padding-left: 12px;
+}
+
+.detail-item {
+  padding-left: 5px;
+}
+
+.detail-value.primary {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.detail-sub {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin: 2px 0 0 0;
+}
+
+.stat-mini-grid {
+  display: flex;
+  gap: 15px;
+}
+
+.mini-stat {
+  background: var(--card-bg);
+  padding: 10px 15px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  text-align: center;
+  min-width: 80px;
+  flex: 1;
+}
+
+.stat-num {
+  display: block;
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--button-primary);
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.full-width {
+  grid-column: span 2;
+}
+
+.description-text, .notes-text {
+  line-height: 1.6;
+  color: var(--text-primary);
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  max-width: 100%;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 
 main {
-  padding: 20px;
+  padding: 40px;
   min-height: 100vh;
-  box-sizing: border-box;
-  overflow-x: hidden;
   background-color: var(--bg-primary);
   transition: background-color 0.3s ease;
 }
 
-main h2 {
-  color: var(--text-primary);
-  transition: color 0.3s ease;
+@media (max-width: 768px) {
+  main {
+    padding: 20px 15px;
+  }
 }
 
-/* DataDisplay component ahora maneja estos estilos */
+main h2 {
+  color: var(--text-primary);
+  margin-bottom: 20px;
+  font-weight: 600;
+}
+@media (max-width: 768px) {
+  .project-detail-view {
+    padding: 0;
+    margin: 0;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
 
-.status.activo { background-color: #4CAF50; }
-.status.pendiente { background-color: #FF9800; }
+  .detail-header {
+    flex-direction: column;
+    align-items: stretch; 
+    gap: 15px;
+    margin-bottom: 20px;
+    width: 100%;
+    padding: 0;
+  }
+
+  .header-actions {
+    width: 100%;
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .detail-grid, .detail-metrics {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0;
+    padding: 0;
+  }
+
+  .detail-content.card {
+     padding: 20px 15px;
+     border-radius: 0;
+     margin: 0;
+     width: 100% !important;
+     max-width: 100% !important;
+     box-sizing: border-box !important;
+     overflow: hidden;
+     border-left: none;
+     border-right: none;
+     background: var(--card-bg);
+     box-shadow: none;
+  }
+
+  :global(.dark) .detail-content.card {
+     background: var(--bg-primary);
+  }
+
+  .detail-title-section {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 25px;
+    padding-bottom: 20px;
+    width: 100%;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .detail-title-section h1 {
+     font-size: 1.5rem;
+     line-height: 1.3;
+     width: 100%;
+     overflow-wrap: break-word;
+     word-wrap: break-word;
+  }
+
+  .title-with-icon {
+    gap: 10px;
+    width: 100%;
+  }
+
+  .project-hero-icon {
+    font-size: 2.2rem !important;
+  }
+
+  .info-section.box-item, .metric-card, .mini-stat {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 0 10px 0 !important;
+    box-sizing: border-box !important;
+    padding: 20px !important;
+  }
+
+  .stat-mini-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+  }
+
+  .info-section h3 {
+    font-size: 1rem;
+    margin-bottom: 12px;
+  }
+}
 </style>

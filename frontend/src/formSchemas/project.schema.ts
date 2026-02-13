@@ -1,21 +1,23 @@
+import { api } from '@/api'
+
 export const projectSchema = [
   {
     section: 'Información general del proyecto',
     fields: [
       {
-        key: 'name',
+        key: 'nombre',
         label: 'Nombre del proyecto',
         type: 'text',
         required: true
       },
       {
-        key: 'description',
+        key: 'descripcion',
         label: 'Descripción',
         type: 'text',
         placeholder: 'Breve descripción del proyecto'
       },
       {
-        key: 'status',
+        key: 'estado',
         label: 'Estado del proyecto',
         type: 'select',
         required: true,
@@ -27,30 +29,39 @@ export const projectSchema = [
     section: 'Responsables y organización',
     fields: [
       {
-        key: 'responsible',
+        key: 'responsableId',
         label: 'Responsable del proyecto',
-        type: 'text',
+        type: 'select',
+        options: async () => {
+          try {
+            const response = await api.get('/users')
+            const data = response.data
+            // El backend devuelve { users: [...] } en get()
+            const users = Array.isArray(data) ? data : (data.users || [])
+            return users.map((user: any) => ({
+              value: user.id,
+              label: `${user.nombre} ${user.apellidos || ''}`.trim()
+            }))
+          } catch (error) {
+            console.error('Error fetching users for schema:', error)
+            return []
+          }
+        },
         required: true
       },
-      {
-        key: 'department',
-        label: 'Área / Departamento',
-        type: 'select',
-        options: ['Cultura', 'Educación', 'Salud', 'Inclusión Social', 'Otros']
-      }
     ]
   },
   {
     section: 'Datos económicos',
     fields: [
       {
-        key: 'budget',
+        key: 'presupuesto',
         label: 'Presupuesto (€)',
         type: 'number',
         required: true
       },
       {
-        key: 'fundingSource',
+        key: 'fuenteFinanciacion',
         label: 'Fuente de financiación',
         type: 'select',
         options: ['Fondos propios', 'Subvención', 'Donaciones', 'Mixto']
@@ -77,7 +88,7 @@ export const projectSchema = [
     section: 'Seguimiento',
     fields: [
       {
-        key: 'notes',
+        key: 'notas',
         label: 'Observaciones',
         type: 'text'
       }

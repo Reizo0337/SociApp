@@ -1,38 +1,34 @@
-import { Injectable, Logger, BadRequestException, InternalServerErrorException } from '@nestjs/common';
-import { DataSource } from 'typeorm';
-
-// Interfaz para tipar las actividades
-export interface Activity {
-  id?: number; // ID opcional, generado por la DB
-  name: string;
-  place: string;
-  horaInicio: string;
-  horaFin: string;
-  diaSemana: string;
-  idMonitor?: number; // ID del monitor, necesario para la relación con usuarios
-  monitor?: string; // Opcional, generado por la DB
-  icon?: string; // Opcional
-}
+import { Injectable, Logger, BadRequestException, NotFoundException, InternalServerErrorException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository, DataSource } from 'typeorm';
+import { Activity } from './activity.entity';
+import { CreateActivityDto } from './dto/create-activity.dto';
+import { UpdateActivityDto } from './dto/update-activity.dto';
 
 @Injectable()
 export class ActivitiesService {
   private readonly logger = new Logger(ActivitiesService.name);
 
-  constructor(private readonly dataSource: DataSource) {}
+  constructor(
+    @InjectRepository(Activity)
+    private readonly activityRepository: Repository<Activity>,
+    private readonly dataSource: DataSource // Mantener para consultas específicas si es necesario, o eliminar
+  ) { }
 
   // Obtener todas las actividades
   async getActivitiesData() {
     try {
-      const activities = await this.dataSource.query(`
-        SELECT 
-          a.*, 
-          u.Nombre AS Monitor
-        FROM actividades a
-        LEFT JOIN usuarios u ON a.idMonitor = u.IdUsuario;
-      `);
+      const activities = await this.activityRepository.find({
+        relations: ['monitor'], // Cargar relación con usuario
+      });
 
       return {
-        activities: activities.map((activity) => this.mapActivity(activity)),
+        activities: activities.map((activity) => ({
+          ...activity,
+          monitor: activity.monitor ? activity.monitor.nombre : null,
+          horaInicio: activity.horaInicio.slice(0, 5), // 'HH:MM:SS' -> 'HH:MM'
+          horaFin: activity.horaFin.slice(0, 5),
+        })),
       };
     } catch (error) {
       this.handleError('Failed to fetch activities data', error);
@@ -40,79 +36,95 @@ export class ActivitiesService {
   }
 
   // Crear nueva actividad
-  async createActivity(activity: Activity) {
+  async createActivity(createActivityDto: CreateActivityDto) {
     try {
-      this.logger.log(`Datos recibidos para crear actividad: ${JSON.stringify(activity)}`);
-      this.validateActivity(activity);
+      this.validateActivity(createActivityDto);
 
-      const iconValue: string = activity.icon ?? '';
+      const newActivity = this.activityRepository.create(createActivityDto);
+      const saved = await this.activityRepository.save(newActivity);
 
-      const result = await this.dataSource.query(
-        `INSERT INTO actividades (Nombre, Lugar, HoraInicio, HoraFin, DiaSemana, Icon, idMonitor) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [activity.name, activity.place, activity.horaInicio, activity.horaFin, activity.diaSemana, iconValue, activity.idMonitor]
-      );
+      const fullActivity = await this.activityRepository.findOne({
+        where: { id: saved.id },
+        relations: ['monitor']
+      });
 
-      const insertedId = result.insertId;
-      return { id: insertedId, ...activity, icon: iconValue };
-    } catch (error) {
-      this.handleError('Failed to create activity', error, activity);
-    }
-  }
-
-  // Actualizar actividad por id, incluyendo el monitor
-  async updateActivity(id: number, activity: Activity) {
-    try {
-      this.logger.log(`Datos recibidos para actualizar actividad con id ${id}: ${JSON.stringify(activity)}`);
-      this.validateActivity(activity);
-
-      const iconValue: string = activity.icon ?? '';
-
-      await this.dataSource.query(
-        `UPDATE actividades SET Nombre = ?, Lugar = ?, HoraInicio = ?, HoraFin = ?, DiaSemana = ?, Icon = ?, idMonitor = ? WHERE Id = ?`,
-        [
-          activity.name,
-          activity.place,
-          activity.horaInicio,
-          activity.horaFin,
-          activity.diaSemana,
-          iconValue,
-          activity.idMonitor,
-          id,
-        ]
-      );
-
-      return { id, ...activity, icon: iconValue };
-    } catch (error) {
-      this.handleError('Failed to update activity', error, { id, ...activity });
-    }
-  }
-
-  // Eliminar actividad por id, asegurando que se maneje correctamente el monitor
-  async deleteActivity(id: number) {
-    try {
-      this.logger.log(`Intentando eliminar actividad con id ${id}`);
-      const result = await this.dataSource.query(`DELETE FROM actividades WHERE Id = ?`, [id]);
-
-      if (result.affectedRows === 0) {
-        throw new BadRequestException(`No se encontró la actividad con id ${id}`);
+      if (!fullActivity) {
+        return saved;
       }
 
+      return {
+        ...fullActivity,
+        monitor: fullActivity.monitor ? fullActivity.monitor.nombre : null,
+        horaInicio: fullActivity.horaInicio.slice(0, 5),
+        horaFin: fullActivity.horaFin.slice(0, 5),
+      };
+    } catch (error) {
+      this.handleError('Failed to create activity', error, createActivityDto);
+    }
+  }
+
+  // Actualizar actividad por id
+  async updateActivity(id: number, updateActivityDto: UpdateActivityDto) {
+    try {
+      const activity = await this.activityRepository.findOne({ where: { id } });
+      if (!activity) throw new NotFoundException('Actividad no encontrada');
+
+      this.validateActivity({ ...activity, ...updateActivityDto } as CreateActivityDto);
+
+      const updated = this.activityRepository.merge(activity, updateActivityDto);
+      await this.activityRepository.save(updated);
+
+      const savedActivity = await this.activityRepository.findOne({
+        where: { id },
+        relations: ['monitor'],
+      });
+
+      if (!savedActivity) {
+        throw new NotFoundException('Error al recuperar la actividad actualizada');
+      }
+
+      return {
+        ...savedActivity,
+        monitor: savedActivity.monitor ? savedActivity.monitor.nombre : null,
+        horaInicio: savedActivity.horaInicio.slice(0, 5),
+        horaFin: savedActivity.horaFin.slice(0, 5),
+      };
+    } catch (error) {
+      this.handleError('Failed to update activity', error, { id, ...updateActivityDto });
+    }
+  }
+
+  // Eliminar actividad por id
+  async deleteActivity(id: number) {
+    try {
+      const result = await this.activityRepository.delete(id);
+      if (result.affected === 0) {
+        throw new NotFoundException(`No se encontró la actividad con id ${id}`);
+      }
       return { success: true };
     } catch (error) {
       this.handleError('Failed to delete activity', error, { id });
     }
   }
 
+  // Obtener solo los nombres de los monitores (Helper)
+  async getMonitors() {
+    try {
+      // Usar query builder o raw query para esto es eficiente
+      return this.dataSource.query(
+        `SELECT IdUsuario AS id, Nombre AS nombre FROM usuarios WHERE Categoria = 'monitor'`
+      );
+    } catch (error) {
+      this.handleError('Failed to fetch monitors', error);
+    }
+  }
+
   // Validar actividad
-  private validateActivity(activity: Activity): void {
+  private validateActivity(activity: CreateActivityDto): void {
     const { name, place, horaInicio, horaFin, diaSemana } = activity;
 
     if (!name || !place || !horaInicio || !horaFin || !diaSemana) {
       throw new BadRequestException('Todos los campos obligatorios deben estar completos');
-    }
-
-    if (name.trim().length > 255 || place.trim().length > 255) {
-      throw new BadRequestException('Los campos no pueden exceder los 255 caracteres');
     }
 
     const startMinutes = this.timeToMinutes(horaInicio);
@@ -124,97 +136,24 @@ export class ActivitiesService {
 
   // Convertir tiempo a minutos
   private timeToMinutes(time: string): number {
-    const match = /^([01]\d|2[0-3]):([0-5]\d)$/.exec(time);
+    const match = /^([01]?\d|2[0-3]):([0-5]\d)(?::([0-5]\d))?$/.exec(time);
     if (!match) {
-      throw new BadRequestException('Formato de hora inválido. Use HH:MM (24 horas)');
+      // Fallback simple si viene sin formato estricto, aunque la regex arriba cubre HH:MM y HH:MM:SS opcional
+      const [hours, minutes] = time.split(':').map(Number);
+      if (isNaN(hours) || isNaN(minutes)) throw new BadRequestException('Formato de hora inválido');
+      return hours * 60 + minutes;
     }
     const hours = parseInt(match[1], 10);
     const minutes = parseInt(match[2], 10);
     return hours * 60 + minutes;
   }
 
-  // Mapear actividad desde la base de datos
-  private mapActivity(activity: any): Activity {
-    return {
-      id: activity.Id,
-      name: activity.Nombre,
-      place: activity.Lugar,
-      horaInicio: activity.HoraInicio,
-      horaFin: activity.HoraFin,
-      diaSemana: activity.DiaSemana,
-      idMonitor: activity.idMonitor, // Agregar idMonitor
-      monitor: activity.Monitor,
-      icon: activity.Icon,
-    };
-  }
-
   // Manejo de errores
   private handleError(message: string, error: any, context?: any): never {
     this.logger.error(message, context ? JSON.stringify(context) : '', error instanceof Error ? error.stack : JSON.stringify(error));
+    if (error instanceof BadRequestException || error instanceof NotFoundException) {
+      throw error;
+    }
     throw new InternalServerErrorException(message);
-  }
-
-  // Obtener todos los monitores
-  async getMonitors() {
-    try {
-      const monitors = await this.dataSource.query(
-        `SELECT IdUsuario AS id, Nombre AS nombre FROM usuarios WHERE Categoria = 'monitor'`
-      );
-      return monitors;
-    } catch (error) {
-      this.handleError('Failed to fetch monitors', error);
-    }
-  }
-
-  // Asignar un monitor a una actividad
-  async assignMonitorToActivity(activityId: number, monitorName: string) {
-    try {
-      const monitor = await this.dataSource.query(
-        `SELECT IdUsuario FROM usuarios WHERE Nombre = ? AND Categoria = 'monitor'`,
-        [monitorName]
-      );
-
-      if (!monitor.length) {
-        throw new BadRequestException(`Monitor with name ${monitorName} not found`);
-      }
-
-      const monitorId = monitor[0].IdUsuario;
-
-      await this.dataSource.query(
-        `UPDATE actividades SET idMonitor = ? WHERE Id = ?`,
-        [monitorId, activityId]
-      );
-
-      return { success: true, monitorId };
-    } catch (error) {
-      this.handleError('Failed to assign monitor to activity', error);
-    }
-  }
-
-  // Obtener solo los nombres de los monitores
-  async getMonitorNames() {
-    try {
-      const monitors = await this.getMonitors();
-      return monitors.map((monitor) => monitor.nombre);
-    } catch (error) {
-      this.handleError('Failed to fetch monitor names', error);
-    }
-  }
-
-  // Asignar monitor por nombre
-  async assignMonitorByName(activityId: number, monitorName: string) {
-    try {
-      const monitor = await this.getMonitors();
-      const monitorData = monitor.find((m) => m.nombre === monitorName);
-
-      if (!monitorData) {
-        throw new BadRequestException(`Monitor with name ${monitorName} not found`);
-      }
-
-      await this.assignMonitorToActivity(activityId, monitorData.nombre);
-      return { success: true, monitorId: monitorData.id };
-    } catch (error) {
-      this.handleError('Failed to assign monitor by name', error);
-    }
   }
 }

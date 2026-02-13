@@ -12,8 +12,8 @@ const model = reactive<Record<string, any>>({})
 const resolvedOptions = reactive<Record<string, any[]>>({})
 
 // Inicializar model con valores iniciales (si hay)
-props.schema.forEach(section => {
-  section.fields.forEach(field => {
+props.schema.forEach((section: any) => {
+  section.fields.forEach((field: any) => {
     let value =
       props.initial && props.initial[field.key] != null
         ? props.initial[field.key]
@@ -38,8 +38,8 @@ watch(
   () => props.initial,
   next => {
     if (!next) return
-    props.schema.forEach(section => {
-      section.fields.forEach(field => {
+    props.schema.forEach((section: any) => {
+      section.fields.forEach((field: any) => {
         let value = next[field.key] ?? ''
         if (field.type === 'date' && value) {
           value = new Date(value).toISOString().split('T')[0]
@@ -75,8 +75,8 @@ onMounted(async () => {
 
 const submit = () => {
   // Validar campos requeridos antes de enviar
-  const missingFields = props.schema.flatMap(section =>
-    section.fields.filter(field => field.required && !model[field.key]),
+  const missingFields = props.schema.flatMap((section: any) =>
+    section.fields.filter((field: any) => field.required && !model[field.key]),
   )
 
   if (missingFields.length > 0) {
@@ -84,9 +84,10 @@ const submit = () => {
     return
   }
 
-  // Incluir id si existe en initial
+  // Incluir id o idProyecto si existe en initial para que el parent sepa qué editar
   const payload = {
     ...(props.initial?.id ? { id: props.initial.id } : {}),
+    ...(props.initial?.idProyecto ? { idProyecto: props.initial.idProyecto } : {}),
     ...model,
   }
   emit('submit', payload)

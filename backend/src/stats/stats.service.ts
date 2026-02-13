@@ -5,7 +5,7 @@ import { DataSource } from 'typeorm';
 export class StatsService {
   private readonly logger = new Logger(StatsService.name);
 
-  constructor(private dataSource: DataSource) {}
+  constructor(private dataSource: DataSource) { }
 
   async getDashboardStats() {
     try {
@@ -16,6 +16,8 @@ export class StatsService {
           SUM(CASE WHEN socio = 2 THEN 1 ELSE 0 END) AS "noSocios",
           (SELECT COUNT(*) FROM actividades) AS "actividades",
           (SELECT COUNT(*) FROM proyectos) AS "proyectos",
+          (SELECT COUNT(*) FROM proyectos WHERE estado = 'Activo') AS "proyectosActivos",
+          (SELECT COUNT(*) FROM proyectos WHERE estado = 'Pendiente') AS "proyectosPendientes",
           (SELECT COUNT(*) FROM usuarios WHERE categoria = "Trabajador") AS "trabajadores"
         FROM usuarios;
       `);
@@ -26,6 +28,8 @@ export class StatsService {
         noSocios: parseInt(stats.noSocios, 10) || 0,
         actividades: parseInt(stats.actividades, 10) || 0,
         proyectos: parseInt(stats.proyectos, 10) || 0,
+        proyectosActivos: parseInt(stats.proyectosActivos, 10) || 0,
+        proyectosPendientes: parseInt(stats.proyectosPendientes, 10) || 0,
         trabajadores: parseInt(stats.trabajadores, 10) || 0,
       };
     } catch (error) {
