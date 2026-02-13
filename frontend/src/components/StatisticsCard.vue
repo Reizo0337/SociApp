@@ -60,9 +60,6 @@ const typeClass = computed(() => (props.type ? `type-${props.type}` : ''))
   align-items: center;
   gap: 8px;
 }
-:global(.dark) .title {
-  background-color: #1e1e2d;
-}
 
 .unify {
   display: flex;

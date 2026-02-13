@@ -1,29 +1,3 @@
-
-import { ref, onMounted } from 'vue';
-
-const monitorOptions = ref([]);
-
-onMounted(async () => {
-  try {
-    const response = await fetch('/activities/monitors');
-    console.log(response);
-    if (!response.ok) {
-      throw new Error('Error HTTP: ' + response.status);
-    }
-
-    const data = await response.json();
-
-    monitorOptions.value = data.map((monitor: any) => ({
-      value: monitor.id,
-      label: monitor.nombre,
-    }));
-
-  } catch (error) {
-    console.error('Error fetching monitor options:', error);
-  }
-});
-
-
 export const ActivitySchema = [
   {
     section: 'Datos de la actividad',
@@ -59,7 +33,13 @@ export const ActivitySchema = [
         key: 'monitorId',          // <-- clave en model
         label: 'Monitor',
         type: 'select',
-        options: monitorOptions
+        options: async () => {
+          const response = await fetch('/activities/getmonitors');
+          if (!response) throw new Error('Error HTTP')
+          console.log(response)
+          const data: { id: number; nombre: string }[] = await response.json();
+          return data.map((monitor) => ({ value: monitor.id, label: monitor.nombre }));
+        }
       }
     ],
   },
