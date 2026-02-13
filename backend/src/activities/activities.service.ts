@@ -28,7 +28,7 @@ export class ActivitiesService {
           a.*, 
           u.Nombre AS Monitor
         FROM actividades a
-        JOIN usuarios u ON a.idMonitor = u.IdUsuario;
+        LEFT JOIN usuarios u ON a.idMonitor = u.IdUsuario;
       `);
 
       return {

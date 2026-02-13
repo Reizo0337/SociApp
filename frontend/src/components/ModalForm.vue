@@ -1,10 +1,11 @@
 <script lang="ts" setup>
-import { reactive } from 'vue'
+import { reactive, onMounted } from 'vue'
 
 const props = defineProps<{ schema: any[]; error?: string; initial?: Record<string, any> }>()
 const emit = defineEmits(['submit', 'close'])
 
 const model = reactive({})
+const resolvedOptions = reactive<Record<string, any[]>>({})
 
 // Inicializar model basado en el schema
 console.log(Array.isArray(props.schema), props.schema);
@@ -12,6 +13,20 @@ props.schema.forEach(section => {
   section.fields.forEach(field => {
     model[field.key] = ''
   })
+})
+
+onMounted(async () => {
+  for (const section of props.schema) {
+    for (const field of section.fields) {
+      if (field.type === 'select' && typeof field.options === 'function') {
+        try {
+          resolvedOptions[field.key] = await field.options()
+        } catch (error) {
+          console.error(`Error cargando opciones para ${field.key}:`, error)
+        }
+      }
+    }
+  }
 })
 
 // Función submit
@@ -51,7 +66,10 @@ const setToday = (key: string) => {
                 :required="field.required"
               />
               <select v-else-if="field.type === 'select'" v-model="model[field.key]" :required="field.required">
-                <option v-for="opt in field.options" :key="opt" :value="opt">{{ opt }}</option>
+                <option disabled value="">-- Selecciona una opción --</option>
+                <option v-for="opt in (resolvedOptions[field.key] || (Array.isArray(field.options) ? field.options : []))" :key="opt.value || opt" :value="opt.value || opt">
+                  {{ opt.label || opt }}
+                </option>
               </select>
               <div v-else-if="field.type === 'date'" class="inline">
                 <input type="date" v-model="model[field.key]" :required="field.required" />

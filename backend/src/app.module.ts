@@ -6,6 +6,8 @@ import { StatsModule } from './stats/stats.module';
 import { UsersModule } from './users/users.module';
 import { ActivitiesModule } from './activities/activities.module';
 
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import * as path from 'path';
 
 import { Usuarios as User } from './users/user.entity';
 
@@ -14,15 +16,23 @@ import { ThrottlerModule } from '@nestjs/throttler';
 
 @Module({
   imports: [
-    TypeOrmModule.forRoot({
-      type: 'mysql',
-      host: '192.168.1.66',
-      port: 3306,
-      username: 'root',
-      password: 'root',
-      database: 'sociappdb', // Asegúrate de que coincida con tu BD local
-      entities: [User],
-      synchronize: false,
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: path.resolve(__dirname, '../../.env')
+    }),
+    TypeOrmModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        type: 'mysql',
+        host: configService.get('DB_HOST'),
+        port: configService.get('DB_PORT'),
+        username: configService.get('DB_USERNAME'),
+        password: configService.get('DB_PASSWORD'),
+        database: configService.get('DB_NAME'),
+        entities: [__dirname + '/**/*.entity{.ts,.js}'],
+        synchronize: false,
+      }),
     }),
     ThrottlerModule.forRoot([{
       ttl: 60,
