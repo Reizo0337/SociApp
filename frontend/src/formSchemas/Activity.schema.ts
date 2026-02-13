@@ -34,7 +34,7 @@ export const ActivitySchema = [
         label: 'Monitor',
         type: 'select',
         options: async () => {
-          const response = await fetch('/activities/getmonitors');
+          const response = await fetch('http://localhost:3000/activities/monitors');
           if (!response) throw new Error('Error HTTP')
           console.log(response)
           const data: { id: number; nombre: string }[] = await response.json();
