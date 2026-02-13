@@ -1,11 +1,12 @@
 <script setup lang="js">
 
 import StatisticsCard from '@/components/StatisticsCard.vue'
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import Title from '../components/Title.vue'
 import ModalForm from '../components/ModalForm.vue'
 import ModalDelete from '../components/ModalDelete.vue'
 import ModalEdit from '../components/ModalEdit.vue'
+import ExpandableListItem from '../components/ExpandableListItem.vue'
 import { ActivitySchema } from '@/formSchemas/Activity.schema'
 
 const activities = ref([])
@@ -18,6 +19,7 @@ const activityToDelete = ref(null)
 const showEditModal = ref(false)
 const editingActivity = ref(null)
 const editError = ref('')
+const expandedActivity = ref([])
 
 onMounted(async () => {
   try {
@@ -41,6 +43,15 @@ const filteredActivities = computed(() => {
     )
   )
 })
+
+watch(filteredActivities, (newActivities) => {
+  if (searchQuery.value) {
+    expandedActivity.value = [...newActivities]
+  } else {
+    expandedActivity.value = []
+  }
+})
+
 const addActivities = () => {
   formError.value = ''
   showAddActivitiesModal.value = true
@@ -144,6 +155,13 @@ const confirmDelete = async () => {
     activityToDelete.value = null;
   }
 }
+const toggleDetails = (activity) => {
+  if (expandedActivity.value.includes(activity) && expandedActivity.value.length === 1) {
+    expandedActivity.value = []
+  } else {
+    expandedActivity.value = [activity]
+  }
+}
 const formatDate = (date) => (date ? new Date(date).toLocaleDateString() : '')
 </script>
 
@@ -162,30 +180,30 @@ const formatDate = (date) => (date ? new Date(date).toLocaleDateString() : '')
         </div>
       </div>
 
-      <div class="users-grid">
-        <div v-for="activity in filteredActivities" :key="activity.id" class="user-card">
-          <div class="card-header">
-            <div class="left">
-              <div class="text">
-                <h3 :title="activity.name" }}>{{activity.name }}</h3>
+      <div class="activities-list">
+        <ExpandableListItem
+          v-for="(activity, index) in filteredActivities"
+          :key="activity.id || activity._id || index"
+          :expanded="expandedActivity.includes(activity)"
+          @toggle="toggleDetails(activity)"
+        >
+          <template #summary-left>
+            <span class="activity-name">{{ activity.name }}</span>
+          </template>
+          <template #details>
+            <div class="card-body between">
+              <div class="data">
+                <p><strong>Lugar de la actividad:</strong> {{ activity.place }}</p>
+                <p><strong>Hora de inicio:</strong> {{ activity.horaInicio }} <strong> Hora de fin: </strong> {{activity.horaFin}} </p>
+                <p><strong>Monitor:</strong> {{ activity.monitor }} </p>
               </div>
-            </div>
-            <div class="right">
               <div class="action-buttons">
-                <button @click="editActivity(activity)"><span class="material-symbols-outlined edit">edit</span></button>
-                <button @click="openDeleteModal(activity)"><span class="material-symbols-outlined delete">delete</span></button>
+                <button @click.stop="editActivity(activity)"><span class="material-symbols-outlined edit">edit</span></button>
+                <button @click.stop="openDeleteModal(activity)"><span class="material-symbols-outlined delete">delete</span></button>
               </div>
             </div>
-            </div>
-          <div class="card-body">
-            <p><strong>Lugar de la actividad:</strong> {{ activity.place }}</p>
-            <p><strong>Hora de inicio:</strong> {{ activity.horaInicio }} <strong> Hora de fin: </strong> {{activity.horaFin}} </p>
-             <p><strong>Monitor:</strong> {{ activity.monitor }} </p>
-            <div class="card-actions">
-            </div>
-
-          </div>
-        </div>
+          </template>
+        </ExpandableListItem>
       </div>
     </div>
   </main>
@@ -197,9 +215,50 @@ main {
   min-height: 100vh;
 }
 
-.users-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 20px;
+.activities-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.activity-name {
+  font-weight: 600;
+  font-size: 1.1rem;
+  color: #333;
+}
+
+.between {
+  display: flex;
+  justify-content: space-between;
+}
+
+.action-buttons {
+  display: flex;
+  justify-content: start;
+  align-items: start;
+}
+
+.action-buttons button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 5px;
+}
+
+:global(.dark) .activity-name {
+  color: #f8fafc;
+}
+
+:global(.dark) .card-body strong {
+  color: #60a5fa;
+}
+
+:global(.dark) .card-body p {
+  color: #94a3b8;
+}
+
+:global(.dark) .action-buttons button span {
+  color: #94a3b8;
 }
 </style>
