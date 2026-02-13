@@ -14,6 +14,10 @@ props.schema.forEach((section) => {
     if (field.type === 'date' && value) {
       value = new Date(value).toISOString().split('T')[0];
     }
+    // Si es select y viene con formato HH:mm:ss, recortamos a HH:mm
+    if (field.type === 'select' && typeof value === 'string' && /^\d{2}:\d{2}:\d{2}$/.test(value)) {
+      value = value.substring(0, 5);
+    }
     model[field.key] = value; // Eliminado carácter inválido º
   });
 });
@@ -27,6 +31,10 @@ watch(
         let value = next[field.key] ?? '';
         if (field.type === 'date' && value) {
           value = new Date(value).toISOString().split('T')[0];
+        }
+        // Si es select y viene con formato HH:mm:ss, recortamos a HH:mm
+        if (field.type === 'select' && typeof value === 'string' && /^\d{2}:\d{2}:\d{2}$/.test(value)) {
+          value = value.substring(0, 5);
         }
         model[field.key] = value;
       });
