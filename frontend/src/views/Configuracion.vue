@@ -165,7 +165,6 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
 import { ref, onMounted } from 'vue'
 import ModalForm from '@/components/ModalForm.vue'
 import Title from '../components/Title.vue'

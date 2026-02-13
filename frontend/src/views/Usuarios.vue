@@ -20,7 +20,7 @@ const route = useRoute()
 
 const loadUsers = async () => {
   try {
-    const response = await fetch('http://192.168.1.55:3000/users')
+    const response = await fetch('http://localhost:3000/users')
 
     const contentType = response.headers.get('content-type')
     if (!contentType?.includes('application/json')) {
@@ -71,7 +71,7 @@ const addUsers = () => {
 const saveUser = async (newUser) => {
   try {
     console.log('Nuevo usuario a enviar:', newUser);
-    const response = await fetch('http://192.168.1.55:3000/users', {
+    const response = await fetch('http://localhost:3000/users', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(newUser)
@@ -107,7 +107,7 @@ const saveEdit = async (payload) => {
       payloadForBackend.poblacion = payloadForBackend.localidad;
       delete payloadForBackend.localidad;
     }
-    const res = await fetch(`http://192.168.1.55:3000/users/edit`, {
+    const res = await fetch(`http://localhost:3000/users/edit`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payloadForBackend)
@@ -162,7 +162,7 @@ const openDeleteModal = (user) => {
 const confirmDelete = async () => {
   if (!userToDelete.value) return
   try {
-    const res = await fetch(`http://192.168.1.55:3000/users/delete`, {
+    const res = await fetch(`http://localhost:3000/users/delete`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ dni: userToDelete.value.dni })

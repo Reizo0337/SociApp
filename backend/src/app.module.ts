@@ -16,10 +16,10 @@ import { ThrottlerModule } from '@nestjs/throttler';
   imports: [
     TypeOrmModule.forRoot({
       type: 'mysql',
-      host: 'localhost',
+      host: '192.168.1.66',
       port: 3306,
       username: 'root',
-      password: 'reizonr1',
+      password: 'root',
       database: 'sociappdb', // Asegúrate de que coincida con tu BD local
       entities: [User],
       synchronize: false,
