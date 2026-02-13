@@ -392,13 +392,12 @@ async function handleSave(data) {
 }
 
 .icon-box {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
+  width: 70px;
+  height: 70px;
+  border-radius: 15px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-right: 15px; /* Espacio a la derecha del icono */
   flex-shrink: 0;
 }
 
@@ -448,8 +447,9 @@ async function handleSave(data) {
 .purple { background: #faf5ff; color: #7c3aed; }
 .blue   { background: #eff6ff; color: #2563eb; }
 .red    { background: #fef2f2; color: #dc2626; }
-.label { font-size: 11px; color: #2563eb; font-weight: 700; }
-.value { font-size: 13px; color: #64748b; }
+
+.label { font-size: 16px; color: #2563eb; font-weight: 700; }
+.value { font-size: 16px; color: #64748b; }
 
 /* MODO OSCURO */
 :global(.dark) .config-app { background-color: #000000; color: #ffffff; }

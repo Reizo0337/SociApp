@@ -26,4 +26,9 @@ export class ActivitiesController {
   remove(@Param('id') id: string) {
     return this.activitiesService.deleteActivity(Number(id));
   }
+
+  @Get('Monitors')
+  getMonitors() {
+    return this.activitiesService.getMonitors();
+  }
 }

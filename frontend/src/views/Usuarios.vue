@@ -1,5 +1,5 @@
 <script setup lang="js">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import Title from '../components/Title.vue'
 import ModalForm from '../components/ModalForm.vue'
@@ -17,6 +17,9 @@ const userToDelete = ref(null)
 const editError = ref('')
 const editingUsers = ref(null)
 const route = useRoute()
+const expandedUser = ref(null)
+const currentPage = ref(1)
+const itemsPerPage = 20
 
 const loadUsers = async () => {
   try {
@@ -62,6 +65,33 @@ const filteredUsers = computed(() => {
     )
   )
 })
+
+const paginatedUsers = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage
+  const end = start + itemsPerPage
+  return filteredUsers.value.slice(start, end)
+})
+
+const totalPages = computed(() => Math.ceil(filteredUsers.value.length / itemsPerPage))
+
+const showingRange = computed(() => {
+  if (filteredUsers.value.length === 0) return '0 - 0'
+  const start = (currentPage.value - 1) * itemsPerPage + 1
+  const end = Math.min(start + itemsPerPage - 1, filteredUsers.value.length)
+  return `${start} - ${end}`
+})
+
+watch(searchQuery, () => {
+  currentPage.value = 1
+})
+
+const nextPage = () => {
+  if (currentPage.value < totalPages.value) currentPage.value++
+}
+
+const prevPage = () => {
+  if (currentPage.value > 1) currentPage.value--
+}
 
 const addUsers = () => {
   // On click open pop up where user can add a new users. we will use a new component.
@@ -162,6 +192,7 @@ const openDeleteModal = (user) => {
 const confirmDelete = async () => {
   if (!userToDelete.value) return
   try {
+    console.log('DNI a eliminar:', userToDelete.value.dni)
     const res = await fetch(`http://localhost:3000/users/delete`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -171,6 +202,20 @@ const confirmDelete = async () => {
     console.error('Error al eliminar el usuario:', error)
   }
   // TODO: FINISH DELETE....
+  const idx = users.value.findIndex(u => u.dni === userToDelete.value.dni)
+  if (idx !== -1) {
+    users.value.splice(idx, 1)
+  }
+  userToDelete.value = null
+  showDeleteModal.value = false
+}
+
+const toggleDetails = (dni) => {
+  if (expandedUser.value === dni) {
+    expandedUser.value = null
+  } else {
+    expandedUser.value = dni
+  }
 }
 
 
@@ -185,6 +230,15 @@ const formatDate = (date) => date ? new Date(date).toLocaleDateString() : ''
       <div class="showUsers-header">
         <h2>Lista de Usuarios</h2>
         <div class="options">
+          <div class="pagination-controls" v-if="filteredUsers.length > 0">
+            <span>{{ showingRange }} de {{ filteredUsers.length }}</span>
+            <button @click="prevPage" :disabled="currentPage === 1" class="page-btn">
+              <span class="material-symbols-outlined">chevron_left</span>
+            </button>
+            <button @click="nextPage" :disabled="currentPage === totalPages" class="page-btn">
+              <span class="material-symbols-outlined">chevron_right</span>
+            </button>
+          </div>
           <button @click="addUsers">Agregar Usuario</button>
           <transition name="fade-scale" v-if="showAddUserModal">
             <ModalForm :schema="userSchema" @submit="saveUser" v-if="showAddUserModal" @close="showAddUserModal = false"/>
@@ -195,27 +249,35 @@ const formatDate = (date) => date ? new Date(date).toLocaleDateString() : ''
         </div>
       </div>
 
-      <div class="users-grid">
-        <div v-for="user in filteredUsers" :key="user.dni" class="user-card">
-          <div class="card-header">
-            <h3>{{ user.nombre }} {{ user.apellidos }}</h3>
-            <div class="action-buttons">
-              <button @click="editUser(user)"><span class="material-symbols-outlined edit">edit</span></button>
-              <button @click="openDeleteModal(user)"><span class="material-symbols-outlined delete">delete</span></button>
+      <div class="users-list">
+        <div v-for="user in paginatedUsers" :key="user.dni" class="user-list-item" @click="toggleDetails(user.dni)" :class="{ 'expanded': expandedUser === user.dni }">
+          <div class="user-summary">
+            <span class="user-name">{{ user.nombre }} {{ user.apellidos }}</span>
+            <div class="summary-right">
+              <span class="role">{{ user.categoria }}</span>
+              <span class="material-symbols-outlined arrow-icon" :class="{ 'rotated': expandedUser === user.dni }">expand_more</span>
             </div>
-
-
-            <span class="role">{{ user.categoria }}</span>
           </div>
-          <div class="card-body">
-            <p><strong>DNI:</strong> {{ user.dni }}</p>
-            <p><strong>Email:</strong> {{ user.email }}</p>
-            <p><strong>Tel:</strong> {{ user.telefono || '-' }}</p>
-            <p><strong>Dirección:</strong> {{ user.direccion || '-' }}, {{ user.CP || '-' }}</p>
-            <p><strong>Localidad:</strong> {{ user.localidad || '-' }}, {{ user.provincia || '-' }}, {{ user.pais || '-' }}</p>
-            <p><strong>Fecha Alta:</strong> {{ formatDate(user.fechadealta) }}</p>
-            <p><strong>Fecha Baja:</strong> {{ formatDate(user.fechadebaja) || '-' }}</p>
-            <p><strong>Forma Pago:</strong> {{ user.formadepago || '-' }} | <strong>Cuota:</strong> {{ user.cuota || '-' }}</p>
+
+          <div class="user-details-card" v-if="expandedUser === user.dni" @click.stop>
+            <div class="card-header">
+            </div>
+            <div class="card-body between">
+              <div class="data">
+                <p><strong>DNI:</strong> {{ user.dni }}</p>
+                <p><strong>Email:</strong> {{ user.email }}</p>
+                <p><strong>Tel:</strong> {{ user.telefono || '-' }}</p>
+                <p><strong>Dirección:</strong> {{ user.direccion || '-' }}, {{ user.CP || '-' }}</p>
+                <p><strong>Localidad:</strong> {{ user.localidad || '-' }}, {{ user.provincia || '-' }}, {{ user.pais || '-' }}</p>
+                <p><strong>Fecha Alta:</strong> {{ formatDate(user.fechadealta) }}</p>
+                <p><strong>Fecha Baja:</strong> {{ formatDate(user.fechadebaja) || '-' }}</p>
+                <p><strong>Forma Pago:</strong> {{ user.formadepago || '-' }} | <strong>Cuota:</strong> {{ user.cuota || '-' }}</p>
+              </div>
+              <div class="action-buttons">
+                <button @click.stop="editUser(user)"><span class="material-symbols-outlined edit">edit</span></button>
+                <button @click.stop="openDeleteModal(user)"><span class="material-symbols-outlined delete">delete</span></button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -229,27 +291,65 @@ main {
   min-height: 100vh;
 }
 
-.users-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 20px;
+.users-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.user-list-item {
+  position: relative;
+  background-color: #fff;
+  padding: 15px 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid #eee;
+}
+
+.user-list-item:hover, .user-list-item.expanded {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  z-index: 10;
+  border-color: #2a4ea2;
 }
 
 .card-header {
   position: relative;
+  display: flex;
+  justify-content: right;
+  align-items: center;
+  margin-bottom: 15px;
 }
 
-.card-body { margin-top: 15px;}
+.user-summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.user-name {
+  font-weight: 600;
+  font-size: 1.1rem;
+  color: #333;
+}
+
+.user-details-card {
+  border-top: 1px solid #eee;
+  padding: 15px;
+  margin-top: 10px;
+  border-radius: 6px;
+  cursor: default;
+}
 
 .role {
   color: #2a4ea2;
   font-size: 12px;
   font-weight: bold;
-  padding: 2px 8px;
+  padding: 2px 10px;
   border-radius: 6px;
-  position: absolute;
-  left: 0;
-  top: 46px;
 }
 
 .options {
@@ -272,37 +372,90 @@ main {
 .options button:hover {
   background-color: #1b3570;
 }
-/* --- ESTILOS MODO OSCURO PARA LAS TARJETAS DE USUARIO --- */
 
-/* Fondo de la tarjeta en modo oscuro */
-:global(.dark) .user-card {
-  background-color: #0a0a0a; /* Gris casi negro para resaltar sobre el fondo negro puro */
-  border: 1px solid #1e293b; /* Borde azul oscuro sutil */
-  color: #f8fafc;            /* Texto claro */
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.9rem;
+  color: #666;
 }
 
-/* Título (Nombre del usuario) en modo oscuro */
+.options button.page-btn {
+  padding: 5px;
+  background-color: transparent;
+  color: #333;
+  border: 1px solid #ddd;
+}
+
+.options button.page-btn:hover {
+  background-color: #f0f0f0;
+}
+
+.options button.page-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.summary-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.arrow-icon {
+  transition: transform 0.3s ease;
+  color: #666;
+}
+
+.arrow-icon.rotated {
+  transform: rotate(180deg);
+}
+
+.between {
+  display: flex;
+  justify-content: space-between;
+}
+
+:global(.dark) .user-list-item {
+  background-color: #0a0a0a;
+  border: 1px solid #1e293b;
+  color: #f8fafc;
+}
+
+:global(.dark) .user-name {
+  color: #f8fafc;
+}
+
+:global(.dark) .user-details-card {
+  background-color: #111827;
+  border-top: 1px solid #334155;
+  color: #f8fafc;
+}
+
 :global(.dark) .card-header h3 {
   color: #ffffff;
 }
 
-/* Etiquetas de datos (Strong) */
 :global(.dark) .card-body strong {
-  color: #60a5fa; /* Azul claro para que los títulos resalten */
+  color: #60a5fa;
 }
 
-/* Textos secundarios dentro de la card */
 :global(.dark) .card-body p {
   color: #94a3b8;
 }
 
-/* El badge del Rol/Categoría en modo oscuro */
 :global(.dark) .role {
-  background-color: rgba(37, 99, 235, 0.2); /* Azul translúcido */
-  color: #60a5fa;                          /* Texto azul brillante */
+  background-color: rgba(37, 99, 235, 0.2);
+  color: #60a5fa;
 }
 
-/* Estilo para los botones de acción dentro de la card */
+.action-buttons {
+  display: flex;
+  justify-content: start;
+  align-items: start;
+}
+
 :global(.dark) .action-buttons button span {
   color: #94a3b8;
 }
@@ -313,5 +466,18 @@ main {
 
 :global(.dark) .action-buttons button:w span.delete {
   color: #f87171;
+}
+
+:global(.dark) .pagination-controls {
+  color: #aaa;
+}
+
+:global(.dark) .options button.page-btn {
+  color: #eee;
+  border-color: #444;
+}
+
+:global(.dark) .options button.page-btn:hover {
+  background-color: #333;
 }
 </style>

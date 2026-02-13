@@ -1,10 +1,11 @@
 <script lang="ts" setup>
-import { reactive, watch } from 'vue';
+import { reactive, watch, onMounted } from 'vue';
 
 const props = defineProps<{ schema: any[]; initial?: Record<string, any>; error?: string }>();
 const emit = defineEmits(['submit', 'close']);
 
 const model = reactive<Record<string, any>>({});
+const resolvedOptions = reactive<Record<string, any[]>>({});
 
 // Inicializar model con valores iniciales (si hay)
 props.schema.forEach((section) => {
@@ -13,6 +14,10 @@ props.schema.forEach((section) => {
     // Si el campo es de tipo fecha y tiene un valor, lo formateamos a YYYY-MM-DD
     if (field.type === 'date' && value) {
       value = new Date(value).toISOString().split('T')[0];
+    }
+    // Si es select y viene con formato HH:mm:ss, recortamos a HH:mm
+    if (field.type === 'select' && typeof value === 'string' && /^\d{2}:\d{2}:\d{2}$/.test(value)) {
+      value = value.substring(0, 5);
     }
     model[field.key] = value; // Eliminado carácter inválido º
   });
@@ -28,12 +33,30 @@ watch(
         if (field.type === 'date' && value) {
           value = new Date(value).toISOString().split('T')[0];
         }
+        // Si es select y viene con formato HH:mm:ss, recortamos a HH:mm
+        if (field.type === 'select' && typeof value === 'string' && /^\d{2}:\d{2}:\d{2}$/.test(value)) {
+          value = value.substring(0, 5);
+        }
         model[field.key] = value;
       });
     });
   },
   { deep: true }
 );
+
+onMounted(async () => {
+  for (const section of props.schema) {
+    for (const field of section.fields) {
+      if (field.type === 'select' && typeof field.options === 'function') {
+        try {
+          resolvedOptions[field.key] = await field.options();
+        } catch (error) {
+          console.error(`Error cargando opciones para ${field.key}:`, error);
+        }
+      }
+    }
+  }
+});
 
 const submit = () => {
   // Validar campos requeridos antes de enviar
@@ -78,7 +101,7 @@ const submit = () => {
 
               <select v-else-if="field.type === 'select'" v-model="model[field.key]" :required="field.required">
                 <option disabled value="">-- Selecciona una opción --</option>
-                <option v-for="opt in field.options" :key="opt.value || opt" :value="opt.value || opt">
+                <option v-for="opt in (resolvedOptions[field.key] || (Array.isArray(field.options) ? field.options : []))" :key="opt.value || opt" :value="opt.value || opt">
                   {{ opt.label || opt }}
                 </option>
               </select>

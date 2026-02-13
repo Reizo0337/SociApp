@@ -33,9 +33,10 @@ export const ActivitySchema = [
         key: 'monitorId',          // <-- clave en model
         label: 'Monitor',
         type: 'select',
-        required: true,
         options: async () => {
-          const response = await fetch('/api/monitors');
+          const response = await fetch('http://localhost:3000/activities/monitors');
+          if (!response) throw new Error('Error HTTP')
+          console.log(response)
           const data: { id: number; nombre: string }[] = await response.json();
           return data.map((monitor) => ({ value: monitor.id, label: monitor.nombre }));
         }
