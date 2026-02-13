@@ -5,6 +5,7 @@ import Title from '../components/Title.vue'
 import ModalForm from '../components/ModalForm.vue'
 import ModalEdit from '../components/ModalEdit.vue'
 import ModalDelete from '../components/ModalDelete.vue'
+import ExpandableListItem from '../components/ExpandableListItem.vue'
 import { userSchema } from '@/formSchemas/user.schema'
 import { userEditSchema } from '@/formSchemas/userEdit.schema'
 
@@ -17,7 +18,7 @@ const userToDelete = ref(null)
 const editError = ref('')
 const editingUsers = ref(null)
 const route = useRoute()
-const expandedUser = ref(null)
+const expandedUser = ref([])
 const currentPage = ref(1)
 const itemsPerPage = 20
 
@@ -83,6 +84,14 @@ const showingRange = computed(() => {
 
 watch(searchQuery, () => {
   currentPage.value = 1
+})
+
+watch(filteredUsers, (newUsers) => {
+  if (searchQuery.value) {
+    expandedUser.value = newUsers.map(u => u.dni)
+  } else {
+    expandedUser.value = []
+  }
 })
 
 const nextPage = () => {
@@ -211,10 +220,10 @@ const confirmDelete = async () => {
 }
 
 const toggleDetails = (dni) => {
-  if (expandedUser.value === dni) {
-    expandedUser.value = null
+  if (expandedUser.value.includes(dni) && expandedUser.value.length === 1) {
+    expandedUser.value = []
   } else {
-    expandedUser.value = dni
+    expandedUser.value = [dni]
   }
 }
 
@@ -250,18 +259,19 @@ const formatDate = (date) => date ? new Date(date).toLocaleDateString() : ''
       </div>
 
       <div class="users-list">
-        <div v-for="user in paginatedUsers" :key="user.dni" class="user-list-item" @click="toggleDetails(user.dni)" :class="{ 'expanded': expandedUser === user.dni }">
-          <div class="user-summary">
+        <ExpandableListItem
+          v-for="user in paginatedUsers"
+          :key="user.dni"
+          :expanded="expandedUser.includes(user.dni)"
+          @toggle="toggleDetails(user.dni)"
+        >
+          <template #summary-left>
             <span class="user-name">{{ user.nombre }} {{ user.apellidos }}</span>
-            <div class="summary-right">
-              <span class="role">{{ user.categoria }}</span>
-              <span class="material-symbols-outlined arrow-icon" :class="{ 'rotated': expandedUser === user.dni }">expand_more</span>
-            </div>
-          </div>
-
-          <div class="user-details-card" v-if="expandedUser === user.dni" @click.stop>
-            <div class="card-header">
-            </div>
+          </template>
+          <template #summary-right>
+            <span class="role">{{ user.categoria }}</span>
+          </template>
+          <template #details>
             <div class="card-body between">
               <div class="data">
                 <p><strong>DNI:</strong> {{ user.dni }}</p>
@@ -278,8 +288,8 @@ const formatDate = (date) => date ? new Date(date).toLocaleDateString() : ''
                 <button @click.stop="openDeleteModal(user)"><span class="material-symbols-outlined delete">delete</span></button>
               </div>
             </div>
-          </div>
-        </div>
+          </template>
+        </ExpandableListItem>
       </div>
     </div>
   </main>
@@ -298,50 +308,10 @@ main {
   margin-top: 20px;
 }
 
-.user-list-item {
-  position: relative;
-  background-color: #fff;
-  padding: 15px 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-  cursor: pointer;
-  transition: all 0.2s ease;
-  border: 1px solid #eee;
-}
-
-.user-list-item:hover, .user-list-item.expanded {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-  z-index: 10;
-  border-color: #2a4ea2;
-}
-
-.card-header {
-  position: relative;
-  display: flex;
-  justify-content: right;
-  align-items: center;
-  margin-bottom: 15px;
-}
-
-.user-summary {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
 .user-name {
   font-weight: 600;
   font-size: 1.1rem;
   color: #333;
-}
-
-.user-details-card {
-  border-top: 1px solid #eee;
-  padding: 15px;
-  margin-top: 10px;
-  border-radius: 6px;
-  cursor: default;
 }
 
 .role {
@@ -397,44 +367,13 @@ main {
   cursor: not-allowed;
 }
 
-.summary-right {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.arrow-icon {
-  transition: transform 0.3s ease;
-  color: #666;
-}
-
-.arrow-icon.rotated {
-  transform: rotate(180deg);
-}
-
 .between {
   display: flex;
   justify-content: space-between;
 }
 
-:global(.dark) .user-list-item {
-  background-color: #0a0a0a;
-  border: 1px solid #1e293b;
-  color: #f8fafc;
-}
-
 :global(.dark) .user-name {
   color: #f8fafc;
-}
-
-:global(.dark) .user-details-card {
-  background-color: #111827;
-  border-top: 1px solid #334155;
-  color: #f8fafc;
-}
-
-:global(.dark) .card-header h3 {
-  color: #ffffff;
 }
 
 :global(.dark) .card-body strong {
