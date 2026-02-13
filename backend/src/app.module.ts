@@ -5,6 +5,7 @@ import { AppService } from './app.service';
 import { StatsModule } from './stats/stats.module';
 import { UsersModule } from './users/users.module';
 import { ActivitiesModule } from './activities/activities.module';
+import { AuthModule } from './auth/auth.module';
 
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import * as path from 'path';
@@ -41,6 +42,8 @@ import { ThrottlerModule } from '@nestjs/throttler';
     StatsModule,
     UsersModule,
     ActivitiesModule,
+    AuthModule,
+
     // Otros módulos
     
   ],

@@ -6,8 +6,13 @@ import ModalForm from '../components/ModalForm.vue'
 import ModalEdit from '../components/ModalEdit.vue'
 import ModalDelete from '../components/ModalDelete.vue'
 import ExpandableListItem from '../components/ExpandableListItem.vue'
+import DataDisplay from '../components/DataDisplay.vue'
+import ActionButtons from '../components/ActionButtons.vue'
+import PrimaryButton from '../components/PrimaryButton.vue'
+import SearchInput from '../components/SearchInput.vue'
 import { userSchema } from '@/formSchemas/user.schema'
 import { userEditSchema } from '@/formSchemas/userEdit.schema'
+import { api } from '@/api'
 
 const users = ref([])
 const searchQuery = ref('')
@@ -24,14 +29,8 @@ const itemsPerPage = 20
 
 const loadUsers = async () => {
   try {
-    const response = await fetch('http://localhost:3000/users')
-
-    const contentType = response.headers.get('content-type')
-    if (!contentType?.includes('application/json')) {
-      throw new Error('La respuesta no es JSON')
-    }
-
-    const data = await response.json()
+    const response = await api.get('/users')
+    const data = response.data
     // NestJS devuelve el array directamente, ajustamos la lectura:
     users.value = Array.isArray(data) ? data : (data.users || [])
   } catch (error) {
@@ -110,25 +109,14 @@ const addUsers = () => {
 const saveUser = async (newUser) => {
   try {
     console.log('Nuevo usuario a enviar:', newUser);
-    const response = await fetch('http://localhost:3000/users', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(newUser)
-    })
-
-    console.log('Response:', response)
-
-    if (!response.ok) {
-      const errorData = await response.json()
-      throw new Error(errorData.error || 'Error al guardar el usuario')
-    }
-
-    const savedUser = await response.json()
+    const response = await api.post('/users', newUser)
+    const savedUser = response.data
     users.value.unshift(savedUser) // Agrega al inicio para verlo rápidamente
     showAddUserModal.value = false
   } catch (error) {
     console.error('Error al guardar el usuario:', error)
-    alert(`No se pudo guardar el usuario: ${error.message}`)
+    const errorMsg = error.response?.data?.error || error.response?.data?.message || error.message || 'Error al guardar el usuario'
+    alert(`No se pudo guardar el usuario: ${errorMsg}`)
   }
 }
 
@@ -146,22 +134,8 @@ const saveEdit = async (payload) => {
       payloadForBackend.poblacion = payloadForBackend.localidad;
       delete payloadForBackend.localidad;
     }
-    const res = await fetch(`http://localhost:3000/users/edit`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payloadForBackend)
-    })
-    if (!res.ok) {
-      let errMsg = 'No se pudo actualizar el usuario'
-      try {
-        const errBody = await res.json()
-        if (errBody?.message) errMsg = Array.isArray(errBody.message) ? errBody.message.join(', ') : errBody.message
-        else if (errBody?.error) errMsg = errBody.error
-      } catch {}
-      editError.value = errMsg
-      return
-    }
-    const updatedUser = await res.json()
+    const res = await api.post('/users/edit', payloadForBackend)
+    const updatedUser = res.data
     const idx = users.value.findIndex(u => u.dni === updatedUser.dni)
     if (idx !== -1) {
       // El backend devuelve la entidad sin procesar. Necesitamos mapearla al modelo de la vista.
@@ -189,7 +163,8 @@ const saveEdit = async (payload) => {
     editingUsers.value = null
     editError.value = ''
   } catch (e) {
-    editError.value = e?.message || String(e) || 'No se pudo actualizar el usuario'
+    const errMsg = e.response?.data?.message || e.response?.data?.error || e?.message || String(e) || 'No se pudo actualizar el usuario'
+    editError.value = Array.isArray(errMsg) ? errMsg.join(', ') : errMsg
   }
 }
 
@@ -202,13 +177,11 @@ const confirmDelete = async () => {
   if (!userToDelete.value) return
   try {
     console.log('DNI a eliminar:', userToDelete.value.dni)
-    const res = await fetch(`http://localhost:3000/users/delete`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ dni: userToDelete.value.dni })
-    })
+    await api.post('/users/delete', { dni: userToDelete.value.dni })
   } catch (error) {
     console.error('Error al eliminar el usuario:', error)
+    alert(`Error al eliminar usuario: ${error.response?.data?.message || error.message || 'Error desconocido'}`)
+    return
   }
   // TODO: FINISH DELETE....
   const idx = users.value.findIndex(u => u.dni === userToDelete.value.dni)
@@ -248,13 +221,13 @@ const formatDate = (date) => date ? new Date(date).toLocaleDateString() : ''
               <span class="material-symbols-outlined">chevron_right</span>
             </button>
           </div>
-          <button @click="addUsers">Agregar Usuario</button>
+          <PrimaryButton @click="addUsers">Agregar Usuario</PrimaryButton>
           <transition name="fade-scale" v-if="showAddUserModal">
             <ModalForm :schema="userSchema" @submit="saveUser" v-if="showAddUserModal" @close="showAddUserModal = false"/>
           </transition>
           <ModalEdit :schema="userEditSchema" :initial="editingUsers" :error="editError" @submit="saveEdit" v-if="showEditModal" @close="() => { showEditModal = false; editingUsers = null; editError = '' }"/>
           <ModalDelete :title="'Eliminar Usuario'" :message="'¿Está seguro de que desea eliminar este Usuario? Esta acción no se puede deshacer.'" :itemName="userToDelete?.name" @confirm="confirmDelete" @close="() => { showDeleteModal = false; userToDelete = null }" v-if="showDeleteModal"/>
-          <input type="text" placeholder="Buscar usuario..." v-model="searchQuery"/>
+          <SearchInput placeholder="Buscar usuario..." v-model="searchQuery"/>
         </div>
       </div>
 
@@ -273,20 +246,24 @@ const formatDate = (date) => date ? new Date(date).toLocaleDateString() : ''
           </template>
           <template #details>
             <div class="card-body between">
-              <div class="data">
-                <p><strong>DNI:</strong> {{ user.dni }}</p>
-                <p><strong>Email:</strong> {{ user.email }}</p>
-                <p><strong>Tel:</strong> {{ user.telefono || '-' }}</p>
-                <p><strong>Dirección:</strong> {{ user.direccion || '-' }}, {{ user.CP || '-' }}</p>
-                <p><strong>Localidad:</strong> {{ user.localidad || '-' }}, {{ user.provincia || '-' }}, {{ user.pais || '-' }}</p>
-                <p><strong>Fecha Alta:</strong> {{ formatDate(user.fechadealta) }}</p>
-                <p><strong>Fecha Baja:</strong> {{ formatDate(user.fechadebaja) || '-' }}</p>
-                <p><strong>Forma Pago:</strong> {{ user.formadepago || '-' }} | <strong>Cuota:</strong> {{ user.cuota || '-' }}</p>
-              </div>
-              <div class="action-buttons">
-                <button @click.stop="editUser(user)"><span class="material-symbols-outlined edit">edit</span></button>
-                <button @click.stop="openDeleteModal(user)"><span class="material-symbols-outlined delete">delete</span></button>
-              </div>
+              <DataDisplay
+                :items="[
+                  { label: 'DNI', value: user.dni },
+                  { label: 'Email', value: user.email },
+                  { label: 'Tel', value: user.telefono },
+                  { label: 'Dirección', value: `${user.direccion || '-'}, ${user.CP || '-'}` },
+                  { label: 'Localidad', value: `${user.localidad || '-'}, ${user.provincia || '-'}, ${user.pais || '-'}` },
+                  { label: 'Fecha Alta', value: formatDate(user.fechadealta) },
+                  { label: 'Fecha Baja', value: formatDate(user.fechadebaja) },
+                  { label: 'Forma Pago', value: `${user.formadepago || '-'} | Cuota: ${user.cuota || '-'}` }
+                ]"
+              />
+              <ActionButtons
+                showEdit
+                showDelete
+                @edit="editUser(user)"
+                @delete="openDeleteModal(user)"
+              />
             </div>
           </template>
         </ExpandableListItem>
@@ -299,6 +276,8 @@ const formatDate = (date) => date ? new Date(date).toLocaleDateString() : ''
 main {
   padding: 20px 40px;
   min-height: 100vh;
+  background-color: var(--bg-primary);
+  transition: background-color 0.3s ease;
 }
 
 .users-list {
@@ -311,7 +290,8 @@ main {
 .user-name {
   font-weight: 600;
   font-size: 1.1rem;
-  color: #333;
+  color: var(--text-primary);
+  transition: color 0.3s ease;
 }
 
 .role {
@@ -328,38 +308,27 @@ main {
   gap: 15px;
 }
 
-.options button {
-  padding: 10px 15px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-  font-size: 14px;
-  cursor: pointer;
-  transition: background-color 0.2s;
-  background-color: #2a4ea2;
-  color: #fff;
-}
-
-.options button:hover {
-  background-color: #1b3570;
-}
+/* Los botones primarios ahora usan el componente PrimaryButton */
 
 .pagination-controls {
   display: flex;
   align-items: center;
   gap: 10px;
   font-size: 0.9rem;
-  color: #666;
+  color: var(--text-secondary);
+  transition: color 0.3s ease;
 }
 
 .options button.page-btn {
   padding: 5px;
   background-color: transparent;
-  color: #333;
-  border: 1px solid #ddd;
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  transition: all 0.3s ease;
 }
 
 .options button.page-btn:hover {
-  background-color: #f0f0f0;
+  background-color: var(--button-secondary-hover);
 }
 
 .options button.page-btn:disabled {
@@ -370,53 +339,11 @@ main {
 .between {
   display: flex;
   justify-content: space-between;
-}
-
-:global(.dark) .user-name {
-  color: #f8fafc;
-}
-
-:global(.dark) .card-body strong {
-  color: #60a5fa;
-}
-
-:global(.dark) .card-body p {
-  color: #94a3b8;
+  gap: 20px;
 }
 
 :global(.dark) .role {
   background-color: rgba(37, 99, 235, 0.2);
   color: #60a5fa;
-}
-
-.action-buttons {
-  display: flex;
-  justify-content: start;
-  align-items: start;
-}
-
-:global(.dark) .action-buttons button span {
-  color: #94a3b8;
-}
-
-:global(.dark) .action-buttons button:hover span.edit {
-  color: #60a5fa;
-}
-
-:global(.dark) .action-buttons button:w span.delete {
-  color: #f87171;
-}
-
-:global(.dark) .pagination-controls {
-  color: #aaa;
-}
-
-:global(.dark) .options button.page-btn {
-  color: #eee;
-  border-color: #444;
-}
-
-:global(.dark) .options button.page-btn:hover {
-  background-color: #333;
 }
 </style>

@@ -1,3 +1,5 @@
+import { api } from '@/api'
+
 export const ActivitySchema = [
   {
     section: 'Datos de la actividad',
@@ -34,10 +36,8 @@ export const ActivitySchema = [
         label: 'Monitor',
         type: 'select',
         options: async () => {
-          const response = await fetch('http://localhost:3000/activities/monitors');
-          if (!response) throw new Error('Error HTTP')
-          console.log(response)
-          const data: { id: number; nombre: string }[] = await response.json();
+          const response = await api.get('/activities/Monitors');
+          const data: { id: number; nombre: string }[] = response.data;
           return data.map((monitor) => ({ value: monitor.id, label: monitor.nombre }));
         }
       }

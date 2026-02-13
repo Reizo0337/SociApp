@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import StatisticsCard from '@/components/StatisticsCard.vue'
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import Title from '@/components/Title.vue'
 import Chart from '@/components/Chart.vue'
+import { api } from '@/api'
 
 const stats = ref([
   { title: 'Socios', data: 0, icon: 'people', href: '/usuarios?search=Socio', background: '#20a8d8' },
@@ -13,21 +14,32 @@ const stats = ref([
 ])
 
 
+const isDark = ref(document.documentElement.classList.contains('dark'))
+
+// Observar cambios en el modo oscuro para actualizar el chart
 onMounted(async () => {
   try {
-    const response = await fetch('http://localhost:3000/stats')
-    if (response.ok) {
-      const data = await response.json()
-      // añadir a data un mini texto en un futuro
-      if (stats?.value?.[0]) stats.value[0].data = data.socios ?? 0;
-      if (stats?.value?.[1]) stats.value[1].data = data.noSocios ?? 0;
-      if (stats?.value?.[2]) stats.value[2].data = data.actividades ?? 0;
-      if (stats?.value?.[3]) stats.value[3].data = data.proyectos ?? 0;
-      if (stats?.value?.[4]) stats.value[4].data = data.trabajadores ?? 0;
-    }
+    const response = await api.get('/stats')
+    const data = response.data
+    // añadir a data un mini texto en un futuro
+    if (stats?.value?.[0]) stats.value[0].data = data.socios ?? 0;
+    if (stats?.value?.[1]) stats.value[1].data = data.noSocios ?? 0;
+    if (stats?.value?.[2]) stats.value[2].data = data.actividades ?? 0;
+    if (stats?.value?.[3]) stats.value[3].data = data.proyectos ?? 0;
+    if (stats?.value?.[4]) stats.value[4].data = data.trabajadores ?? 0;
   } catch (error) {
     console.error('Error al cargar estadísticas:', error)
   }
+  
+  // Observar cambios en la clase dark del documento
+  const observer = new MutationObserver(() => {
+    isDark.value = document.documentElement.classList.contains('dark')
+  })
+  
+  observer.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ['class']
+  })
 })
 
 const chartData = computed(() => ({
@@ -50,20 +62,36 @@ const chartData = computed(() => ({
 }))
 
 
-const chartOptions = {
-  plugins: {
-    legend: {
-      display: false,
+const chartOptions = computed(() => {
+  return {
+    plugins: {
+      legend: {
+        display: false,
+      },
     },
-  },
-  responsive: true,
-  maintainAspectRatio: false,
-  scales: {
-    y: {
-      beginAtZero: true,
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      y: {
+        beginAtZero: true,
+        ticks: {
+          color: isDark.value ? '#e0e0e0' : '#666',
+        },
+        grid: {
+          color: isDark.value ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
+        },
+      },
+      x: {
+        ticks: {
+          color: isDark.value ? '#e0e0e0' : '#666',
+        },
+        grid: {
+          color: isDark.value ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
+        },
+      },
     },
-  },
-}
+  }
+})
 </script>
 
 <template>
@@ -88,13 +116,16 @@ const chartOptions = {
 main {
   padding: 20px 40px;
   min-height: 100vh;
+  background-color: var(--bg-primary);
+  transition: background-color 0.3s ease;
 }
 
 .chart-container {
   margin-top: 50px;
   margin-left: 50px;
   margin-right: 50px;
-  border-top: 1px solid #000;
+  border-top: 1px solid var(--border-color);
+  transition: border-color 0.3s ease;
 }
 
 .statistics-container {
@@ -106,16 +137,8 @@ main {
 }
 
 .statistics-container > *:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 6px 14px rgba(0,0,0,.15);
-  transition: all 0.3s ease;
-}
-
-.statistics-container > *:hover {
   transform: translateY(-3px);
-}
-
-:global(.dark) .statistics-container > *:hover {
-  box-shadow: 0 6px 14px rgba(0,0,0,.5);
+  box-shadow: 0 6px 14px var(--card-shadow-hover);
+  transition: all 0.3s ease;
 }
 </style>

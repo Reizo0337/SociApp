@@ -53,14 +53,16 @@ const confirm = () => {
 }
 
 .modal-content {
-  background: #fff;
+  background: var(--card-bg);
   border-radius: 12px;
   width: 100%;
   position: relative;
   max-height: 40vh;
   max-width: 350px;
   padding: 24px;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+  box-shadow: 0 10px 40px var(--card-shadow);
+  border: 1px solid var(--border-color);
+  transition: all 0.3s ease;
 }
 
 .close-button {
@@ -71,6 +73,8 @@ const confirm = () => {
   cursor: pointer;
   border: none;
   background: transparent;
+  color: var(--text-primary);
+  transition: color 0.3s ease;
 }
 
 .delete-container {
@@ -86,21 +90,24 @@ const confirm = () => {
 .delete-container h3 {
   margin-bottom: 12px;
   font-size: 20px;
-  color: #1f2937;
+  color: var(--text-primary);
+  transition: color 0.3s ease;
 }
 
 .delete-container p {
   margin-bottom: 12px;
   font-size: 14px;
-  color: #555;
+  color: var(--text-secondary);
+  transition: color 0.3s ease;
 }
 
 .item-name {
-  background: #f3f4f6;
+  background: var(--bg-tertiary);
   padding: 12px;
   border-radius: 8px;
   margin-top: 16px;
-  color: #1f2937 !important;
+  color: var(--text-primary) !important;
+  transition: all 0.3s ease;
 }
 
 .actions {
@@ -119,12 +126,13 @@ const confirm = () => {
 }
 
 .secondary {
-  background: #e5e7eb;
-  color: #111827;
+  background: var(--button-secondary);
+  color: var(--text-primary);
+  transition: all 0.3s ease;
 }
 
 .secondary:hover {
-  background: #d1d5db;
+  background: var(--button-secondary-hover);
 }
 
 .danger {
