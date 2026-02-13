@@ -13,7 +13,7 @@ const stats = ref([
 
 onMounted(async () => {
   try {
-    const response = await fetch('http://192.168.1.55:3000/stats')
+    const response = await fetch('http://localhost:3000/stats')
     if (response.ok) {
       const data = await response.json()
       // añadir a data un mini texto en un futuro

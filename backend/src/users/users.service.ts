@@ -18,8 +18,10 @@ export class UsersService {
   async getUsersData() {
     try {
       const users = await this.userRepository.find();
-      return {
-        users: users.map(user => ({
+
+      const sortedUsers = users
+        .sort((a, b) => a.nombre.localeCompare(b.nombre))
+        .map(user => ({
           nombre: user.nombre,
           apellidos: user.apellidos,
           dni: user.dni,
@@ -36,13 +38,16 @@ export class UsersService {
           cuota: Number(user.cuota) || 0,
           categoria: user.categoria,
           socio: user.socio,
-        })),
-      };
+        }));
+
+      return { users: sortedUsers };
+
     } catch (error) {
       this.logger.error('Failed to fetch users data', error);
       throw error;
     }
   }
+
 
   async createUser(dto: CreateUserDto) {
     try {

@@ -6,6 +6,13 @@
     'opsz' 24;
 }
 
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  scrollbar-width: none;
+}
+
 body {
   background-color: #ffffff;
   margin: 0;
