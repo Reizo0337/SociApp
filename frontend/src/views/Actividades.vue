@@ -29,6 +29,15 @@ onMounted(async () => {
     }
     const activitiesData = await activitiesResponse.json()
     activities.value = activitiesData.activities || []
+
+    // Cargar monitores
+    const monitorsResponse = await fetch('http://localhost:3000/api/monitors')
+    const monitorsContentType = monitorsResponse.headers.get('content-type')
+    if (!monitorsContentType?.includes('application/json')) {
+      throw new Error('La respuesta de monitores no es JSON')
+    }
+    const monitorsData = await monitorsResponse.json()
+    monitors.value = monitorsData || []
   } catch (error) {
     console.error('Error al cargar datos:', error)
   }
