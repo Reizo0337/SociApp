@@ -156,7 +156,7 @@
         v-if="showAddUserModal && sectionForm[selectedSection]"
         :schema="sectionForm[selectedSection]"
         :title="sectionTitle[selectedSection]"
-        :initialData="selectedSection === 'datos' ? asociacionData : null"
+        :initialData="selectedSection === 'datos' ? asociacionData : editingData"
         @submit="handleSave"
         @close="showAddUserModal = false"
       />
@@ -165,7 +165,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import ModalForm from '@/components/ModalForm.vue'
 import Title from '../components/Title.vue'
 import { bancosSchema } from '@/formSchemas/bancos.schema'
@@ -179,6 +179,7 @@ const selectedSection = ref(null)
 const showAddUserModal = ref(false)
 const editingData = ref(null)
 const editingIndex = ref(null)
+const loading = ref(false) // Para feedback visual
 
 //estados de datos
 const asociacionData = ref(null)
@@ -186,6 +187,22 @@ const listaBancos = ref([])
 const listaJunta = ref([])
 const listaDonativos = ref([])
 const listaRelaciones = ref([])
+
+const fetchConfiguracion = async () => {
+  try {
+    const response = await fetch('http://localhost:3000/configuracion/datos');
+    if (response.ok) {
+      const data = await response.json();
+      asociacionData.value = data;
+    }
+  } catch (error) {
+    console.error('Error cargando configuración:', error);
+  }
+};
+
+onMounted(() => {
+  fetchConfiguracion();
+});
 
 const sectionTitle = {
   datos: 'Datos Asociación',
@@ -250,11 +267,30 @@ function deleteBanco(index) {
 function deleteItem(list, index) {
   list.splice(index, 1)
 }
-function handleSave(data) {
+async function handleSave(data) {
   const section = selectedSection.value
 
   if (section === 'datos') {
-    asociacionData.value = data
+    try {
+      loading.value = true;
+      const response = await fetch('http://localhost:3000/configuracion/datos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+
+      if (!response.ok) throw new Error('Error al guardar');
+
+      const updatedData = await response.json();
+      asociacionData.value = updatedData; // Actualizamos el estado local
+      showAddUserModal.value = false;
+      alert('¡Configuración guardada con éxito!');
+    } catch (error) {
+      alert('Error al conectar con el servidor');
+      console.error(error);
+    } finally {
+      loading.value = false;
+    }
   } else {
     // Lógica para listas dinámicas
     const listMap = {
@@ -366,13 +402,12 @@ function handleSave(data) {
 }
 
 .icon-box {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
+  width: 70px;
+  height: 70px;
+  border-radius: 15px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-right: 15px; /* Espacio a la derecha del icono */
   flex-shrink: 0;
 }
 
