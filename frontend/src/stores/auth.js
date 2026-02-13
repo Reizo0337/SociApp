@@ -83,6 +83,11 @@ export const useAuthStore = defineStore('auth', {
       }
       this.user = null
       this.setAccessToken(null)
+
+      // Force redirect to landing page
+      if (typeof window !== 'undefined') {
+        window.location.href = '/'
+      }
     },
   },
 })

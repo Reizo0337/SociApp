@@ -10,6 +10,8 @@ const stats = ref([
   { title: 'No Socios', data: 0, icon: 'people', href: '/usuarios?search=noSocio', background: '#63c2de' },
   { title: 'Actividades', data: 0, icon: 'event', href: '/actividades', background: '#fec106' },
   { title: 'Proyectos', data: 0, icon: 'assignment', href:'/proyectos', background: '#f86c6b' },
+  { title: 'Activos', data: 0, icon: 'play_circle', href:'/proyectos?search=Activo', background: '#2196F3' },
+  { title: 'Pendientes', data: 0, icon: 'hourglass_empty', href:'/proyectos?search=Pendiente', background: '#FF9800' },
   { title: 'Trabajadores', data: 0, icon:'person', href:'/usuarios?search=trabajador', background: '#20a8d8' }
 ])
 
@@ -26,7 +28,9 @@ onMounted(async () => {
     if (stats?.value?.[1]) stats.value[1].data = data.noSocios ?? 0;
     if (stats?.value?.[2]) stats.value[2].data = data.actividades ?? 0;
     if (stats?.value?.[3]) stats.value[3].data = data.proyectos ?? 0;
-    if (stats?.value?.[4]) stats.value[4].data = data.trabajadores ?? 0;
+    if (stats?.value?.[4]) stats.value[4].data = data.proyectosActivos ?? 0;
+    if (stats?.value?.[5]) stats.value[5].data = data.proyectosPendientes ?? 0;
+    if (stats?.value?.[6]) stats.value[6].data = data.trabajadores ?? 0;
   } catch (error) {
     console.error('Error al cargar estadísticas:', error)
   }
@@ -120,25 +124,49 @@ main {
   transition: background-color 0.3s ease;
 }
 
-.chart-container {
-  margin-top: 50px;
-  margin-left: 50px;
-  margin-right: 50px;
-  border-top: 1px solid var(--border-color);
-  transition: border-color 0.3s ease;
+@media (max-width: 768px) {
+  main {
+    padding: 20px 15px;
+  }
 }
 
 .statistics-container {
-  display: flex;
-  gap: 20px;
-  margin-top: 20px;
-  margin-left: 50px;
-  margin-right: 50px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 24px;
+  margin-top: 30px;
+  padding: 0 20px;
+}
+
+@media (max-width: 768px) {
+  .statistics-container {
+    padding: 0 10px;
+    gap: 15px;
+  }
+}
+
+.statistics-container > * {
+  width: 100% !important;
+  margin-bottom: 0;
+  height: 160px;
 }
 
 .statistics-container > *:hover {
   transform: translateY(-3px);
   box-shadow: 0 6px 14px var(--card-shadow-hover);
   transition: all 0.3s ease;
+}
+
+.chart-container {
+  margin: 50px 20px 0 20px;
+  padding-top: 30px;
+  border-top: 1px solid var(--border-color);
+  transition: border-color 0.3s ease;
+}
+
+@media (max-width: 768px) {
+  .chart-container {
+    margin: 30px 10px 0 10px;
+  }
 }
 </style>

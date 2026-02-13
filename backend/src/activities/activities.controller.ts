@@ -3,12 +3,14 @@ import { Controller, Get, Post, Body, Put, Delete, Param, UseGuards } from '@nes
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
+import { CreateActivityDto } from './dto/create-activity.dto';
+import { UpdateActivityDto } from './dto/update-activity.dto';
 
 // ⚠️ SEGURIDAD: Todos los endpoints protegidos - solo administradores pueden acceder
 @Controller('activities')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class ActivitiesController {
-  constructor(private readonly activitiesService: ActivitiesService) {}
+  constructor(private readonly activitiesService: ActivitiesService) { }
 
   // Obtener todas las actividades
   @Get()
@@ -20,14 +22,14 @@ export class ActivitiesController {
   // Crear nueva actividad
   @Post()
   @Roles('monitor', 'admin')
-  create(@Body() activity: any) {
-    return this.activitiesService.createActivity(activity);
+  create(@Body() createActivityDto: CreateActivityDto) {
+    return this.activitiesService.createActivity(createActivityDto);
   }
 
   @Put(':id')
   @Roles('monitor', 'admin')
-  update(@Param('id') id: string, @Body() activity: any) {
-    return this.activitiesService.updateActivity(Number(id), activity);
+  update(@Param('id') id: string, @Body() updateActivityDto: UpdateActivityDto) {
+    return this.activitiesService.updateActivity(Number(id), updateActivityDto);
   }
 
   @Delete(':id')

@@ -5,7 +5,7 @@ import logo from '@/assets/logo.png'
 import ToggleSwitch from '@/components/ToggleSwitch.vue'
 import { useAuthStore } from '@/stores/auth'
 
-const emit = defineEmits(['toggle-menu'])
+const emit = defineEmits(['toggle-menu', 'open-login', 'open-register'])
 const router = useRouter()
 const auth = useAuthStore()
 
@@ -21,7 +21,7 @@ const userName = computed(() => {
 
 const handleLogout = async () => {
   await auth.logout()
-  router.push({ name: 'login' })
+  router.push({ name: 'landing' })
 }
 
 const toggleMenu = () => {
@@ -31,14 +31,14 @@ const toggleMenu = () => {
 }
 
 const handleMouseEnter = () => {
-  if (!isPinned.value) {
+  if (window.innerWidth > 768 && !isPinned.value) {
     isOpen.value = true
     emit('toggle-menu', true)
   }
 }
 
 const handleMouseLeave = () => {
-  if (!isPinned.value) {
+  if (window.innerWidth > 768 && !isPinned.value) {
     isOpen.value = false
     emit('toggle-menu', false)
   }
@@ -48,7 +48,7 @@ const handleMouseLeave = () => {
 <template>
   <header>
     <div class="header">
-      <button class="menu-toggle" @click="toggleMenu">
+      <button class="menu-toggle" @click="toggleMenu" v-if="auth.isAuthenticated && auth.isAdmin">
         <span class="material-symbols-outlined">menu</span>
       </button>
       <RouterLink to="/" class="logo-wrapper">
@@ -60,12 +60,12 @@ const handleMouseLeave = () => {
 
       <!-- Si no está logueado: mostrar Login y Register -->
       <div v-if="!auth.isAuthenticated" class="auth-buttons">
-        <RouterLink to="/login" class="auth-link">
-          <p>Login</p>
-        </RouterLink>
-        <RouterLink to="/register" class="auth-link">
-          <p>Register</p>
-        </RouterLink>
+        <button @click="$emit('open-login')" class="auth-link-btn">
+          Login
+        </button>
+        <button @click="$emit('open-register')" class="auth-btn-primary">
+          Register
+        </button>
       </div>
 
       <!-- Si está logueado: mostrar toggle, bienvenida y logout -->
@@ -83,6 +83,7 @@ const handleMouseLeave = () => {
     :class="{ 'is-open': isOpen }"
     @mouseenter="handleMouseEnter"
     @mouseleave="handleMouseLeave"
+    v-if="auth.isAuthenticated && auth.isAdmin"
   >
     <nav class="sidebar-nav">
       <ul>
@@ -115,6 +116,13 @@ const handleMouseLeave = () => {
       </ul>
     </nav>
   </aside>
+
+  <!-- Overlay para cerrar el menú en móvil -->
+  <div 
+    v-if="isOpen && auth.isAuthenticated && auth.isAdmin" 
+    class="sidebar-overlay" 
+    @click="toggleMenu"
+  ></div>
 </template>
 
 <style scoped>
@@ -127,7 +135,7 @@ const handleMouseLeave = () => {
   background: var(--bg-secondary);
   display: flex;
   align-items: center;
-  padding: 0 20px;
+  padding: 0 13px;
   z-index: 1003;
   border-bottom: 1px solid var(--border-color);
   transition:
@@ -135,18 +143,7 @@ const handleMouseLeave = () => {
     border-color 0.3s ease;
 }
 
-.sidebar .header .menu-toggle {
-  transition: background 0.2s ease;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-right: 10px;
-}
 
-.menu-toggle span {
-  margin-left: 3px;
-}
 
 .close {
   margin-top: 10px;
@@ -177,6 +174,19 @@ const handleMouseLeave = () => {
   width: 250px;
 }
 
+@media (max-width: 768px) {
+  .sidebar {
+    width: 0;
+    padding: 0;
+    border: none;
+  }
+  .sidebar.is-open {
+    width: 250px;
+    padding: 20px 10px;
+    box-shadow: 4px 0 15px rgba(0,0,0,0.1);
+  }
+}
+
 .sidebar-header {
   display: flex;
   flex-direction: column;
@@ -201,12 +211,18 @@ const handleMouseLeave = () => {
   cursor: pointer;
   text-decoration: none;
   color: var(--text-primary);
-  font-size: 1.3rem;
+  font-size: 1.5rem;
 }
 
 .logo-wrapper img {
-  width: 100px;
+  width: 70px;
   height: auto;
+}
+
+@media (max-width: 768px) {
+  .logo-text {
+    display: none;
+  }
 }
 
 .logo-icon {
@@ -221,9 +237,15 @@ const handleMouseLeave = () => {
 .menu-toggle {
   background: none;
   border: none;
-  font-size: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
   cursor: pointer;
   color: var(--text-primary);
+  transition: background-color 0.2s ease;
 }
 
 .theme-toggle-small {
@@ -239,19 +261,34 @@ const handleMouseLeave = () => {
   margin-right: 20px;
 }
 
-.auth-link {
-  text-decoration: none;
+.auth-link-btn {
+  background: none;
+  border: none;
   color: var(--text-primary);
   font-size: 0.95rem;
   padding: 8px 16px;
   border-radius: 6px;
-  transition:
-    background-color 0.2s,
-    color 0.3s ease;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.3s ease;
 }
 
-.auth-link:hover {
+.auth-link-btn:hover {
   background-color: var(--button-secondary);
+}
+
+.auth-btn-primary {
+  background: var(--button-primary);
+  color: white;
+  border: none;
+  font-size: 0.95rem;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.auth-btn-primary:hover {
+  background: var(--button-primary-hover);
 }
 
 .user-info {
@@ -262,10 +299,14 @@ const handleMouseLeave = () => {
   margin-right: 20px;
 }
 
-.welcome-text {
-  color: var(--text-primary);
-  font-size: 0.95rem;
-  font-weight: 500;
+@media (max-width: 768px) {
+  .welcome-text {
+    display: none;
+  }
+  .user-info {
+    margin-right: 10px;
+    gap: 10px;
+  }
 }
 
 .logout-btn {
@@ -321,10 +362,13 @@ const handleMouseLeave = () => {
     color 0.3s ease;
 }
 
-.nav-link:hover,
-.menu-toggle:hover {
+.nav-link:hover {
   background-color: var(--button-secondary);
   border-radius: 30px;
+}
+
+.menu-toggle:hover {
+  background-color: var(--button-secondary);
 }
 
 .nav-link.router-link-active {
@@ -336,6 +380,24 @@ const handleMouseLeave = () => {
 :global(.dark) .nav-link.router-link-active {
   background-color: rgba(42, 78, 162, 0.2);
   color: #60a5fa;
+}
+
+.sidebar-overlay {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .sidebar-overlay {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 1001;
+    backdrop-filter: blur(2px);
+  }
 }
 
 .icon {

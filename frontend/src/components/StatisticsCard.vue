@@ -34,7 +34,7 @@ const typeClass = computed(() => (props.type ? `type-${props.type}` : ''))
     </div>
     <div class="unify">
       <div class="data">
-        <p v-if="data">{{ data }}</p>
+        <p v-if="data !== undefined && data !== null">{{ data }}</p>
         <slot name="content"></slot>
       </div>
       <div class="localizacion" v-if="localizacion">
@@ -53,7 +53,7 @@ const typeClass = computed(() => (props.type ? `type-${props.type}` : ''))
   display: flex;
   flex-direction: column;
   border-radius: 8px;
-  padding: 8px;
+  padding: 16px;
   margin-bottom: 16px;
   border: 1px solid var(--border-color);
   box-sizing: border-box;

@@ -14,19 +14,28 @@ export class AuthService {
   constructor(
     private usersService: UsersService,
     private jwtService: JwtService,
-  ) {}
+  ) { }
 
   // 🔹 REGISTER
   async register(dto: RegisterDto) {
+    console.log('📝 Registration DTO received:', JSON.stringify(dto, null, 2));
+    console.log('📅 fechaalta value:', dto.fechaalta);
+    console.log('📅 fechaalta type:', typeof dto.fechaalta);
+
     const existingUser = await this.usersService.findByEmail(dto.email);
     if (existingUser) throw new ConflictException('Email already exists');
 
     const hashedPassword = await bcrypt.hash(dto.password, 12);
 
-    const user = await this.usersService.create({
+    // Convert fechaalta string to Date object for database
+    const userData = {
       ...dto,
       password: hashedPassword,
-    });
+      fechaalta: new Date(dto.fechaalta),
+      fechabaja: dto.fechabaja ? new Date(dto.fechabaja) : undefined,
+    };
+
+    const user = await this.usersService.create(userData);
 
     return this.generateTokens(user);
   }

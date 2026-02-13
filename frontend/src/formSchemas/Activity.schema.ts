@@ -19,7 +19,7 @@ export const ActivitySchema = [
         type: 'select',
         required: true,
         options: [
-          '10:00','11:00','12:00','13:00','17:00','18:00','19:00','20:00'
+          '10:00', '11:00', '12:00', '13:00', '17:00', '18:00', '19:00', '20:00'
         ]
       },
       {
@@ -28,11 +28,11 @@ export const ActivitySchema = [
         type: 'select',
         required: true,
         options: [
-          '10:00','11:00','12:00','13:00','17:00','18:00','19:00','20:00'
+          '10:00', '11:00', '12:00', '13:00', '17:00', '18:00', '19:00', '20:00'
         ]
       },
       {
-        key: 'monitorId',          // <-- clave en model
+        key: 'idMonitor',          // <-- clave en model
         label: 'Monitor',
         type: 'select',
         options: async () => {

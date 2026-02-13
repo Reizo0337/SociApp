@@ -12,9 +12,10 @@ import PrimaryButton from '../components/PrimaryButton.vue'
 import SearchInput from '../components/SearchInput.vue'
 import { userSchema } from '@/formSchemas/user.schema'
 import { userEditSchema } from '@/formSchemas/userEdit.schema'
-import { api } from '@/api'
+import { useUserStore } from '@/stores/users'
 
-const users = ref([])
+const userStore = useUserStore()
+const users = computed(() => userStore.users)
 const searchQuery = ref('')
 const showAddUserModal = ref(false)
 const showEditModal = ref(false)
@@ -28,14 +29,7 @@ const currentPage = ref(1)
 const itemsPerPage = 20
 
 const loadUsers = async () => {
-  try {
-    const response = await api.get('/users')
-    const data = response.data
-    // NestJS devuelve el array directamente, ajustamos la lectura:
-    users.value = Array.isArray(data) ? data : (data.users || [])
-  } catch (error) {
-    console.error('Error al cargar usuarios:', error)
-  }
+  await userStore.fetchUsers()
 }
 
 onMounted(async () => {
@@ -108,10 +102,7 @@ const addUsers = () => {
 
 const saveUser = async (newUser) => {
   try {
-    console.log('Nuevo usuario a enviar:', newUser);
-    const response = await api.post('/users', newUser)
-    const savedUser = response.data
-    users.value.unshift(savedUser) // Agrega al inicio para verlo rápidamente
+    await userStore.addUser(newUser)
     showAddUserModal.value = false
   } catch (error) {
     console.error('Error al guardar el usuario:', error)
@@ -127,38 +118,7 @@ const editUser = (user) => {
 
 const saveEdit = async (payload) => {
   try {
-    // El backend espera 'poblacion', pero el frontend usa 'localidad'.
-    // Hacemos el mapeo inverso antes de enviar.
-    const payloadForBackend = { ...payload };
-    if (payloadForBackend.localidad) {
-      payloadForBackend.poblacion = payloadForBackend.localidad;
-      delete payloadForBackend.localidad;
-    }
-    const res = await api.post('/users/edit', payloadForBackend)
-    const updatedUser = res.data
-    const idx = users.value.findIndex(u => u.dni === updatedUser.dni)
-    if (idx !== -1) {
-      // El backend devuelve la entidad sin procesar. Necesitamos mapearla al modelo de la vista.
-      const userForView = {
-        nombre: updatedUser.nombre,
-        apellidos: updatedUser.apellidos,
-        dni: updatedUser.dni,
-        direccion: updatedUser.direccion,
-        CP: updatedUser.CP,
-        provincia: updatedUser.provincia,
-        localidad: updatedUser.poblacion, // Mapeo de poblacion a localidad
-        pais: updatedUser.pais,
-        email: updatedUser.email,
-        telefono: updatedUser.telefono,
-        fechadealta: updatedUser.fechadealta,
-        fechadebaja: updatedUser.fechabaja,
-        formadepago: updatedUser.formadepago,
-        cuota: Number(updatedUser.cuota) || 0,
-        categoria: updatedUser.categoria,
-        socio: updatedUser.socio
-      }
-      users.value.splice(idx, 1, userForView)
-    }
+    await userStore.updateUser(payload)
     showEditModal.value = false
     editingUsers.value = null
     editError.value = ''
@@ -176,17 +136,11 @@ const openDeleteModal = (user) => {
 const confirmDelete = async () => {
   if (!userToDelete.value) return
   try {
-    console.log('DNI a eliminar:', userToDelete.value.dni)
-    await api.post('/users/delete', { dni: userToDelete.value.dni })
+    await userStore.removeUser(userToDelete.value.dni)
   } catch (error) {
     console.error('Error al eliminar el usuario:', error)
     alert(`Error al eliminar usuario: ${error.response?.data?.message || error.message || 'Error desconocido'}`)
     return
-  }
-  // TODO: FINISH DELETE....
-  const idx = users.value.findIndex(u => u.dni === userToDelete.value.dni)
-  if (idx !== -1) {
-    users.value.splice(idx, 1)
   }
   userToDelete.value = null
   showDeleteModal.value = false
@@ -223,9 +177,9 @@ const formatDate = (date) => date ? new Date(date).toLocaleDateString() : ''
           </div>
           <PrimaryButton @click="addUsers">Agregar Usuario</PrimaryButton>
           <transition name="fade-scale" v-if="showAddUserModal">
-            <ModalForm :schema="userSchema" @submit="saveUser" v-if="showAddUserModal" @close="showAddUserModal = false"/>
+            <ModalForm title="Agregar Usuario" :schema="userSchema" @submit="saveUser" v-if="showAddUserModal" @close="showAddUserModal = false"/>
           </transition>
-          <ModalEdit :schema="userEditSchema" :initial="editingUsers" :error="editError" @submit="saveEdit" v-if="showEditModal" @close="() => { showEditModal = false; editingUsers = null; editError = '' }"/>
+          <ModalEdit title="Editar Usuario" :schema="userEditSchema" :initial="editingUsers" :error="editError" @submit="saveEdit" v-if="showEditModal" @close="() => { showEditModal = false; editingUsers = null; editError = '' }"/>
           <ModalDelete :title="'Eliminar Usuario'" :message="'¿Está seguro de que desea eliminar este Usuario? Esta acción no se puede deshacer.'" :itemName="userToDelete?.name" @confirm="confirmDelete" @close="() => { showDeleteModal = false; userToDelete = null }" v-if="showDeleteModal"/>
           <SearchInput placeholder="Buscar usuario..." v-model="searchQuery"/>
         </div>
@@ -280,6 +234,12 @@ main {
   transition: background-color 0.3s ease;
 }
 
+@media (max-width: 768px) {
+  main {
+    padding: 20px 15px;
+  }
+}
+
 .users-list {
   display: flex;
   flex-direction: column;
@@ -295,6 +255,7 @@ main {
 }
 
 .role {
+  background-color: #e1e8ff;
   color: #2a4ea2;
   font-size: 12px;
   font-weight: bold;
@@ -308,15 +269,39 @@ main {
   gap: 15px;
 }
 
+@media (max-width: 768px) {
+  .showUsers-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 15px;
+  }
+  .options {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+}
+
 /* Los botones primarios ahora usan el componente PrimaryButton */
 
 .pagination-controls {
   display: flex;
   align-items: center;
-  gap: 10px;
-  font-size: 0.9rem;
+  gap: 12px;
+  font-size: 0.95rem;
   color: var(--text-secondary);
-  transition: color 0.3s ease;
+  background: var(--card-bg);
+  padding: 6px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  transition: all 0.3s ease;
+}
+
+@media (max-width: 480px) {
+  .pagination-controls {
+    justify-content: space-between;
+    width: 100%;
+  }
 }
 
 .options button.page-btn {
@@ -340,6 +325,14 @@ main {
   display: flex;
   justify-content: space-between;
   gap: 20px;
+}
+
+.box-item {
+  background: var(--bg-primary);
+  padding: 20px;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  margin-top: 10px;
 }
 
 :global(.dark) .role {

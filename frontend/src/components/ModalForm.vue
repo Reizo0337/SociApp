@@ -3,8 +3,9 @@ import { reactive, onMounted } from 'vue'
 
 const props = defineProps<{
   schema: any[]
-  error?: string
+  title?: string
   initial?: Record<string, any>
+  error?: string
 }>()
 const emit = defineEmits(['submit', 'close'])
 
@@ -50,7 +51,7 @@ const setToday = (key: string) => {
     <div class="modal-content">
       <!-- HEADER -->
       <div class="modal-header">
-        <h2>SociApp</h2>
+        <h2>{{ title || 'Agregar' }}</h2>
         <button class="close-button" @click="$emit('close')">&times;</button>
       </div>
 

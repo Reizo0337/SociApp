@@ -1,6 +1,10 @@
 <script setup>
 defineProps({
   expanded: Boolean,
+  showArrow: {
+    type: Boolean,
+    default: true
+  }
 })
 defineEmits(['toggle'])
 </script>
@@ -18,6 +22,7 @@ defineEmits(['toggle'])
       <div class="summary-right">
         <slot name="summary-right"></slot>
         <span
+          v-if="showArrow"
           class="material-symbols-outlined arrow-icon"
           :class="{ rotated: expanded }"
           >expand_more</span
@@ -55,6 +60,22 @@ defineEmits(['toggle'])
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 480px) {
+  .summary {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .summary-right {
+    width: 100%;
+    justify-content: space-between;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border-color);
+  }
 }
 
 .summary-right {

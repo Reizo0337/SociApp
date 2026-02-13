@@ -43,12 +43,14 @@ defineEmits<{
   background: none;
   border: none;
   cursor: pointer;
-  padding: 5px;
+  padding: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 4px;
+  border-radius: 8px;
   transition: all 0.2s ease;
+  min-width: 44px;
+  min-height: 44px;
 }
 
 .action-btn:hover {
@@ -56,13 +58,13 @@ defineEmits<{
 }
 
 .edit-btn .material-symbols-outlined {
-  color: #2563eb;
-  font-size: 1.2rem;
+  color: #3b82f6;
+  font-size: 1.4rem;
 }
 
 .delete-btn .material-symbols-outlined {
   color: #ef4444;
-  font-size: 1.2rem;
+  font-size: 1.4rem;
 }
 
 :global(.dark) .action-btn .material-symbols-outlined {
