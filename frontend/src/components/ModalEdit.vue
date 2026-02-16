@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import { reactive, watch, onMounted } from 'vue'
+import { useNotificationStore } from '../stores/notification'
 
 const props = defineProps<{
   schema: any[]
@@ -7,6 +8,7 @@ const props = defineProps<{
   error?: string
 }>()
 const emit = defineEmits(['submit', 'close'])
+const notificationStore = useNotificationStore()
 
 const model = reactive<Record<string, any>>({})
 const resolvedOptions = reactive<Record<string, any[]>>({})
@@ -80,16 +82,21 @@ const submit = () => {
   )
 
   if (missingFields.length > 0) {
-    alert('Por favor, complete todos los campos obligatorios.')
+    notificationStore.warning('Por favor, complete todos los campos obligatorios.')
     return
   }
 
-  // Incluir id o idProyecto si existe en initial para que el parent sepa qué editar
-  const payload = {
-    ...(props.initial?.id ? { id: props.initial.id } : {}),
+  // Incluir idProyecto si existe en initial para otros tipos de datos que lo usen
+  // Pero NO incluir 'id' para usuarios, ya que el DTO de NestJS no lo permite (usa dni)
+  const payload: any = {
     ...(props.initial?.idProyecto ? { idProyecto: props.initial.idProyecto } : {}),
     ...model,
   }
+  
+  // Asegurar que propiedades críticas tengan el tipo correcto
+  if (payload.dni) payload.dni = String(payload.dni);
+  if (payload.id) delete payload.id;
+
   emit('submit', payload)
 }
 </script>

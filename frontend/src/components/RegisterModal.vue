@@ -84,6 +84,13 @@
           </div>
         </form>
       </div>
+
+      <VerificationModal 
+        v-if="showVerification"
+        :email="form.email"
+        @close="showVerification = false"
+        @verified="onVerified"
+      />
     </div>
   </div>
 </template>
@@ -91,10 +98,14 @@
 <script setup>
 import { reactive, ref } from 'vue';
 import { useAuthStore } from '../stores/auth';
+import { useNotificationStore } from '../stores/notification';
+import VerificationModal from './VerificationModal.vue';
 
 const emit = defineEmits(['close', 'switch-to-login']);
 const auth = useAuthStore();
+const notificationStore = useNotificationStore();
 const isLoading = ref(false);
+const showVerification = ref(false);
 
 const form = reactive({
   nombre: '',
@@ -145,15 +156,20 @@ const submit = async () => {
     console.log('fechaalta type:', typeof payload.fechaalta);
     
     await auth.register(payload);
-    alert('Usuario registrado correctamente. Por favor, inicia sesión.');
-    emit('switch-to-login');
+    notificationStore.success('Usuario registrado. Se ha enviado un código de verificación.');
+    showVerification.value = true;
   } catch (err) {
     console.error('Registration error:', err);
     console.error('Error response:', err?.response?.data);
-    alert('Error al registrar usuario: ' + (err?.response?.data?.message || 'Inténtelo de nuevo'));
+    notificationStore.error('Error al registrar usuario: ' + (err?.response?.data?.message || 'Inténtelo de nuevo'));
   } finally {
     isLoading.value = false;
   }
+};
+
+const onVerified = () => {
+  showVerification.value = false;
+  emit('switch-to-login');
 };
 </script>
 

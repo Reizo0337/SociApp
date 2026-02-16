@@ -9,23 +9,27 @@ import { UsersService } from '../users/users.service';
 import { Usuarios as User } from '../users/user.entity';
 import { RegisterDto } from 'src/users/dto/register.dto';
 
+import { MailService } from 'src/mail/mail.service';
+
 @Injectable()
 export class AuthService {
   constructor(
     private usersService: UsersService,
     private jwtService: JwtService,
+    private mailService: MailService,
   ) { }
 
   // 🔹 REGISTER
   async register(dto: RegisterDto) {
-    console.log('📝 Registration DTO received:', JSON.stringify(dto, null, 2));
-    console.log('📅 fechaalta value:', dto.fechaalta);
-    console.log('📅 fechaalta type:', typeof dto.fechaalta);
-
     const existingUser = await this.usersService.findByEmail(dto.email);
     if (existingUser) throw new ConflictException('Email already exists');
 
     const hashedPassword = await bcrypt.hash(dto.password, 12);
+
+    // Generar código de verificación de 6 dígitos
+    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const verificationExpires = new Date();
+    verificationExpires.setMinutes(verificationExpires.getMinutes() + 15); // Expire in 15 mins
 
     // Convert fechaalta string to Date object for database
     const userData = {
@@ -33,13 +37,63 @@ export class AuthService {
       password: hashedPassword,
       fechaalta: new Date(dto.fechaalta),
       fechabaja: dto.fechabaja ? new Date(dto.fechabaja) : undefined,
+      verificationCode,
+      verificationExpires,
+      isVerified: false,
     };
 
     const user = await this.usersService.create(userData);
 
+    // Enviar correo de verificación (sin esperar a que termine para no retrasar la respuesta)
+    this.mailService.sendVerificationCode(user.email, verificationCode).catch(err => {
+      console.error('Failed to send verification email:', err);
+    });
+
+    return { message: 'User registered successfully. Please check your email for verification code.' };
+  }
+
+  // 🔹 VERIFY EMAIL
+  async verifyEmail(email: string, code: string) {
+    const user = await this.usersService.findByEmail(email);
+    if (!user) throw new UnauthorizedException('User not found');
+
+    if (user.isVerified) return { message: 'Email already verified' };
+
+    if (!user.verificationExpires || new Date() > user.verificationExpires) {
+      await this.usersService.removeUser({ dni: user.dni });
+      throw new UnauthorizedException('El código ha expirado. Su registro ha sido eliminado por seguridad. Por favor, regístrese de nuevo.');
+    }
+
+    if (user.verificationCode !== code) {
+      throw new UnauthorizedException('Código de verificación incorrecto. Inténtelo de nuevo.');
+    }
+
+    user.isVerified = true;
+    user.verificationCode = null;
+    user.verificationExpires = null;
+    await this.usersService.updateVerificationStatus(user.IdUsuario, true);
+
     return this.generateTokens(user);
   }
 
+  // 🔹 RESEND CODE
+  async resendVerificationCode(email: string) {
+    const user = await this.usersService.findByEmail(email);
+    if (!user) throw new UnauthorizedException('User not found');
+
+    if (user.isVerified) throw new ConflictException('Email already verified');
+
+    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const verificationExpires = new Date();
+    verificationExpires.setMinutes(verificationExpires.getMinutes() + 15);
+
+    user.verificationCode = verificationCode;
+    user.verificationExpires = verificationExpires;
+    await this.usersService.create(user);
+
+    await this.mailService.sendVerificationCode(user.email, verificationCode);
+    return { message: 'Verification code resent successfully' };
+  }
 
   // 🔹 VALIDATE USER
   async validateUser(email: string, password: string) {
@@ -53,6 +107,14 @@ export class AuthService {
 
     if (!passwordValid) {
       throw new UnauthorizedException('Invalid credentials');
+    }
+
+    if (!user.isVerified) {
+      if (user.verificationExpires && new Date() > user.verificationExpires) {
+        await this.usersService.removeUser({ dni: user.dni });
+        throw new UnauthorizedException('Su registro ha expirado por falta de verificación y ha sido eliminado. Por favor, regístrese de nuevo.');
+      }
+      throw new UnauthorizedException('Por favor, verifique su correo electrónico antes de iniciar sesión.');
     }
 
     return user;
