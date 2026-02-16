@@ -14,8 +14,10 @@ import SearchInput from '../components/SearchInput.vue'
 import { userSchema } from '@/formSchemas/user.schema'
 import { userEditSchema } from '@/formSchemas/userEdit.schema'
 import { useUserStore } from '@/stores/users'
+import { useNotificationStore } from '@/stores/notification'
 
 const userStore = useUserStore()
+const notificationStore = useNotificationStore()
 const users = computed(() => userStore.users)
 const searchQuery = ref('')
 const showAddUserModal = ref(false)
@@ -33,32 +35,6 @@ const itemsPerPage = 20
 const selectedUserEmails = ref([])
 const showMailModal = ref(false)
 
-const isAllSelected = computed(() => {
-  return paginatedUsers.value.length > 0 && paginatedUsers.value.every(u => selectedUserEmails.value.includes(u.email))
-})
-
-const toggleSelectAll = () => {
-  if (isAllSelected.value) {
-    const paginatedEmails = paginatedUsers.value.map(u => u.email)
-    selectedUserEmails.value = selectedUserEmails.value.filter(email => !paginatedEmails.includes(email))
-  } else {
-    paginatedUsers.value.forEach(u => {
-      if (!selectedUserEmails.value.includes(u.email)) {
-        selectedUserEmails.value.push(u.email)
-      }
-    })
-  }
-}
-
-const toggleSelectUser = (email) => {
-  const index = selectedUserEmails.value.indexOf(email)
-  if (index > -1) {
-    selectedUserEmails.value.splice(index, 1)
-  } else {
-    selectedUserEmails.value.push(email)
-  }
-}
-
 const openMailModal = () => {
   showMailModal.value = true
 }
@@ -68,10 +44,10 @@ const sendMail = async (emailData) => {
     await userStore.sendEmail(emailData)
     showMailModal.value = false
     selectedUserEmails.value = []
-    alert('Correo enviado con éxito')
+    notificationStore.success('Correo enviado con éxito')
   } catch (error) {
     console.error('Error al enviar correo:', error)
-    alert('Error al enviar el correo. Por favor, revisa la consola.')
+    notificationStore.error('Error al enviar el correo. Por favor, revisa la consola.')
   }
 }
 
@@ -151,10 +127,11 @@ const saveUser = async (newUser) => {
   try {
     await userStore.addUser(newUser)
     showAddUserModal.value = false
+    notificationStore.success('Usuario guardado con éxito')
   } catch (error) {
     console.error('Error al guardar el usuario:', error)
     const errorMsg = error.response?.data?.error || error.response?.data?.message || error.message || 'Error al guardar el usuario'
-    alert(`No se pudo guardar el usuario: ${errorMsg}`)
+    notificationStore.error(`No se pudo guardar el usuario: ${errorMsg}`)
   }
 }
 
@@ -169,6 +146,7 @@ const saveEdit = async (payload) => {
     showEditModal.value = false
     editingUsers.value = null
     editError.value = ''
+    notificationStore.success('Usuario actualizado con éxito')
   } catch (e) {
     const errMsg = e.response?.data?.message || e.response?.data?.error || e?.message || String(e) || 'No se pudo actualizar el usuario'
     editError.value = Array.isArray(errMsg) ? errMsg.join(', ') : errMsg
@@ -184,9 +162,10 @@ const confirmDelete = async () => {
   if (!userToDelete.value) return
   try {
     await userStore.removeUser(userToDelete.value.dni)
+    notificationStore.success('Usuario eliminado con éxito')
   } catch (error) {
     console.error('Error al eliminar el usuario:', error)
-    alert(`Error al eliminar usuario: ${error.response?.data?.message || error.message || 'Error desconocido'}`)
+    notificationStore.error(`Error al eliminar usuario: ${error.response?.data?.message || error.message || 'Error desconocido'}`)
     return
   }
   userToDelete.value = null
@@ -228,26 +207,13 @@ const formatDate = (date) => date ? new Date(date).toLocaleDateString() : ''
           </transition>
           <ModalEdit title="Editar Usuario" :schema="userEditSchema" :initial="editingUsers" :error="editError" @submit="saveEdit" v-if="showEditModal" @close="() => { showEditModal = false; editingUsers = null; editError = '' }"/>
           <ModalDelete :title="'Eliminar Usuario'" :message="'¿Está seguro de que desea eliminar este Usuario? Esta acción no se puede deshacer.'" :itemName="userToDelete?.name" @confirm="confirmDelete" @close="() => { showDeleteModal = false; userToDelete = null }" v-if="showDeleteModal"/>
-          <PrimaryButton @click="openMailModal" :disabled="selectedUserEmails.length === 0" variant="secondary">
-            Enviar Correo ({{ selectedUserEmails.length }})
-          </PrimaryButton>
-          <PrimaryButton @click="() => { selectedUserEmails = []; openMailModal() }" variant="outline">
-            Correo a Todos
-          </PrimaryButton>
           <MailModal 
             v-if="showMailModal" 
-            :recipients="selectedUserEmails" 
+            :initialRecipients="selectedUserEmails" 
             @close="showMailModal = false" 
             @send="sendMail"
           />
           <SearchInput placeholder="Buscar usuario..." v-model="searchQuery"/>
-        </div>
-      </div>
-
-      <div class="users-list-header" v-if="paginatedUsers.length > 0">
-        <div class="selection-control">
-          <input type="checkbox" :checked="isAllSelected" @change="toggleSelectAll" id="selectAll" />
-          <label for="selectAll">Seleccionar todos en esta página</label>
         </div>
       </div>
 
@@ -259,14 +225,12 @@ const formatDate = (date) => date ? new Date(date).toLocaleDateString() : ''
           @toggle="toggleDetails(user.dni)"
         >
           <template #summary-left>
-            <div class="user-summary-selection" @click.stop>
-              <input 
-                type="checkbox" 
-                :checked="selectedUserEmails.includes(user.email)" 
-                @change="toggleSelectUser(user.email)"
-              />
+            <div class="user-info-summary">
+              <span class="user-name">{{ user.nombre }} {{ user.apellidos }}</span>
+              <button class="individual-mail-btn" @click.stop="() => { selectedUserEmails = [user.email]; openMailModal() }" title="Enviar correo">
+                <span class="material-symbols-outlined">mail</span>
+              </button>
             </div>
-            <span class="user-name">{{ user.nombre }} {{ user.apellidos }}</span>
           </template>
           <template #summary-right>
             <span class="role">{{ user.categoria }}</span>
@@ -279,9 +243,9 @@ const formatDate = (date) => date ? new Date(date).toLocaleDateString() : ''
                   { label: 'Email', value: user.email },
                   { label: 'Tel', value: user.telefono },
                   { label: 'Dirección', value: `${user.direccion || '-'}, ${user.CP || '-'}` },
-                  { label: 'Localidad', value: `${user.localidad || '-'}, ${user.provincia || '-'}, ${user.pais || '-'}` },
-                  { label: 'Fecha Alta', value: formatDate(user.fechadealta) },
-                  { label: 'Fecha Baja', value: formatDate(user.fechadebaja) },
+                  { label: 'Población', value: `${user.poblacion || '-'}, ${user.provincia || '-'}, ${user.pais || '-'}` },
+                  { label: 'Fecha Alta', value: formatDate(user.fechaalta) },
+                  { label: 'Fecha Baja', value: formatDate(user.fechabaja) },
                   { label: 'Forma Pago', value: `${user.formadepago || '-'} | Cuota: ${user.cuota || '-'}` }
                 ]"
               />
@@ -412,38 +376,36 @@ main {
   background-color: rgba(37, 99, 235, 0.2);
   color: #60a5fa;
 }
-.user-summary-selection {
-  display: flex;
-  align-items: center;
-  margin-right: 15px;
-}
 
-.user-summary-selection input[type="checkbox"] {
-  width: 18px;
-  height: 18px;
-  cursor: pointer;
-}
-
-.users-list-header {
-  margin-top: 20px;
-  padding: 10px 24px;
-  background: var(--bg-secondary);
-  border-radius: 8px;
-  border: 1px solid var(--border-color);
-}
-
-.selection-control {
+.user-info-summary {
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 14px;
-  color: var(--text-secondary);
-  font-weight: 600;
 }
 
-.selection-control input {
-  width: 16px;
-  height: 16px;
+.individual-mail-btn {
+  background: transparent;
+  border: none;
+  color: var(--button-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  margin-left: 10px;
   cursor: pointer;
+  border-radius: 50%;
+  transition: all 0.2s;
+  opacity: 0.7;
 }
+
+.individual-mail-btn:hover {
+  background: rgba(var(--button-primary-rgb, 37, 99, 235), 0.1);
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+.individual-mail-btn span {
+  font-size: 1.2rem;
+}
+
 </style>

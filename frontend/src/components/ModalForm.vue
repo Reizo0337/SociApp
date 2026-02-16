@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import { reactive, onMounted } from 'vue'
+import { useNotificationStore } from '../stores/notification'
 
 const props = defineProps<{
   schema: any[]
@@ -8,6 +9,7 @@ const props = defineProps<{
   error?: string
 }>()
 const emit = defineEmits(['submit', 'close'])
+const notificationStore = useNotificationStore()
 
 const model = reactive<Record<string, any>>({})
 const resolvedOptions = reactive<Record<string, any[]>>({})
@@ -43,7 +45,22 @@ onMounted(async () => {
 
 // Función submit
 const submit = () => {
-  emit('submit', { ...model })
+  // Validar campos requeridos
+  const missingFields = props.schema.flatMap((section: any) =>
+    section.fields.filter((field: any) => field.required && !model[field.key]),
+  )
+
+  if (missingFields.length > 0) {
+    notificationStore.warning('Por favor, complete todos los campos obligatorios.')
+    return
+  }
+  
+  const payload = { ...model };
+  // Asegurar tipos
+  if (payload.dni) payload.dni = String(payload.dni);
+  if (payload.id) delete payload.id;
+
+  emit('submit', payload)
 }
 
 // Fecha actual

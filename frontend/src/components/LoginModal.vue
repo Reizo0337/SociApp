@@ -35,12 +35,14 @@
 import { ref } from 'vue';
 import { useAuthStore } from '../stores/auth';
 import { useRouter } from 'vue-router';
+import { useNotificationStore } from '../stores/notification';
 
 const emit = defineEmits(['close', 'switch-to-register']);
 const email = ref('');
 const password = ref('');
 const auth = useAuthStore();
 const router = useRouter();
+const notificationStore = useNotificationStore();
 const isLoading = ref(false);
 
 const submit = async () => {
@@ -50,6 +52,7 @@ const submit = async () => {
   try {
     await auth.login({ email: email.value, password: password.value });
     emit('close');
+    notificationStore.success('Inicio de sesión correcto');
     
     // Redirect based on role
     if (auth.isAdmin) {
@@ -59,7 +62,7 @@ const submit = async () => {
     
   } catch (err) {
     // Basic error handling
-    alert(err?.response?.data?.message || 'Error al iniciar sesión');
+    notificationStore.error(err?.response?.data?.message || 'Error al iniciar sesión');
   } finally {
     isLoading.value = false;
   }

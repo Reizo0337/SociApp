@@ -59,4 +59,13 @@ export class Usuarios {
     default: 'NoSocio'
   })
   socio: 'Socio' | 'NoSocio';
+
+  @Column({ default: false })
+  isVerified: boolean;
+
+  @Column({ type: 'varchar', length: 10, nullable: true })
+  verificationCode: string | null;
+
+  @Column({ type: 'timestamp', nullable: true })
+  verificationExpires: Date | null;
 }

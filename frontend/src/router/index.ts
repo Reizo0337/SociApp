@@ -36,6 +36,11 @@ const router = createRouter({
       name: 'proyectos',
       component: () => import('../views/Proyectos.vue'),
     },
+    {
+      path: '/mensajeria',
+      name: 'mensajeria',
+      component: () => import('../views/Mensajeria.vue'),
+    },
   ],
 })
 

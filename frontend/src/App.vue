@@ -4,6 +4,7 @@ import { RouterView, useRoute } from 'vue-router'
 import Menu from './components/Menu.vue'
 import LoginModal from './components/LoginModal.vue'
 import RegisterModal from './components/RegisterModal.vue'
+import NotificationHost from './components/NotificationHost.vue'
 import { useAuthStore } from './stores/auth'
 
 const route = useRoute()
@@ -74,6 +75,8 @@ const isNotHome = computed(() => {
   <RouterLink v-if="isNotHome" to="/dashboard" class="floating-home-btn" title="Ir al Panel Principal">
     <span class="material-symbols-outlined">home</span>
   </RouterLink>
+
+  <NotificationHost />
 </template>
 
 <style scoped>

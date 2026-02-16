@@ -13,7 +13,7 @@ export class UsersService {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
-  ) {}
+  ) { }
 
   async getUsersData() {
     try {
@@ -65,6 +65,14 @@ export class UsersService {
   async create(data: Partial<User>): Promise<User> {
     const user = this.userRepository.create(data);
     return this.userRepository.save(user);
+  }
+
+  async updateVerificationStatus(userId: number, isVerified: boolean) {
+    return this.userRepository.update(userId, {
+      isVerified,
+      verificationCode: null,
+      verificationExpires: null
+    });
   }
 
 
