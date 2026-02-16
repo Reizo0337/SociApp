@@ -93,5 +93,16 @@ export const projectSchema = [
         type: 'text'
       }
     ]
+  },
+  {
+    section: 'Documentación',
+    fields: [
+      {
+        key: 'pdf',
+        label: 'Archivo PDF (Máx. 10MB)',
+        type: 'file',
+        accept: '.pdf'
+      }
+    ]
   }
 ]

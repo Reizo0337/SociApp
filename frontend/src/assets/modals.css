@@ -4,10 +4,12 @@
   background-color: rgba(0, 0, 0, 0.45);
   display: flex;
   justify-content: center;
-  align-items: flex-start; /* para que el modal empiece desde arriba */
+  align-items: flex-start;
+  /* para que el modal empiece desde arriba */
   z-index: 999999;
   padding: 20px;
-  overflow-y: auto; /* permite scroll si el contenido es más alto que la pantalla */
+  overflow-y: auto;
+  /* permite scroll si el contenido es más alto que la pantalla */
 }
 
 .modal-header {
@@ -58,6 +60,7 @@
   transition: background-color 0.3s ease;
   cursor: pointer;
 }
+
 .card button:hover {
   background-color: var(--button-primary-hover);
 }
@@ -149,4 +152,50 @@ input::placeholder {
   .grid-2 {
     grid-template-columns: 1fr;
   }
+}
+
+/* Custom File Upload Styling */
+.file-upload-wrapper {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.file-input-custom {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  z-index: 2;
+}
+
+.file-upload-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 12px;
+  background: var(--bg-primary);
+  border: 2px dashed var(--border-color);
+  border-radius: 8px;
+  color: var(--text-secondary);
+  font-weight: 500;
+  transition: all 0.3s ease;
+  pointer-events: none;
+}
+
+.file-upload-wrapper:hover .file-upload-btn {
+  border-color: var(--button-primary);
+  color: var(--button-primary);
+  background: rgba(var(--button-primary-rgb), 0.05);
+}
+
+.file-selected-name {
+  font-size: 12px;
+  color: var(--button-primary);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 5px;
 }

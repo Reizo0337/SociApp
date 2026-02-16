@@ -11,6 +11,7 @@ import DataDisplay from '../components/DataDisplay.vue'
 import PrimaryButton from '../components/PrimaryButton.vue'
 import SearchInput from '../components/SearchInput.vue'
 import ExpandableListItem from '../components/ExpandableListItem.vue'
+import PdfPreview from '@/components/PdfPreview.vue'
 import { useRoute } from 'vue-router'
 import { useProjectStore } from '@/stores/projects'
 
@@ -37,6 +38,7 @@ interface Proyecto {
   notas?: string
   subproyectos?: string[]
   actividades?: string[]
+  pdfPath?: string
 }
 
 // Variables reactivas
@@ -88,9 +90,27 @@ const fetchProjects = async () => {
   await projectStore.fetchProjects()
 }
 
+const buildFormData = (data: any) => {
+  const formData = new FormData()
+  Object.keys(data).forEach(key => {
+    if (data[key] !== undefined && data[key] !== null) {
+      if (key === 'subproyectos' || key === 'actividades') {
+        // Enviar arrays como campos repetidos o JSON si el backend lo espera así
+        // El entity usa simple-array que TypeORM maneja de forma especial, 
+        // pero aquí los enviamos como strings separados por comas si es FormData
+        formData.append(key, data[key].join(','))
+      } else {
+        formData.append(key, data[key])
+      }
+    }
+  })
+  return formData
+}
+
 const createProject = async (newProject: any) => {
   try {
-    await projectStore.addProject(newProject)
+    const data = newProject.pdf ? buildFormData(newProject) : newProject
+    await projectStore.addProject(data)
     showAddProjectModal.value = false
   } catch (error: any) {
     console.error('Error creating project:', error)
@@ -103,10 +123,13 @@ const editProject = (proyecto: Proyecto) => {
   showEditProjectModal.value = true
 }
 
-const saveEdit = async (updatedProject: Proyecto) => {
+const saveEdit = async (updatedProject: any) => {
   try {
-    const idToUpdate = updatedProject.idProyecto
-    await projectStore.updateProject(idToUpdate, updatedProject)
+    const idToUpdate = updatedProject.idProyecto || editingProject.value?.idProyecto
+    if (!idToUpdate) throw new Error('ID de proyecto no encontrado')
+    
+    const data = updatedProject.pdf ? buildFormData(updatedProject) : updatedProject
+    await projectStore.updateProject(idToUpdate, data)
 
     showEditProjectModal.value = false
     editingProject.value = null
@@ -302,6 +325,20 @@ onMounted(() => {
               Descripción del Proyecto
             </h3>
             <p class="description-text">{{ selectedProject.descripcion || 'Sin descripción' }}</p>
+          </div>
+
+          <div class="info-section box-item" v-if="selectedProject.pdfPath">
+            <h3>
+              <span class="material-symbols-outlined">attachment</span>
+              Documentación
+            </h3>
+            <a :href="`http://192.168.1.55:3000${selectedProject.pdfPath}`" target="_blank" class="pdf-link">
+              <span class="material-symbols-outlined">open_in_new</span>
+              Abrir PDF en pestaña nueva
+            </a>
+            <div class="pdf-preview-wrapper">
+              <PdfPreview :pdf-url="`http://192.168.1.55:3000${selectedProject.pdfPath}`" />
+            </div>
           </div>
 
           <div class="info-section box-item">
@@ -624,6 +661,17 @@ onMounted(() => {
 .metric-card:hover {
   border-color: var(--button-primary);
   transform: translateY(-2px);
+}
+
+.pdf-link:hover {
+  background: var(--button-primary);
+  color: white;
+  transform: translateY(-2px);
+}
+
+.pdf-preview-wrapper {
+  margin-top: 15px;
+  width: 100%;
 }
 
 .metric-card span.material-symbols-outlined {

@@ -5,13 +5,13 @@ import { DataSource } from 'typeorm';
 export class ConfiguracionService {
   private readonly logger = new Logger(ConfiguracionService.name);
 
-  constructor(private readonly dataSource: DataSource) {}
+  constructor(private readonly dataSource: DataSource) { }
 
   async getDatosAsociacion() {
     try {
       // Seleccionamos de tu tabla 'asociacion'
       const data = await this.dataSource.query(`SELECT * FROM asociacion LIMIT 1`);
-      
+
       if (!data.length) return null;
 
       const a = data[0];
@@ -44,13 +44,13 @@ export class ConfiguracionService {
             nombre = ?, CIF = ?, dirección = ?, cp = ?, teléfono = ?, email = ?, web = ? 
            WHERE idAsociacion = ?`,
           [
-            data.legalName, 
-            data.cif, 
-            data.address, 
-            data.postalCode, 
-            data.generalPhone, 
-            data.generalEmail, 
-            data.website, 
+            data.legalName,
+            data.cif,
+            data.address,
+            data.postalCode,
+            data.generalPhone,
+            data.generalEmail,
+            data.website,
             existing[0].idAsociacion
           ]
         );
@@ -60,12 +60,12 @@ export class ConfiguracionService {
         const result = await this.dataSource.query(
           `INSERT INTO asociacion (nombre, CIF, dirección, cp, teléfono, email, web) VALUES (?, ?, ?, ?, ?, ?, ?)`,
           [
-            data.legalName, 
-            data.cif, 
-            data.address, 
-            data.postalCode, 
-            data.generalPhone, 
-            data.generalEmail, 
+            data.legalName,
+            data.cif,
+            data.address,
+            data.postalCode,
+            data.generalPhone,
+            data.generalEmail,
             data.website
           ]
         );

@@ -9,7 +9,9 @@ import { ProjectModule } from './projects/project.module';
 import { AuthModule } from './auth/auth.module';
 
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ServeStaticModule } from '@nestjs/serve-static';
 import * as path from 'path';
+import { join } from 'path';
 
 import { Usuarios as User } from './users/user.entity';
 
@@ -45,6 +47,10 @@ import { ThrottlerModule } from '@nestjs/throttler';
     ActivitiesModule,
     ProjectModule,
     AuthModule,
+    ServeStaticModule.forRoot({
+      rootPath: join(process.cwd(), 'uploads'),
+      serveRoot: '/uploads',
+    }),
 
     // Otros módulos
 
