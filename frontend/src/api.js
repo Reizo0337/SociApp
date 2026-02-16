@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 export const api = axios.create({
-  baseURL: 'http://localhost:3000', // backendURL
+  baseURL: 'http://192.168.1.55:3000', // backendURL
   withCredentials: true, // Lo usamos con HTTPONLY. (seguridad)
 })
 
@@ -19,9 +19,9 @@ api.interceptors.response.use(
     // Si es 401 y no hemos intentado refrescar aún
     if (error.response?.status === 401 && !originalRequest._retry) {
       // No intentar refrescar si es el endpoint de refresh o login
-      if (originalRequest.url?.includes('/auth/refresh') || 
-          originalRequest.url?.includes('/auth/login') ||
-          originalRequest.url?.includes('/auth/register')) {
+      if (originalRequest.url?.includes('/auth/refresh') ||
+        originalRequest.url?.includes('/auth/login') ||
+        originalRequest.url?.includes('/auth/register')) {
         return Promise.reject(error)
       }
 
@@ -31,13 +31,13 @@ api.interceptors.response.use(
         // Intentar refrescar el token usando la cookie HttpOnly
         const res = await api.post('/auth/refresh')
         const newAccessToken = res.data.access_token
-        
+
         if (newAccessToken) {
           localStorage.setItem('access_token', newAccessToken)
           api.defaults.headers.common['Authorization'] = `Bearer ${newAccessToken}`
           originalRequest.headers = originalRequest.headers || {}
           originalRequest.headers['Authorization'] = `Bearer ${newAccessToken}`
-          
+
           // Reintentar la petición original con el nuevo token
           return api(originalRequest)
         }
@@ -46,7 +46,7 @@ api.interceptors.response.use(
         console.error('Error al refrescar token:', refreshError)
         localStorage.removeItem('access_token')
         delete api.defaults.headers.common['Authorization']
-        
+
         // Si estamos en el navegador, redirigir a login
         if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
           window.location.href = '/login'

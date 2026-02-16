@@ -46,4 +46,8 @@ export class CreateProjectDto {
     @IsArray()
     @IsOptional()
     actividades?: string[];
+
+    @IsString()
+    @IsOptional()
+    pdfPath?: string;
 }

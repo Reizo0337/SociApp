@@ -3,20 +3,28 @@ import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import 'reflect-metadata';
 import 'dotenv/config';
+import * as fs from 'fs';
+import { join } from 'path';
 
 async function bootstrap() {
+  // Asegurar que existe la carpeta de subidas
+  const uploadDir = join(process.cwd(), 'uploads', 'projects');
+  if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+  }
+
   const app = await NestFactory.create(AppModule);
   const cookieParser = require('cookie-parser');
   app.use(cookieParser());
-  
+
   // ⚠️ SEGURIDAD: CORS configurado - en producción usar variable de entorno para origin
   app.enableCors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+    origin: process.env.FRONTEND_URL || 'http://192.168.1.55:5173',
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
   });
-  
+
   // ⚠️ SEGURIDAD: Validación global activada - rechaza propiedades no definidas en DTOs
   app.useGlobalPipes(
     new ValidationPipe({
@@ -28,7 +36,7 @@ async function bootstrap() {
       },
     })
   );
-  
+
   await app.listen(process.env.PORT ?? 3000);
 }
 bootstrap();

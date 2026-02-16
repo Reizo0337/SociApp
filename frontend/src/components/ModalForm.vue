@@ -9,16 +9,23 @@ const props = defineProps<{
 }>()
 const emit = defineEmits(['submit', 'close'])
 
-const model = reactive({})
+const model = reactive<Record<string, any>>({})
 const resolvedOptions = reactive<Record<string, any[]>>({})
 
 // Inicializar model basado en el schema
 console.log(Array.isArray(props.schema), props.schema)
-props.schema.forEach(section => {
-  section.fields.forEach(field => {
-    model[field.key] = ''
+props.schema.forEach((section: any) => {
+  section.fields.forEach((field: any) => {
+    model[field.key] = props.initial ? (props.initial[field.key] || '') : ''
   })
 })
+
+const handleFileChange = (event: Event, key: string) => {
+  const target = event.target as HTMLInputElement
+  if (target.files && target.files.length > 0) {
+    model[key] = target.files[0]
+  }
+}
 
 onMounted(async () => {
   for (const section of props.schema) {
@@ -69,11 +76,28 @@ const setToday = (key: string) => {
             >
               <label>{{ field.label }}</label>
               <input
-                v-if="field.type !== 'select' && field.type !== 'date'"
+                v-if="field.type !== 'select' && field.type !== 'date' && field.type !== 'file'"
                 :type="field.type"
                 v-model="model[field.key]"
                 :required="field.required"
               />
+              <div v-else-if="field.type === 'file'" class="file-upload-wrapper">
+                <input
+                  type="file"
+                  class="file-input-custom"
+                  @change="handleFileChange($event, field.key)"
+                  :accept="field.accept"
+                  :required="field.required"
+                />
+                <div class="file-upload-btn">
+                  <span class="material-symbols-outlined">cloud_upload</span>
+                  <span>{{ field.label }}</span>
+                </div>
+                <div v-if="model[field.key]" class="file-selected-name">
+                  <span class="material-symbols-outlined">check_circle</span>
+                  {{ (model[field.key] as any).name || 'Archivo seleccionado' }}
+                </div>
+              </div>
               <select
                 v-else-if="field.type === 'select'"
                 v-model="model[field.key]"

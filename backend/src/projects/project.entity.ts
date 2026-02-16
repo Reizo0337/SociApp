@@ -39,4 +39,7 @@ export class Proyecto {
 
     @Column('simple-array', { nullable: true })
     actividades: string[];
+
+    @Column({ length: 255, nullable: true })
+    pdfPath: string;
 }
