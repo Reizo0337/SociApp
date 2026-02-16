@@ -5,6 +5,7 @@ import Title from '../components/Title.vue'
 import ModalForm from '../components/ModalForm.vue'
 import ModalEdit from '../components/ModalEdit.vue'
 import ModalDelete from '../components/ModalDelete.vue'
+import MailModal from '../components/MailModal.vue'
 import ExpandableListItem from '../components/ExpandableListItem.vue'
 import DataDisplay from '../components/DataDisplay.vue'
 import ActionButtons from '../components/ActionButtons.vue'
@@ -27,6 +28,52 @@ const route = useRoute()
 const expandedUser = ref([])
 const currentPage = ref(1)
 const itemsPerPage = 20
+
+// Selección de usuarios para correo
+const selectedUserEmails = ref([])
+const showMailModal = ref(false)
+
+const isAllSelected = computed(() => {
+  return paginatedUsers.value.length > 0 && paginatedUsers.value.every(u => selectedUserEmails.value.includes(u.email))
+})
+
+const toggleSelectAll = () => {
+  if (isAllSelected.value) {
+    const paginatedEmails = paginatedUsers.value.map(u => u.email)
+    selectedUserEmails.value = selectedUserEmails.value.filter(email => !paginatedEmails.includes(email))
+  } else {
+    paginatedUsers.value.forEach(u => {
+      if (!selectedUserEmails.value.includes(u.email)) {
+        selectedUserEmails.value.push(u.email)
+      }
+    })
+  }
+}
+
+const toggleSelectUser = (email) => {
+  const index = selectedUserEmails.value.indexOf(email)
+  if (index > -1) {
+    selectedUserEmails.value.splice(index, 1)
+  } else {
+    selectedUserEmails.value.push(email)
+  }
+}
+
+const openMailModal = () => {
+  showMailModal.value = true
+}
+
+const sendMail = async (emailData) => {
+  try {
+    await userStore.sendEmail(emailData)
+    showMailModal.value = false
+    selectedUserEmails.value = []
+    alert('Correo enviado con éxito')
+  } catch (error) {
+    console.error('Error al enviar correo:', error)
+    alert('Error al enviar el correo. Por favor, revisa la consola.')
+  }
+}
 
 const loadUsers = async () => {
   await userStore.fetchUsers()
@@ -181,7 +228,26 @@ const formatDate = (date) => date ? new Date(date).toLocaleDateString() : ''
           </transition>
           <ModalEdit title="Editar Usuario" :schema="userEditSchema" :initial="editingUsers" :error="editError" @submit="saveEdit" v-if="showEditModal" @close="() => { showEditModal = false; editingUsers = null; editError = '' }"/>
           <ModalDelete :title="'Eliminar Usuario'" :message="'¿Está seguro de que desea eliminar este Usuario? Esta acción no se puede deshacer.'" :itemName="userToDelete?.name" @confirm="confirmDelete" @close="() => { showDeleteModal = false; userToDelete = null }" v-if="showDeleteModal"/>
+          <PrimaryButton @click="openMailModal" :disabled="selectedUserEmails.length === 0" variant="secondary">
+            Enviar Correo ({{ selectedUserEmails.length }})
+          </PrimaryButton>
+          <PrimaryButton @click="() => { selectedUserEmails = []; openMailModal() }" variant="outline">
+            Correo a Todos
+          </PrimaryButton>
+          <MailModal 
+            v-if="showMailModal" 
+            :recipients="selectedUserEmails" 
+            @close="showMailModal = false" 
+            @send="sendMail"
+          />
           <SearchInput placeholder="Buscar usuario..." v-model="searchQuery"/>
+        </div>
+      </div>
+
+      <div class="users-list-header" v-if="paginatedUsers.length > 0">
+        <div class="selection-control">
+          <input type="checkbox" :checked="isAllSelected" @change="toggleSelectAll" id="selectAll" />
+          <label for="selectAll">Seleccionar todos en esta página</label>
         </div>
       </div>
 
@@ -193,6 +259,13 @@ const formatDate = (date) => date ? new Date(date).toLocaleDateString() : ''
           @toggle="toggleDetails(user.dni)"
         >
           <template #summary-left>
+            <div class="user-summary-selection" @click.stop>
+              <input 
+                type="checkbox" 
+                :checked="selectedUserEmails.includes(user.email)" 
+                @change="toggleSelectUser(user.email)"
+              />
+            </div>
             <span class="user-name">{{ user.nombre }} {{ user.apellidos }}</span>
           </template>
           <template #summary-right>
@@ -338,5 +411,39 @@ main {
 :global(.dark) .role {
   background-color: rgba(37, 99, 235, 0.2);
   color: #60a5fa;
+}
+.user-summary-selection {
+  display: flex;
+  align-items: center;
+  margin-right: 15px;
+}
+
+.user-summary-selection input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+.users-list-header {
+  margin-top: 20px;
+  padding: 10px 24px;
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+}
+
+.selection-control {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.selection-control input {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
 }
 </style>

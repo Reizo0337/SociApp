@@ -77,6 +77,20 @@ export const useUserStore = defineStore('users', {
         async removeUser(dni) {
             await api.post('/users/delete', { dni })
             this.users = this.users.filter(u => u.dni !== dni)
+        },
+        async sendEmail(data) {
+            if (data.recipients && data.recipients.length > 0) {
+                return api.post('/mail/send', {
+                    to: data.recipients,
+                    subject: data.subject,
+                    message: data.message
+                });
+            } else {
+                return api.post('/mail/send-all', {
+                    subject: data.subject,
+                    message: data.message
+                });
+            }
         }
     }
 })

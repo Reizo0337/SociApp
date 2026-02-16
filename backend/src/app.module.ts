@@ -12,6 +12,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import * as path from 'path';
 import { join } from 'path';
+import { MailerModule } from '@nestjs-modules/mailer';
+import { MailModule } from './mail/mail.module';
 
 import { Usuarios as User } from './users/user.entity';
 
@@ -23,6 +25,20 @@ import { ThrottlerModule } from '@nestjs/throttler';
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: path.resolve(__dirname, '../../.env')
+    }),
+    MailerModule.forRoot({
+      transport: {
+        host: 'smtp.gmail.com',
+        port: 587,
+        secure: false,
+        auth: {
+          user: 'noreplysociapp@gmail.com',
+          pass: process.env.SMTP_PASSWORD
+        },
+      },
+      defaults: {
+        from: '"SociApp" <noreplysociapp@gmail.com>',
+      },
     }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
@@ -47,6 +63,7 @@ import { ThrottlerModule } from '@nestjs/throttler';
     ActivitiesModule,
     ProjectModule,
     AuthModule,
+    MailModule,
     ServeStaticModule.forRoot({
       rootPath: join(process.cwd(), 'uploads'),
       serveRoot: '/uploads',
