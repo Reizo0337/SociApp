@@ -19,7 +19,7 @@ export class ActivitiesService {
   async getActivitiesData() {
     try {
       const activities = await this.activityRepository.find({
-        relations: ['monitor'], // Cargar relación con usuario
+        relations: ['monitor', 'proyecto'], // Cargar relación con usuario
       });
 
       return {
@@ -45,7 +45,7 @@ export class ActivitiesService {
 
       const fullActivity = await this.activityRepository.findOne({
         where: { id: saved.id },
-        relations: ['monitor']
+        relations: ['monitor', 'proyecto']
       });
 
       if (!fullActivity) {
@@ -55,6 +55,7 @@ export class ActivitiesService {
       return {
         ...fullActivity,
         monitor: fullActivity.monitor ? fullActivity.monitor.nombre : null,
+        proyecto: fullActivity.proyecto ? fullActivity.proyecto.nombre : null,
         horaInicio: fullActivity.horaInicio.slice(0, 5),
         horaFin: fullActivity.horaFin.slice(0, 5),
       };
@@ -76,7 +77,7 @@ export class ActivitiesService {
 
       const savedActivity = await this.activityRepository.findOne({
         where: { id },
-        relations: ['monitor'],
+        relations: ['monitor', 'proyecto'],
       });
 
       if (!savedActivity) {
@@ -116,6 +117,16 @@ export class ActivitiesService {
       );
     } catch (error) {
       this.handleError('Failed to fetch monitors', error);
+    }
+  }
+
+  async getProjects() {
+    try {
+      return this.dataSource.query(
+        `SELECT idProyecto AS id, nombre AS nombre FROM proyectos`
+      );
+    } catch (error) {
+      this.handleError('Failed to fetch projects', error);
     }
   }
 

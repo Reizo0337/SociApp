@@ -64,7 +64,7 @@ import { ConfiguracionModule } from './configuracion/configuracion.module';
     ActivitiesModule,
     ProjectModule,
     AuthModule,
-    ConfiguracionModule
+    ConfiguracionModule,
     MailModule,
     ServeStaticModule.forRoot({
       rootPath: join(process.cwd(), 'uploads'),

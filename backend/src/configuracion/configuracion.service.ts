@@ -130,6 +130,28 @@ export class ConfiguracionService {
     }
   }
 
+  async updateRelacion(id: number, data: any) {
+    try {
+      await this.dataSource.query(`
+        UPDATE relacionesinstitucionales 
+        SET Nombre = ?, Direccion = ?, CP = ?, Poblacion = ?, Telefono = ?, Email = ?, Web = ?, Notas = ?
+        WHERE IdInstitucion = ?`,
+        [
+          data.Nombre, data.Direccion || '', data.CP || null,
+          data.Poblacion || '', data.Telefono || '', data.Email || '',
+          data.Web || '', data.Notas || '', id
+        ]
+      );
+      return { IdInstitucion: id, ...data };
+    } catch (error) {
+      this.handleError('Error al actualizar relación institucional', error);
+    }
+  }
+
+  async deleteRelacion(id: number) {
+    return this.dataSource.query(`DELETE FROM relacionesinstitucionales WHERE IdInstitucion = ?`, [id]);
+  }
+
   // --- HELPERS ---
 
   private validateDatos(data: any) {

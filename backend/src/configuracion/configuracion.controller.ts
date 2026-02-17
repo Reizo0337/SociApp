@@ -3,7 +3,7 @@ import { ConfiguracionService } from './configuracion.service';
 
 @Controller('configuracion/datos')
 export class ConfiguracionController {
-  constructor(private readonly configService: ConfiguracionService) {}
+  constructor(private readonly configService: ConfiguracionService) { }
 
   @Get()
   getDatos() {
@@ -18,9 +18,9 @@ export class ConfiguracionController {
 
 @Controller('configuracion/junta')
 export class JuntaController {
-  constructor(private readonly service: ConfiguracionService) {}
+  constructor(private readonly service: ConfiguracionService) { }
 
-  @Get('usuarios-lista') 
+  @Get('usuarios-lista')
   async getUsuariosLista() {
     return this.service.getUsuariosParaJunta();
   }
@@ -44,14 +44,29 @@ export class JuntaController {
   remove(@Param('id') id: number) {
     return this.service.deleteJunta(id);
   }
+}
 
-  @Post('relaciones')
-  addRelacion(@Body() data: any) {
+@Controller('configuracion/relaciones')
+export class RelacionesController {
+  constructor(private readonly service: ConfiguracionService) { }
+
+  @Get()
+  getAll() {
+    return this.service.getRelaciones();
+  }
+
+  @Post()
+  add(@Body() data: any) {
     return this.service.addRelacion(data);
   }
 
-  @Get('relaciones')
-  getRelaciones() {
-    return this.service.getRelaciones();
+  @Put(':id')
+  update(@Param('id') id: number, @Body() data: any) {
+    return this.service.updateRelacion(id, data);
+  }
+
+  @Delete(':id')
+  remove(@Param('id') id: number) {
+    return this.service.deleteRelacion(id);
   }
 }

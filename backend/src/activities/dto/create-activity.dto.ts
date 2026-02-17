@@ -25,6 +25,10 @@ export class CreateActivityDto {
     @IsOptional()
     idMonitor?: number;
 
+    @IsNumber()
+    @IsOptional()
+    idProyecto?: number;
+
     @IsString()
     @IsOptional()
     icon?: string;

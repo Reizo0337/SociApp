@@ -40,6 +40,16 @@ export const ActivitySchema = [
           const data: { id: number; nombre: string }[] = response.data;
           return data.map((monitor) => ({ value: monitor.id, label: monitor.nombre }));
         }
+      },
+      {
+        key: 'idProyecto',
+        label: 'Proyecto',
+        type: 'select',
+        options: async () => {
+          const response = await api.get('/activities/Projects');
+          const data: { id: number; nombre: string }[] = response.data;
+          return data.map((project) => ({ value: project.id, label: project.nombre }));
+        }
       }
     ],
   },

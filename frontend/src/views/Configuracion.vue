@@ -98,8 +98,8 @@
             <template #content>
               <div class="record-icon">🤝</div>
               <div class="record-details">
-                <p class="record-main">{{ rel.entidad || rel.nombreInstitucion }}</p>
-                <p class="record-sub">{{ rel.tipoRelacion || 'Convenio' }}</p>
+                <p class="record-main">{{ rel.Nombre }}</p>
+                <p class="record-sub">{{ rel.Email || rel.Telefono || 'Convenio' }}</p>
               </div>
             </template>
             <template #actions>
@@ -316,7 +316,8 @@ function openEditDatos() {
 
 function editMiembro(index) {
   editingIndex.value = index
-  editingData.value = { ...listaJunta.value[index] }
+  const miembro = listaJunta.value[index]
+  editingData.value = { ...miembro }
   showAddUserModal.value = true
 }
 
@@ -329,11 +330,44 @@ function editItem(list, index) {
 function deleteBanco(index) {
   listaBancos.value.splice(index, 1)
 }
-function deleteItem(list, index) {
-  if(confirm('¿Estás seguro de eliminar este registro?')) {
-      // Aquí deberías llamar también a un fetch(DELETE)
-      list.splice(index, 1);
-    }}
+async function deleteItem(list, index) {
+  if (!confirm('¿Estás seguro de eliminar este registro?')) return;
+  
+  const section = selectedSection.value;
+  const item = list[index];
+  
+  // Determine the ID field based on section
+  let id;
+  if (section === 'junta') {
+    id = item.id;
+  } else if (section === 'relaciones') {
+    id = item.IdInstitucion;
+  } else if (section === 'donativos') {
+    id = item.id;
+  } else if (section === 'bancos') {
+    id = item.id;
+  }
+  
+  if (!id) {
+    alert('No se pudo identificar el ID del registro');
+    return;
+  }
+  
+  try {
+    const response = await fetch(`http://localhost:3000/configuracion/${endpoints[section]}/${id}`, {
+      method: 'DELETE'
+    });
+    
+    if (!response.ok) throw new Error('Error al eliminar');
+    
+    // Refresh the list
+    await fetchSection(section);
+    alert('Registro eliminado con éxito ✅');
+  } catch (error) {
+    console.error(error);
+    alert('Error al eliminar el registro');
+  }
+}
 
 async function saveDatosEdit(updatedData) {
   try {
@@ -392,26 +426,56 @@ async function fetchSection(section) {
 }
 
 async function handleSave(data) {
-  console.log("Datos a enviar:", data); // <--- AÑADE ESTO
+  console.log("Datos a enviar:", data);
   const section = selectedSection.value;
+  const isEditing = editingIndex.value !== null;
   
   try {
     loading.value = true;
-    const url = `http://localhost:3000/configuracion/${endpoints[section]}`;
+    
+    let url = `http://localhost:3000/configuracion/${endpoints[section]}`;
+    let method = 'POST';
+    
+    // If editing, use PUT and append the ID
+    if (isEditing) {
+      method = 'PUT';
+      const item = editingData.value;
+      
+      // Determine the ID field based on section
+      let id;
+      if (section === 'junta') {
+        id = item.id;
+      } else if (section === 'relaciones') {
+        id = item.IdInstitucion;
+      } else if (section === 'donativos') {
+        id = item.id;
+      } else if (section === 'bancos') {
+        id = item.id;
+      }
+      
+      if (!id) {
+        throw new Error('No se pudo identificar el ID del registro');
+      }
+      
+      url = `${url}/${id}`;
+    }
     
     const response = await fetch(url, {
-      method: 'POST', // Verifica que sea POST para agregar
+      method,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
     });
 
     if (!response.ok) throw new Error('Error en la base de datos');
 
-    // IMPORTANTE: Refrescar la lista para ver el nuevo miembro
+    // Refresh the list
     await fetchSection(section); 
 
     showAddUserModal.value = false;
-    alert('¡Miembro agregado con éxito! 🎉');
+    editingIndex.value = null;
+    editingData.value = null;
+    
+    alert(isEditing ? '¡Registro actualizado con éxito! ✅' : '¡Registro agregado con éxito! 🎉');
   } catch (error) {
     console.error(error);
     alert('No se pudo guardar en la base de datos. Revisa la consola del servidor.');
