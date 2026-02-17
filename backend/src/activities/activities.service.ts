@@ -26,6 +26,7 @@ export class ActivitiesService {
         activities: activities.map((activity) => ({
           ...activity,
           monitor: activity.monitor ? activity.monitor.nombre : null,
+          proyecto: activity.proyecto ? activity.proyecto.nombre : null,
           horaInicio: activity.horaInicio.slice(0, 5), // 'HH:MM:SS' -> 'HH:MM'
           horaFin: activity.horaFin.slice(0, 5),
         })),
@@ -87,6 +88,7 @@ export class ActivitiesService {
       return {
         ...savedActivity,
         monitor: savedActivity.monitor ? savedActivity.monitor.nombre : null,
+        proyecto: savedActivity.proyecto ? savedActivity.proyecto.nombre : null,
         horaInicio: savedActivity.horaInicio.slice(0, 5),
         horaFin: savedActivity.horaFin.slice(0, 5),
       };

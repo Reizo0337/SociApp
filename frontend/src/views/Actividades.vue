@@ -189,6 +189,7 @@ const formatDate = (date) => (date ? new Date(date).toLocaleDateString() : '')
                   { label: 'Hora de fin', value: activity.horaFin },
                   { label: 'Monitor', value: activity.monitor },
                   { label: 'Proyecto', value: activity.proyecto?.nombre} 
+
                 ]"
               />
               <ActionButtons

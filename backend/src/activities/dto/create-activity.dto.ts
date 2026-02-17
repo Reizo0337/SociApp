@@ -32,4 +32,8 @@ export class CreateActivityDto {
     @IsString()
     @IsOptional()
     icon?: string;
+
+    @IsNumber()
+    @IsOptional()
+    idProyecto?: number;
 }
