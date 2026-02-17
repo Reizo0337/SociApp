@@ -5,13 +5,17 @@ import { DataSource } from 'typeorm';
 export class ConfiguracionService {
   private readonly logger = new Logger(ConfiguracionService.name);
 
-  constructor(private readonly dataSource: DataSource) {}
+  constructor(private readonly dataSource: DataSource) { }
 
   // --- SECCIÓN: DATOS ASOCIACIÓN ---
 
   async getDatosAsociacion() {
     try {
       const data = await this.dataSource.query(`SELECT * FROM asociacion LIMIT 1`);
+<<<<<<< HEAD
+=======
+
+>>>>>>> 527857a7643d5306024eb5a44450cf7af8f44d05
       if (!data.length) return null;
 
       const a = data[0];
@@ -39,15 +43,43 @@ export class ConfiguracionService {
       if (existing.length > 0) {
         await this.dataSource.query(
           `UPDATE asociacion SET 
+<<<<<<< HEAD
             Nombre = ?, CIF = ?, Direccion = ?, CP = ?, Telefono = ?, Email = ?, Web = ? 
           WHERE idAsociacion = ?`,
           [data.Nombre, data.CIF, data.Direccion, data.CP, data.Telefono, data.Email, data.Web, existing[0].idAsociacion]
+=======
+            nombre = ?, CIF = ?, dirección = ?, cp = ?, teléfono = ?, email = ?, web = ? 
+           WHERE idAsociacion = ?`,
+          [
+            data.legalName,
+            data.cif,
+            data.address,
+            data.postalCode,
+            data.generalPhone,
+            data.generalEmail,
+            data.website,
+            existing[0].idAsociacion
+          ]
+>>>>>>> 527857a7643d5306024eb5a44450cf7af8f44d05
         );
         return { ...data }; 
       } else {
         const result = await this.dataSource.query(
+<<<<<<< HEAD
           `INSERT INTO asociacion (Nombre, CIF, Direccion, CP, Telefono, Email, Web) VALUES (?, ?, ?, ?, ?, ?, ?)`,
           [data.Nombre, data.CIF, data.Direccion, data.CP, data.Telefono, data.Email, data.Web]
+=======
+          `INSERT INTO asociacion (nombre, CIF, dirección, cp, teléfono, email, web) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          [
+            data.legalName,
+            data.cif,
+            data.address,
+            data.postalCode,
+            data.generalPhone,
+            data.generalEmail,
+            data.website
+          ]
+>>>>>>> 527857a7643d5306024eb5a44450cf7af8f44d05
         );
         return { idAsociacion: result.insertId, ...data };
       }

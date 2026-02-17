@@ -113,6 +113,12 @@ const handleMouseLeave = () => {
             <span class="text" v-show="isOpen">Proyectos</span>
           </RouterLink>
         </li>
+        <li>
+          <RouterLink to="/mensajeria" class="nav-link">
+            <span class="material-symbols-outlined icon"> mail </span>
+            <span class="text" v-show="isOpen">Mensajería</span>
+          </RouterLink>
+        </li>
       </ul>
     </nav>
   </aside>

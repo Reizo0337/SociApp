@@ -1,10 +1,21 @@
 <script lang="ts" setup>
 import { reactive, watch, onMounted } from 'vue'
+import { useNotificationStore } from '../stores/notification'
 
+<<<<<<< HEAD
 interface Props {
   data: Record<string, any>  // Aquí viene tu editDatos
   title?: string
 }
+=======
+const props = defineProps<{
+  schema: any[]
+  initial?: Record<string, any>
+  error?: string
+}>()
+const emit = defineEmits(['submit', 'close'])
+const notificationStore = useNotificationStore()
+>>>>>>> 527857a7643d5306024eb5a44450cf7af8f44d05
 
 const props = defineProps<Props>()
 const emit = defineEmits(['save', 'close'])
@@ -17,8 +28,48 @@ watch(() => props.data, (newData) => {
   Object.assign(model, newData)
 }, { deep: true })
 
+<<<<<<< HEAD
 const save = () => {
   emit('save', { ...model })  // Se envía al parent
+=======
+onMounted(async () => {
+  for (const section of props.schema) {
+    for (const field of section.fields) {
+      if (field.type === 'select' && typeof field.options === 'function') {
+        try {
+          resolvedOptions[field.key] = await field.options()
+        } catch (error) {
+          console.error(`Error cargando opciones para ${field.key}:`, error)
+        }
+      }
+    }
+  }
+})
+
+const submit = () => {
+  // Validar campos requeridos antes de enviar
+  const missingFields = props.schema.flatMap((section: any) =>
+    section.fields.filter((field: any) => field.required && !model[field.key]),
+  )
+
+  if (missingFields.length > 0) {
+    notificationStore.warning('Por favor, complete todos los campos obligatorios.')
+    return
+  }
+
+  // Incluir idProyecto si existe en initial para otros tipos de datos que lo usen
+  // Pero NO incluir 'id' para usuarios, ya que el DTO de NestJS no lo permite (usa dni)
+  const payload: any = {
+    ...(props.initial?.idProyecto ? { idProyecto: props.initial.idProyecto } : {}),
+    ...model,
+  }
+  
+  // Asegurar que propiedades críticas tengan el tipo correcto
+  if (payload.dni) payload.dni = String(payload.dni);
+  if (payload.id) delete payload.id;
+
+  emit('submit', payload)
+>>>>>>> 527857a7643d5306024eb5a44450cf7af8f44d05
 }
 </script>
 

@@ -28,6 +28,7 @@ export class ProjectService {
     const { responsableId, ...rest } = createProjectDto;
     const projectData = {
       ...rest,
+      pdfPath: createProjectDto.pdfPath,
       responsable: responsableId ? { IdUsuario: Number(responsableId) } as any : undefined
     };
     const newProject = this.projectRepository.create(projectData);

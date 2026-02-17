@@ -75,6 +75,26 @@ export const useAuthStore = defineStore('auth', {
       return res.data
     },
 
+    async verifyEmail(email, code) {
+      console.log('Verifying email:', email, 'with code:', code);
+      const res = await api.post('/auth/verify-email', { email, code })
+
+      if (res.data?.access_token) {
+        this.setAccessToken(res.data.access_token)
+        try {
+          await this.fetchCurrentUser()
+        } catch (err) {
+          console.warn('Failed to fetch user after verification, but continuing:', err);
+        }
+      }
+      return res.data
+    },
+
+    async resendCode(email) {
+      const res = await api.post('/auth/resend-code', { email })
+      return res.data
+    },
+
     async logout() {
       try {
         await api.post('/auth/logout')

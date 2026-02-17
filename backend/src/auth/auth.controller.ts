@@ -13,11 +13,12 @@ import { ThrottlerGuard } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { RegisterDto } from 'src/users/dto/register.dto';
 import { LoginDto } from 'src/users/dto/login.dto';
+import { VerifyEmailDto, ResendCodeDto } from 'src/users/dto/verify-email.dto';
 import { JwtAuthGuard } from './jwt-auth.guard';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(private readonly authService: AuthService) { }
 
   // 🔹 REGISTER
   // ⚠️ SEGURIDAD: Rate limiting aplicado para prevenir ataques de fuerza bruta y registro masivo
@@ -27,11 +28,30 @@ export class AuthController {
     @Body() dto: RegisterDto,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const tokens = await this.authService.register(dto);
+    return this.authService.register(dto);
+  }
 
-    this.setRefreshCookie(res, tokens.refresh_token);
+  @Post('verify-email')
+  @HttpCode(200)
+  async verifyEmail(
+    @Body() dto: VerifyEmailDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const result = await this.authService.verifyEmail(dto.email, dto.code);
 
-    return { access_token: tokens.access_token };
+    // Si result tiene tokens, los guardamos en la cookie
+    if ('refresh_token' in result) {
+      this.setRefreshCookie(res, result.refresh_token);
+      return { access_token: result.access_token };
+    }
+
+    return result;
+  }
+
+  @Post('resend-code')
+  @HttpCode(200)
+  async resendCode(@Body() dto: ResendCodeDto) {
+    return this.authService.resendVerificationCode(dto.email);
   }
 
   // 🔹 LOGIN
