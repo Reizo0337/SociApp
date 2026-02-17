@@ -7,25 +7,24 @@ export class ConfiguracionService {
 
   constructor(private readonly dataSource: DataSource) {}
 
+  // --- SECCIÓN: DATOS ASOCIACIÓN ---
+
   async getDatosAsociacion() {
     try {
-      // Seleccionamos de tu tabla 'asociacion'
       const data = await this.dataSource.query(`SELECT * FROM asociacion LIMIT 1`);
-      
       if (!data.length) return null;
 
       const a = data[0];
-      // Mapeamos de DB a los nombres que espera tu frontend (datosSchema)
       return {
-        legalName: a.nombre,
-        cif: a.CIF,
-        address: a.dirección,
-        postalCode: a.cp,
-        generalPhone: a.teléfono,
-        generalEmail: a.email,
-        website: a.web,
+        Nombre: a.Nombre,
+        CIF: a.CIF,
+        Direccion: a.Direccion,
+        CP: a.CP,
+        Telefono: a.Telefono,
+        Email: a.Email,
+        Web: a.Web,
         nrRegistro: a.nrRegistro,
-        logo: a.Logo
+        Logo: a.Logo
       };
     } catch (error) {
       this.handleError('Error al obtener datos de la asociación', error);
@@ -38,52 +37,109 @@ export class ConfiguracionService {
       const existing = await this.dataSource.query(`SELECT idAsociacion FROM asociacion LIMIT 1`);
 
       if (existing.length > 0) {
-        // UPDATE usando tus nombres de columna: CIF, nombre, dirección, cp, teléfono, email, web
         await this.dataSource.query(
           `UPDATE asociacion SET 
-            nombre = ?, CIF = ?, dirección = ?, cp = ?, teléfono = ?, email = ?, web = ? 
-           WHERE idAsociacion = ?`,
-          [
-            data.legalName, 
-            data.cif, 
-            data.address, 
-            data.postalCode, 
-            data.generalPhone, 
-            data.generalEmail, 
-            data.website, 
-            existing[0].idAsociacion
-          ]
+            Nombre = ?, CIF = ?, Direccion = ?, CP = ?, Telefono = ?, Email = ?, Web = ? 
+          WHERE idAsociacion = ?`,
+          [data.Nombre, data.CIF, data.Direccion, data.CP, data.Telefono, data.Email, data.Web, existing[0].idAsociacion]
         );
-        return { success: true, ...data };
+        return { ...data }; 
       } else {
-        // INSERT inicial si la tabla está vacía
         const result = await this.dataSource.query(
-          `INSERT INTO asociacion (nombre, CIF, dirección, cp, teléfono, email, web) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-          [
-            data.legalName, 
-            data.cif, 
-            data.address, 
-            data.postalCode, 
-            data.generalPhone, 
-            data.generalEmail, 
-            data.website
-          ]
+          `INSERT INTO asociacion (Nombre, CIF, Direccion, CP, Telefono, Email, Web) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          [data.Nombre, data.CIF, data.Direccion, data.CP, data.Telefono, data.Email, data.Web]
         );
-        return { id: result.insertId, ...data };
+        return { idAsociacion: result.insertId, ...data };
       }
     } catch (error) {
-      this.handleError('Error al guardar datos de configuración', error, data);
+      this.handleError('Error al guardar datos', error, data);
     }
   }
 
+  // --- SECCIÓN: JUNTA DIRECTIVA ---
+
+  async getUsuariosParaJunta() {
+    return this.dataSource.query(`SELECT idUsuario, Nombre, Apellidos FROM usuarios`);
+  }
+
+  async getJunta() {
+    return this.dataSource.query(`
+      SELECT j.id, j.idUsuario, j.Notas as cargo, u.Nombre, u.Apellidos 
+      FROM juntadirectiva j
+      JOIN usuarios u ON j.idUsuario = u.idUsuario
+    `);
+  }
+
+  async addJunta(data: any) {
+    try {
+      const resAsoc = await this.dataSource.query(`SELECT idAsociacion FROM asociacion LIMIT 1`);
+      const idAsoc = resAsoc.length > 0 ? resAsoc[0].idAsociacion : 1;
+
+      const result = await this.dataSource.query(
+        `INSERT INTO juntadirectiva (idUsuario, idAsociacion, Notas, FechaEntrada) VALUES (?, ?, ?, NOW())`,
+        [data.idUsuario, idAsoc, data.cargo]
+      );
+
+      return { id: result.insertId, ...data };
+    } catch (error) {
+      this.handleError('Error al insertar en la junta directiva', error, data);
+    }
+  }
+
+  async updateJunta(id: number, data: any) {
+    try {
+      await this.dataSource.query(
+        `UPDATE juntadirectiva SET idUsuario = ?, Notas = ? WHERE id = ?`,
+        [data.idUsuario, data.cargo, id]
+      );
+      return { id, ...data };
+    } catch (error) {
+      this.handleError('Error al actualizar miembro de la junta', error);
+    }
+  }
+
+  async deleteJunta(id: number) {
+    return this.dataSource.query(`DELETE FROM juntadirectiva WHERE id = ?`, [id]);
+  }
+
+  // --- SECCIÓN: RELACIONES INSTITUCIONALES ---
+
+  async getRelaciones() {
+    return this.dataSource.query(`SELECT * FROM relacionesinstitucionales`);
+  }
+
+  async addRelacion(data: any) {
+    try {
+      const asoc = await this.dataSource.query(`SELECT idAsociacion FROM asociacion LIMIT 1`);
+      const idAsoc = asoc.length > 0 ? asoc[0].idAsociacion : 1;
+
+      const result = await this.dataSource.query(`
+        INSERT INTO relacionesinstitucionales 
+        (IdAsociacion, Nombre, Direccion, CP, Poblacion, Telefono, Email, Web, Notas)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`, 
+        [
+          idAsoc, data.Nombre, data.Direccion || '', data.CP || null, 
+          data.Poblacion || '', data.Telefono || '', data.Email || '', 
+          data.Web || '', data.Notas || ''
+        ]
+      );
+
+      return { IdInstitucion: result.insertId, ...data };
+    } catch (error) {
+      this.handleError('Error al guardar la relación institucional', error, data);
+    }
+  }
+
+  // --- HELPERS ---
+
   private validateDatos(data: any) {
-    if (!data.legalName || !data.cif || !data.generalEmail) {
+    if (!data.Nombre || !data.CIF || !data.Email) {
       throw new BadRequestException('Faltan campos obligatorios: Nombre, CIF o Email');
     }
   }
 
   private handleError(message: string, error: any, context?: any): never {
-    this.logger.error(message, context ? JSON.stringify(context) : '', error?.stack);
+    this.logger.error(`${message}: ${error.message}`, error.stack, context ? JSON.stringify(context) : '');
     throw new InternalServerErrorException(message);
   }
 }

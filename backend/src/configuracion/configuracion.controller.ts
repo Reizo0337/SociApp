@@ -1,4 +1,4 @@
-import { Controller, Get, Body, Put, Post } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param } from '@nestjs/common';
 import { ConfiguracionService } from './configuracion.service';
 
 @Controller('configuracion/datos')
@@ -11,12 +11,47 @@ export class ConfiguracionController {
   }
 
   @Post()
-  saveDatos(@Body() data: any) {
+  saveOrUpdateDatos(@Body() data: any) {
     return this.configService.upsertDatosAsociacion(data);
   }
+}
 
-  @Put()
-  updateDatos(@Body() data: any) {
-    return this.configService.upsertDatosAsociacion(data);
+@Controller('configuracion/junta')
+export class JuntaController {
+  constructor(private readonly service: ConfiguracionService) {}
+
+  @Get('usuarios-lista') 
+  async getUsuariosLista() {
+    return this.service.getUsuariosParaJunta();
+  }
+
+  @Get()
+  getAll() {
+    return this.service.getJunta();
+  }
+
+  @Post()
+  add(@Body() data: any) {
+    return this.service.addJunta(data);
+  }
+
+  @Put(':id')
+  update(@Param('id') id: number, @Body() data: any) {
+    return this.service.updateJunta(id, data);
+  }
+
+  @Delete(':id')
+  remove(@Param('id') id: number) {
+    return this.service.deleteJunta(id);
+  }
+
+  @Post('relaciones')
+  addRelacion(@Body() data: any) {
+    return this.service.addRelacion(data);
+  }
+
+  @Get('relaciones')
+  getRelaciones() {
+    return this.service.getRelaciones();
   }
 }

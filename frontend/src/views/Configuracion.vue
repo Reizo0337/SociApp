@@ -5,14 +5,14 @@
     <header v-if="!selectedSection" class="profile-header">
       <div class="association-card">
         <div class="avatar-circle">
-          {{ asociacionData?.legalName?.charAt(0) || 'S' }}
+          {{ asociacionData?.Nombre?.charAt(0) || 'S' }}
         </div>
         <div class="header-info">
           <h2 class="association-name">
-            {{ asociacionData?.legalName || 'Agregue datos de la asociación' }}
+            {{ asociacionData?.Nombre || 'Agregue datos de la asociación' }}
           </h2>
           <p v-if="asociacionData" class="sub-label">
-            {{ asociacionData.cif }} • {{ asociacionData.generalEmail }}
+            {{ asociacionData.CIF }} • {{ asociacionData.Email }}
           </p>
           <p v-else class="sub-label">PANEL DE CONTROL GENERAL</p>
         </div>
@@ -52,7 +52,8 @@
       <div class="view-header">
         <h2 class="view-title">{{ sectionTitle[selectedSection] }}</h2>
         <div class="options">
-          <button class="btn-primary" @click="showAddUserModal = true">
+          <button class="btn-primary" @click="selectedSection === 'datos' ? openEditDatos() : openModal()"
+>
             {{ selectedSection === 'datos' && asociacionData ? '📝 EDITAR' : '➕ AGREGAR' }}
           </button>
         </div>
@@ -60,8 +61,8 @@
 
       <div class="content-placeholder">
         <div v-if="selectedSection === 'datos' && asociacionData" class="data-preview">
-          <p><strong>Nombre Legal:</strong> {{ asociacionData.legalName }}</p>
-          <p><strong>CIF:</strong> {{ asociacionData.cif }}</p>
+          <p><strong>Nombre Legal:</strong> {{ asociacionData.Nombre }}</p>
+          <p><strong>CIF:</strong> {{ asociacionData.CIF }}</p>
         </div>
 
         <div v-if="selectedSection === 'junta' && listaJunta.length > 0" class="records-list">
@@ -160,6 +161,14 @@
         @submit="handleSave"
         @close="showAddUserModal = false"
       />
+      <ModalEdit
+        v-if="showEditModal"
+        :data="editDatos"
+        title="Editar Datos Asociación"
+        @save="saveDatosEdit"
+        @close="showEditModal = false"
+      />
+
     </div>
   </main>
 </template>
@@ -174,11 +183,14 @@ import { RelacionesInstitucionalesSchema } from '@/formSchemas/RelacionesInstitu
 import { datosSchema } from '@/formSchemas/datos.schema'
 import { donativosSchema } from '@/formSchemas/donativos.schema'
 import StatisticsCard from '@/components/StatisticsCard.vue'
+import ModalEdit from '@/components/ModalEdit.vue'
 
 const selectedSection = ref(null)
 const showAddUserModal = ref(false)
 const editingData = ref(null)
+const showEditModal = ref(false)
 const editingIndex = ref(null)
+const editDatos = ref(null)
 const loading = ref(false) // Para feedback visual
 
 //estados de datos
@@ -186,7 +198,25 @@ const asociacionData = ref(null)
 const listaBancos = ref([])
 const listaJunta = ref([])
 const listaDonativos = ref([])
+const listaUsuariosParaSelect = ref([])
 const listaRelaciones = ref([])
+
+// 3. Modificamos el selectSection para que cargue los usuarios si entramos en 'junta'
+const selectSection = (section) => {
+  selectedSection.value = section;
+  
+  // Limpiamos datos anteriores para que no se mezclen
+  editingIndex.value = null;
+  editingData.value = null;
+
+  // Carga automática al entrar en la sección
+  if (section === 'junta') {
+    fetchUsuariosSelect();
+    fetchJunta();
+  } else {
+    fetchSection(section);
+  }
+};
 
 const fetchConfiguracion = async () => {
   try {
@@ -199,10 +229,6 @@ const fetchConfiguracion = async () => {
     console.error('Error cargando configuración:', error);
   }
 };
-
-onMounted(() => {
-  fetchConfiguracion();
-});
 
 const sectionTitle = {
   datos: 'Datos Asociación',
@@ -226,6 +252,14 @@ const getColorClass = (key) => {
   const colors = { datos: 'yellow', junta: 'green', relaciones: 'purple', bancos: 'blue', donativos: 'red' }
   return colors[key] || ''
 }
+const fetchJunta = async () => {
+  const res = await fetch('http://localhost:3000/configuracion/junta');
+  listaJunta.value = await res.json();
+};
+onMounted(() => {
+  fetchConfiguracion();
+  fetchJunta();
+});
 
 const sectionForm = {
   junta: juntaDirectivaSchema,
@@ -235,24 +269,55 @@ const sectionForm = {
   donativos: donativosSchema
 }
 
-function openModal() {
-  editingIndex.value = null
-  if (selectedSection.value === 'datos') {
-    editingData.value = asociacionData.value
-  } else {
-    editingData.value = null
+const fetchUsuariosSelect = async () => {
+  try {
+    const res = await fetch('http://localhost:3000/configuracion/junta/usuarios-lista');
+    const data = await res.json();
+    
+    const opcionesMapeadas = data.map(u => ({
+      label: `${u.Nombre} ${u.Apellidos}`,
+      value: u.idUsuario
+    }));
+
+    // Accedemos al primer elemento del array (la sección) y buscamos el campo
+    const seccion = sectionForm.junta[0]; 
+    const campo = seccion.fields.find(f => f.key === 'idUsuario');
+    
+    if (campo) {
+      campo.options = opcionesMapeadas;
+    }
+  } catch (error) {
+    console.error("Error cargando usuarios:", error);
   }
-  showAddUserModal.value = true
+};
+
+async function openModal() {
+  editingIndex.value = null;
+  editingData.value = null;
+
+  if (selectedSection.value === 'junta') {
+    // Abrimos el modal PRIMERO para dar feedback visual, 
+    // o aseguramos que la carga no bloquee la interfaz
+    try {
+      await fetchUsuariosSelect();
+      showAddUserModal.value = true;
+    } catch (error) {
+      console.error("Error al preparar el formulario de junta:", error);
+      alert("Error al cargar la lista de usuarios");
+    }
+  } else {
+    showAddUserModal.value = true;
+  }
+}
+function openEditDatos() {
+  editDatos.value = { ...asociacionData.value } // copia editable
+  showEditModal.value = true
 }
 
 function editMiembro(index) {
   editingIndex.value = index
   editingData.value = { ...listaJunta.value[index] }
   showAddUserModal.value = true
-}
-
-function selectSection(section) {
-  selectedSection.value = section
 }
 
 function editItem(list, index) {
@@ -265,51 +330,94 @@ function deleteBanco(index) {
   listaBancos.value.splice(index, 1)
 }
 function deleteItem(list, index) {
-  list.splice(index, 1)
-}
-async function handleSave(data) {
-  const section = selectedSection.value
+  if(confirm('¿Estás seguro de eliminar este registro?')) {
+      // Aquí deberías llamar también a un fetch(DELETE)
+      list.splice(index, 1);
+    }}
 
-  if (section === 'datos') {
-    try {
-      loading.value = true;
-      const response = await fetch('http://localhost:3000/configuracion/datos', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-      });
+async function saveDatosEdit(updatedData) {
+  try {
+    const res = await fetch('http://localhost:3000/configuracion/datos', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updatedData)
+    })
 
-      if (!response.ok) throw new Error('Error al guardar');
+    const data = await res.json()
 
-      const updatedData = await response.json();
-      asociacionData.value = updatedData; // Actualizamos el estado local
-      showAddUserModal.value = false;
-      alert('¡Configuración guardada con éxito!');
-    } catch (error) {
-      alert('Error al conectar con el servidor');
-      console.error(error);
-    } finally {
-      loading.value = false;
-    }
-  } else {
-    // Lógica para listas dinámicas
-    const listMap = {
-      bancos: listaBancos.value,
-      junta: listaJunta.value,
-      donativos: listaDonativos.value,
-      relaciones: listaRelaciones.value
-    }
+    asociacionData.value = data
+    showEditModal.value = false
 
-    const targetList = listMap[section]
-    if (targetList) {
-      if (editingIndex.value !== null) {
-        targetList[editingIndex.value] = data
-      } else {
-        targetList.push(data)
-      }
-    }
+    alert('Datos actualizados ✅')
+  } catch (err) {
+    console.error(err)
+    alert('Error al guardar')
   }
-  showAddUserModal.value = false
+}
+
+async function deleteJunta(id) {
+  await fetch(`/configuracion/junta/${id}`, {
+    method: 'DELETE'
+  });
+
+  fetchJunta();
+}
+const endpoints = {
+  datos: 'datos',
+  junta: 'junta',
+  bancos: 'bancos',
+  relaciones: 'relaciones',
+  donativos: 'donativos'
+};
+
+async function fetchSection(section) {
+  try {
+    const res = await fetch(`http://localhost:3000/configuracion/${endpoints[section]}`);
+    const data = await res.json();
+    
+    // Mapeo dinámico para evitar tantos 'if'
+    const listMap = {
+      junta: listaJunta,
+      bancos: listaBancos,
+      relaciones: listaRelaciones,
+      donativos: listaDonativos
+    };
+    
+    if (listMap[section]) {
+      listMap[section].value = data;
+    }
+  } catch (error) {
+    console.error(`Error cargando ${section}:`, error);
+  }
+}
+
+async function handleSave(data) {
+  console.log("Datos a enviar:", data); // <--- AÑADE ESTO
+  const section = selectedSection.value;
+  
+  try {
+    loading.value = true;
+    const url = `http://localhost:3000/configuracion/${endpoints[section]}`;
+    
+    const response = await fetch(url, {
+      method: 'POST', // Verifica que sea POST para agregar
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+
+    if (!response.ok) throw new Error('Error en la base de datos');
+
+    // IMPORTANTE: Refrescar la lista para ver el nuevo miembro
+    await fetchSection(section); 
+
+    showAddUserModal.value = false;
+    alert('¡Miembro agregado con éxito! 🎉');
+  } catch (error) {
+    console.error(error);
+    alert('No se pudo guardar en la base de datos. Revisa la consola del servidor.');
+  } finally {
+    loading.value = false;
+  }
 }
 </script>
 
@@ -498,8 +606,6 @@ async function handleSave(data) {
   color: var(--text-secondary);
   transition: color 0.3s ease;
 }
-
-/* Los estilos de modo oscuro ahora se manejan con variables CSS */
 
 .view-panel {
   padding: 20px;
