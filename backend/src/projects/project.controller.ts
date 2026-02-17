@@ -85,4 +85,10 @@ export class ProjectController {
   delete(@Param('id') id: string) {
     return this.projectService.deleteProject(Number(id));
   }
+
+  @Get('activities')
+  @Roles('monitor', 'admin')
+  getActivities() {
+    //return this.projectService.getActivities();
+  }
 }

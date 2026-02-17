@@ -360,8 +360,10 @@ onMounted(() => {
                 <span class="stat-label">Subproyectos</span>
               </div>
               <div class="mini-stat">
-                <span class="stat-num">{{ selectedProject.actividades?.length || 0 }}</span>
-                <span class="stat-label">Actividades</span>
+                <RouterLink to="/actividades">
+                  <span class="stat-num">{{ selectedProject.actividades?.length || 0 }}</span>
+                  <span class="stat-label">Actividades</span>
+                </RouterLink>
               </div>
             </div>
           </div>

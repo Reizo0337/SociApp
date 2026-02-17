@@ -18,7 +18,11 @@ const resolvedOptions = reactive<Record<string, any[]>>({})
 console.log(Array.isArray(props.schema), props.schema)
 props.schema.forEach((section: any) => {
   section.fields.forEach((field: any) => {
-    model[field.key] = props.initial ? (props.initial[field.key] || '') : ''
+    if (field.type === 'select' && field.multiple) {
+      model[field.key] = props.initial?.[field.key] || []
+    } else {
+      model[field.key] = props.initial?.[field.key] || ''
+    }
   })
 })
 
@@ -47,7 +51,17 @@ onMounted(async () => {
 const submit = () => {
   // Validar campos requeridos
   const missingFields = props.schema.flatMap((section: any) =>
-    section.fields.filter((field: any) => field.required && !model[field.key]),
+    section.fields.filter((field: any) => {
+      const value = model[field.key]
+
+      if (!field.required) return false
+
+      if (field.type === 'select' && field.multiple) {
+        return !Array.isArray(value) || value.length === 0
+      }
+
+      return !value
+    }),
   )
 
   if (missingFields.length > 0) {
@@ -68,6 +82,19 @@ const setToday = (key: string) => {
   const today = new Date()
   model[key] = today.toISOString().split('T')[0]
 }
+
+const toggleCheckbox = (key: string, value: any) => {
+  const arr = model[key]
+  const index = arr.indexOf(value)
+
+  if (index > -1) {
+    arr.splice(index, 1)
+  } else {
+    arr.push(value)
+  }
+}
+
+
 </script>
 
 <template>
@@ -115,6 +142,29 @@ const setToday = (key: string) => {
                   {{ (model[field.key] as any).name || 'Archivo seleccionado' }}
                 </div>
               </div>
+              <!-- SELECT MÚLTIPLE (checkboxes) -->
+              <div v-else-if="field.type === 'select' && field.multiple">
+                <div
+                  v-for="opt in resolvedOptions[field.key] ||
+                  (Array.isArray(field.options) ? field.options : [])"
+                  :key="opt.value || opt"
+                  class="checkbox-option"
+                  @click="toggleCheckbox(field.key, opt.value || opt)"
+                >
+                  <input
+                    type="checkbox"
+                    :value="opt.value || opt"
+                    v-model="model[field.key]"
+                    @click.stop
+                  />
+                  <span>{{ opt.label || opt }}</span>
+                </div>
+              </div>
+
+
+
+
+              <!-- SELECT SIMPLE -->
               <select
                 v-else-if="field.type === 'select'"
                 v-model="model[field.key]"
@@ -130,6 +180,7 @@ const setToday = (key: string) => {
                   {{ opt.label || opt }}
                 </option>
               </select>
+
               <div v-else-if="field.type === 'date'" class="inline">
                 <input
                   type="date"
@@ -153,4 +204,60 @@ const setToday = (key: string) => {
 
 <style scoped>
 @import '../assets/modals.css';
+.checkbox-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid #2c2c2c;
+  background: #1e1e1e;
+}
+
+.checkbox-option:hover {
+  background: #2a2a2a;
+  border-color: #3a3a3a;
+}
+
+.checkbox-option input[type="checkbox"] {
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  border: 2px solid #555;
+  display: grid;
+  place-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.checkbox-option input[type="checkbox"]::before {
+  content: "";
+  width: 10px;
+  height: 10px;
+  transform: scale(0);
+  transition: transform 0.15s ease-in-out;
+  background-color: #4ade80; /* verde bonito */
+  border-radius: 2px;
+}
+
+.checkbox-option input[type="checkbox"]:checked {
+  border-color: #4ade80;
+  background-color: #4ade80;
+}
+
+.checkbox-option input[type="checkbox"]:checked::before {
+  transform: scale(1);
+  background: white;
+}
+
+.checkbox-option label {
+  cursor: pointer;
+  flex: 1;
+  color: #e5e5e5;
+  font-size: 14px;
+}
+
 </style>

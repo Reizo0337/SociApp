@@ -44,6 +44,11 @@ export class JuntaController {
   remove(@Param('id') id: number) {
     return this.service.deleteJunta(id);
   }
+
+  @Get('cargos')
+  async getCargos() {
+    return this.service.getCargos();
+  }
 }
 
 @Controller('configuracion/relaciones')

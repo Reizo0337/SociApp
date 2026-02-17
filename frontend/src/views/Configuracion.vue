@@ -67,97 +67,143 @@
 
         <div v-if="selectedSection === 'junta' && listaJunta.length > 0" class="records-list">
           <h3 class="list-title">Miembros de la Junta</h3>
-          <StatisticsCard
-            v-for="(miembro, index) in listaJunta"
-            :key="index"
-            class="record-card"
-          >
-            <template #content>
-              <div class="record-icon">👤</div>
-              <div class="record-details">
-                <p class="record-main">{{ miembro.nombre }} {{ miembro.apellidos }}</p>
-                <p class="record-sub">{{ miembro.cargo || 'Miembro' }}</p>
-              </div>
-            </template>
-            <template #actions>
-              <div class="action-buttons">
-                <button @click="editMiembro(index)" class="edit-icon">
-                  <span class="material-symbols-outlined">edit</span>
-                </button>
-                <button @click="deleteItem(listaJunta, index)" class="delete-icon">
-                  <span class="material-symbols-outlined">delete</span>
-                </button>
-              </div>
-            </template>
-          </StatisticsCard>
+            <ExpandableListItem
+          v-for="(miembro, index) in listaJunta"
+          :key="index"
+          :expanded="expandedActivity.includes(miembro)"
+          @toggle="toggleDetails(miembro)"
+        >
+          <template #summary-left>
+            <span class="activity-name">{{ miembro.Nombre + miembro.Apellidos }}</span>
+          </template>
+          <template #details>
+            <div class="card-body box-item between">
+              <DataDisplay
+                :items="[
+                  { label: 'Nombre', value: miembro.Nombre },
+                  { label: 'Apellido', value: miembro.Apellidos },
+                  { label: 'Cargo', value: miembro.cargo },
+                ]"
+              />
+              <ActionButtons
+                showEdit
+                showDelete
+                @edit="editItem(listaJunta, index)"
+                @delete="deleteItem(listaJunta, index)"
+              />
+            </div>
+          </template>
+        </ExpandableListItem>
+          
         </div>
 
         <div v-if="selectedSection === 'relaciones' && listaRelaciones.length > 0" class="records-list">
           <h3 class="list-title">Convenios y Relaciones</h3>
-          <StatisticsCard v-for="(rel, index) in listaRelaciones" :key="index" class="record-card">
-            <template #content>
-              <div class="record-icon">🤝</div>
-              <div class="record-details">
-                <p class="record-main">{{ rel.Nombre }}</p>
-                <p class="record-sub">{{ rel.Email || rel.Telefono || 'Convenio' }}</p>
+
+          <ExpandableListItem
+            v-for="(rel, index) in listaRelaciones"
+            :key="index"
+            :expanded="expandedActivity.includes(rel)"
+            @toggle="toggleDetails(rel)"
+          >
+            <template #summary-left>
+              <span class="activity-name">{{ rel.Nombre }}</span>
+            </template>
+
+            <template #details>
+              <div class="card-body box-item">
+                <DataDisplay
+                  :items="[
+                    { label: 'Nombre', value: rel.Nombre },
+                    { label: 'Email', value: rel.Email },
+                    { label: 'Teléfono', value: rel.Telefono }
+                  ]"
+                />
+                <ActionButtons
+                  showEdit
+                  showDelete
+                  @edit="editItem(listaRelaciones, index)"
+                  @delete="deleteItem(listaRelaciones, index)"
+                />
               </div>
             </template>
-            <template #actions>
-              <div class="action-buttons">
-                <button @click="editItem(listaRelaciones, index)" class="edit-icon"><span class="material-symbols-outlined">edit</span></button>
-                <button @click="deleteItem(listaRelaciones, index)" class="delete-icon"><span class="material-symbols-outlined">delete</span></button>
-              </div>
-            </template>
-          </StatisticsCard>
+          </ExpandableListItem>
         </div>
+
 
         <div v-if="selectedSection === 'donativos' && listaDonativos.length > 0" class="records-list">
           <h3 class="list-title">Registros de Donativos</h3>
-          <StatisticsCard v-for="(item, index) in listaDonativos" :key="index" class="record-card">
-            <template #content>
-              <div class="record-icon">🎁</div>
-              <div class="record-details">
-                <p class="record-main">{{ item.donante || 'Donativo Anónimo' }}</p>
-                <p class="record-sub">{{ item.tipo || 'General' }} • {{ item.cuantía || item.monto || '' }}</p>
+
+          <ExpandableListItem
+            v-for="(item, index) in listaDonativos"
+            :key="index"
+            :expanded="expandedActivity.includes(item)"
+            @toggle="toggleDetails(item)"
+          >
+            <template #summary-left>
+              <span class="activity-name">
+                {{ item.donante || 'Donativo Anónimo' }}
+              </span>
+            </template>
+
+            <template #details>
+              <div class="card-body box-item">
+                <DataDisplay
+                  :items="[
+                    { label: 'Donante', value: item.donante || 'Anónimo' },
+                    { label: 'Tipo', value: item.tipo },
+                    { label: 'Monto', value: item.cuantía || item.monto }
+                  ]"
+                />
+                <ActionButtons
+                  showEdit
+                  showDelete
+                  @edit="editItem(listaDonativos, index)"
+                  @delete="deleteItem(listaDonativos, index)"
+                />
               </div>
             </template>
-            <template #actions>
-              <div class="action-buttons">
-                <button @click="editItem(listaDonativos, index)" class="edit-icon"><span class="material-symbols-outlined">edit</span></button>
-                <button @click="deleteItem(listaDonativos, index)" class="delete-icon"><span class="material-symbols-outlined">delete</span></button>
-              </div>
-            </template>
-          </StatisticsCard>
+          </ExpandableListItem>
         </div>
+
 
         <div v-if="selectedSection === 'bancos' && listaBancos.length > 0" class="records-list">
           <h3 class="list-title">Cuentas Registradas</h3>
-          <StatisticsCard
+
+          <ExpandableListItem
             v-for="(banco, index) in listaBancos"
             :key="index"
-            class="record-card"
+            :expanded="expandedActivity.includes(banco)"
+            @toggle="toggleDetails(banco)"
           >
-            <template #content>
-              <div class="record-icon">🏛️</div>
-              <div class="record-details">
-                <p class="record-main">{{ banco.entidad }}</p>
-                <p class="record-sub">{{ banco.iban }}</p>
+            <template #summary-left>
+              <span class="activity-name">{{ banco.entidad }}</span>
+            </template>
+
+            <template #details>
+              <div class="card-body box-item">
+                <DataDisplay
+                  :items="[
+                    { label: 'Entidad', value: banco.entidad },
+                    { label: 'IBAN', value: banco.iban }
+                  ]"
+                />
+                <ActionButtons
+                  showDelete
+                  @delete="deleteBanco(index)"
+                />
               </div>
             </template>
-            <template #actions>
-               <button @click="deleteBanco(index)" class="delete-icon">
-                <span class="material-symbols-outlined">delete</span>
-              </button>
-            </template>
-          </StatisticsCard>
+          </ExpandableListItem>
         </div>
       </div>
+
 
       <ModalForm
         v-if="showAddUserModal && sectionForm[selectedSection]"
         :schema="sectionForm[selectedSection]"
         :title="sectionTitle[selectedSection]"
-        :initialData="selectedSection === 'datos' ? asociacionData : editingData"
+        :initial="selectedSection === 'datos' ? asociacionData : editingData"
         @submit="handleSave"
         @close="showAddUserModal = false"
       />
@@ -184,6 +230,10 @@ import { datosSchema } from '@/formSchemas/datos.schema'
 import { donativosSchema } from '@/formSchemas/donativos.schema'
 import StatisticsCard from '@/components/StatisticsCard.vue'
 import ModalEdit from '@/components/ModalEdit.vue'
+import ExpandableListItem from '@/components/ExpandableListItem.vue'
+import DataDisplay from '@/components/DataDisplay.vue'
+import ActionButtons from '@/components/ActionButtons.vue'
+
 
 const selectedSection = ref(null)
 const showAddUserModal = ref(false)
@@ -192,6 +242,7 @@ const showEditModal = ref(false)
 const editingIndex = ref(null)
 const editDatos = ref(null)
 const loading = ref(false) // Para feedback visual
+const expandedActivity = ref([])
 
 //estados de datos
 const asociacionData = ref(null)
@@ -252,6 +303,14 @@ const getColorClass = (key) => {
   const colors = { datos: 'yellow', junta: 'green', relaciones: 'purple', bancos: 'blue', donativos: 'red' }
   return colors[key] || ''
 }
+const toggleDetails = (miembro) => {
+  if (expandedActivity.value.includes(miembro) && expandedActivity.value.length === 1) {
+    expandedActivity.value = []
+  } else {
+    expandedActivity.value = [miembro]
+  }
+}
+
 const fetchJunta = async () => {
   const res = await fetch('http://localhost:3000/configuracion/junta');
   listaJunta.value = await res.json();
@@ -683,5 +742,11 @@ async function handleSave(data) {
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+.between {
+  display: flex;
+  justify-content: space-between;
+  
 }
 </style>

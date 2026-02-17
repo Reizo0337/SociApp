@@ -62,6 +62,31 @@ export class ConfiguracionService {
     return this.dataSource.query(`SELECT idUsuario, Nombre, Apellidos FROM usuarios`);
   }
 
+  async getCargos() {
+    try {
+      const rows: any[] = await this.dataSource.query(`
+      SELECT COLUMN_TYPE
+      FROM INFORMATION_SCHEMA.COLUMNS
+      WHERE TABLE_NAME = 'usuarios'  -- tu tabla real
+        AND COLUMN_NAME = 'Categoria'
+        AND TABLE_SCHEMA = DATABASE()
+    `);
+
+      if (!rows.length) return [];
+
+      const enumString: string = rows[0].COLUMN_TYPE;
+      const values = enumString
+        .replace(/^enum\(|\)$/gi, '')
+        .split(',')
+        .map(v => v.replace(/'/g, ''));
+
+      return values.map(v => ({ value: v, label: v }));
+    } catch (error) {
+      this.handleError('Error al obtener los cargos de la junta', error);
+    }
+  }
+
+
   async getJunta() {
     return this.dataSource.query(`
       SELECT j.id, j.idUsuario, j.Notas as cargo, u.Nombre, u.Apellidos 
