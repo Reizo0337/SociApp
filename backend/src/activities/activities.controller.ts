@@ -43,4 +43,10 @@ export class ActivitiesController {
   getMonitors() {
     return this.activitiesService.getMonitors();
   }
+
+  @Get('Projects')
+  @Roles('monitor', 'admin')
+  getProjects() {
+    return this.activitiesService.getProjects();
+  }
 }

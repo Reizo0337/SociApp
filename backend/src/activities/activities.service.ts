@@ -19,13 +19,14 @@ export class ActivitiesService {
   async getActivitiesData() {
     try {
       const activities = await this.activityRepository.find({
-        relations: ['monitor'], // Cargar relación con usuario
+        relations: ['monitor', 'proyecto'], // Cargar relaciones
       });
 
       return {
         activities: activities.map((activity) => ({
           ...activity,
           monitor: activity.monitor ? activity.monitor.nombre : null,
+          proyecto: activity.proyecto ? activity.proyecto.nombre : null,
           horaInicio: activity.horaInicio.slice(0, 5), // 'HH:MM:SS' -> 'HH:MM'
           horaFin: activity.horaFin.slice(0, 5),
         })),
@@ -45,7 +46,7 @@ export class ActivitiesService {
 
       const fullActivity = await this.activityRepository.findOne({
         where: { id: saved.id },
-        relations: ['monitor']
+        relations: ['monitor', 'proyecto']
       });
 
       if (!fullActivity) {
@@ -55,6 +56,7 @@ export class ActivitiesService {
       return {
         ...fullActivity,
         monitor: fullActivity.monitor ? fullActivity.monitor.nombre : null,
+        proyecto: fullActivity.proyecto ? fullActivity.proyecto.nombre : null,
         horaInicio: fullActivity.horaInicio.slice(0, 5),
         horaFin: fullActivity.horaFin.slice(0, 5),
       };
@@ -76,7 +78,7 @@ export class ActivitiesService {
 
       const savedActivity = await this.activityRepository.findOne({
         where: { id },
-        relations: ['monitor'],
+        relations: ['monitor', 'proyecto'],
       });
 
       if (!savedActivity) {
@@ -86,6 +88,7 @@ export class ActivitiesService {
       return {
         ...savedActivity,
         monitor: savedActivity.monitor ? savedActivity.monitor.nombre : null,
+        proyecto: savedActivity.proyecto ? savedActivity.proyecto.nombre : null,
         horaInicio: savedActivity.horaInicio.slice(0, 5),
         horaFin: savedActivity.horaFin.slice(0, 5),
       };
@@ -116,6 +119,17 @@ export class ActivitiesService {
       );
     } catch (error) {
       this.handleError('Failed to fetch monitors', error);
+    }
+  }
+
+  // Obtener solo los nombres de los proyectos (Helper)
+  async getProjects() {
+    try {
+      return this.dataSource.query(
+        `SELECT idProyecto AS id, nombre FROM proyectos`
+      );
+    } catch (error) {
+      this.handleError('Failed to fetch projects', error);
     }
   }
 
