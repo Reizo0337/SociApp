@@ -332,12 +332,12 @@ onMounted(() => {
               <span class="material-symbols-outlined">attachment</span>
               Documentación
             </h3>
-            <a :href="`http://192.168.1.55:3000${selectedProject.pdfPath}`" target="_blank" class="pdf-link">
+            <a :href="`http://localhost:3000${selectedProject.pdfPath}`" target="_blank" class="pdf-link">
               <span class="material-symbols-outlined">open_in_new</span>
               Abrir PDF en pestaña nueva
             </a>
             <div class="pdf-preview-wrapper">
-              <PdfPreview :pdf-url="`http://192.168.1.55:3000${selectedProject.pdfPath}`" />
+              <PdfPreview :pdf-url="`http://localhost:3000${selectedProject.pdfPath}`" />
             </div>
           </div>
 

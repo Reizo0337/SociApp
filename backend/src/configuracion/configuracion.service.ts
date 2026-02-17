@@ -12,10 +12,6 @@ export class ConfiguracionService {
   async getDatosAsociacion() {
     try {
       const data = await this.dataSource.query(`SELECT * FROM asociacion LIMIT 1`);
-<<<<<<< HEAD
-=======
-
->>>>>>> 527857a7643d5306024eb5a44450cf7af8f44d05
       if (!data.length) return null;
 
       const a = data[0];
@@ -43,43 +39,15 @@ export class ConfiguracionService {
       if (existing.length > 0) {
         await this.dataSource.query(
           `UPDATE asociacion SET 
-<<<<<<< HEAD
             Nombre = ?, CIF = ?, Direccion = ?, CP = ?, Telefono = ?, Email = ?, Web = ? 
           WHERE idAsociacion = ?`,
           [data.Nombre, data.CIF, data.Direccion, data.CP, data.Telefono, data.Email, data.Web, existing[0].idAsociacion]
-=======
-            nombre = ?, CIF = ?, dirección = ?, cp = ?, teléfono = ?, email = ?, web = ? 
-           WHERE idAsociacion = ?`,
-          [
-            data.legalName,
-            data.cif,
-            data.address,
-            data.postalCode,
-            data.generalPhone,
-            data.generalEmail,
-            data.website,
-            existing[0].idAsociacion
-          ]
->>>>>>> 527857a7643d5306024eb5a44450cf7af8f44d05
         );
-        return { ...data }; 
+        return { ...data };
       } else {
         const result = await this.dataSource.query(
-<<<<<<< HEAD
           `INSERT INTO asociacion (Nombre, CIF, Direccion, CP, Telefono, Email, Web) VALUES (?, ?, ?, ?, ?, ?, ?)`,
           [data.Nombre, data.CIF, data.Direccion, data.CP, data.Telefono, data.Email, data.Web]
-=======
-          `INSERT INTO asociacion (nombre, CIF, dirección, cp, teléfono, email, web) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-          [
-            data.legalName,
-            data.cif,
-            data.address,
-            data.postalCode,
-            data.generalPhone,
-            data.generalEmail,
-            data.website
-          ]
->>>>>>> 527857a7643d5306024eb5a44450cf7af8f44d05
         );
         return { idAsociacion: result.insertId, ...data };
       }
@@ -148,10 +116,10 @@ export class ConfiguracionService {
       const result = await this.dataSource.query(`
         INSERT INTO relacionesinstitucionales 
         (IdAsociacion, Nombre, Direccion, CP, Poblacion, Telefono, Email, Web, Notas)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`, 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
-          idAsoc, data.Nombre, data.Direccion || '', data.CP || null, 
-          data.Poblacion || '', data.Telefono || '', data.Email || '', 
+          idAsoc, data.Nombre, data.Direccion || '', data.CP || null,
+          data.Poblacion || '', data.Telefono || '', data.Email || '',
           data.Web || '', data.Notas || ''
         ]
       );

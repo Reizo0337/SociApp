@@ -64,15 +64,12 @@ import { ConfiguracionModule } from './configuracion/configuracion.module';
     ActivitiesModule,
     ProjectModule,
     AuthModule,
-<<<<<<< HEAD
     ConfiguracionModule
-=======
     MailModule,
     ServeStaticModule.forRoot({
       rootPath: join(process.cwd(), 'uploads'),
       serveRoot: '/uploads',
     }),
->>>>>>> 527857a7643d5306024eb5a44450cf7af8f44d05
 
     // Otros módulos
 

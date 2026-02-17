@@ -2,12 +2,7 @@
 import { reactive, watch, onMounted } from 'vue'
 import { useNotificationStore } from '../stores/notification'
 
-<<<<<<< HEAD
-interface Props {
-  data: Record<string, any>  // Aquí viene tu editDatos
-  title?: string
-}
-=======
+
 const props = defineProps<{
   schema: any[]
   initial?: Record<string, any>
@@ -15,10 +10,6 @@ const props = defineProps<{
 }>()
 const emit = defineEmits(['submit', 'close'])
 const notificationStore = useNotificationStore()
->>>>>>> 527857a7643d5306024eb5a44450cf7af8f44d05
-
-const props = defineProps<Props>()
-const emit = defineEmits(['save', 'close'])
 
 // Modelo editable
 const model = reactive({ ...props.data })
@@ -28,10 +19,7 @@ watch(() => props.data, (newData) => {
   Object.assign(model, newData)
 }, { deep: true })
 
-<<<<<<< HEAD
-const save = () => {
-  emit('save', { ...model })  // Se envía al parent
-=======
+
 onMounted(async () => {
   for (const section of props.schema) {
     for (const field of section.fields) {
@@ -69,7 +57,6 @@ const submit = () => {
   if (payload.id) delete payload.id;
 
   emit('submit', payload)
->>>>>>> 527857a7643d5306024eb5a44450cf7af8f44d05
 }
 </script>
 
