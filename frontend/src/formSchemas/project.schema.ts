@@ -29,7 +29,7 @@ export const projectSchema = [
     section: 'Actividades',
     fields: [
       {
-        key: 'actividades',
+        key: 'activityIds',
         label: 'Actividades',
         // multiple
         type: 'select',
@@ -126,9 +126,10 @@ export const projectSchema = [
     fields: [
       {
         key: 'pdf',
-        label: 'Archivo PDF (Máx. 10MB)',
+        label: 'Archivos PDF (Máx. 10MB)',
         type: 'file',
-        accept: '.pdf'
+        accept: '.pdf',
+        multiple: true
       }
     ]
   }

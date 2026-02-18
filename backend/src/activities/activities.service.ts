@@ -1,9 +1,10 @@
 import { Injectable, Logger, BadRequestException, NotFoundException, InternalServerErrorException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource } from 'typeorm';
+import { Repository, DataSource, In } from 'typeorm';
 import { Activity } from './activity.entity';
 import { CreateActivityDto } from './dto/create-activity.dto';
 import { UpdateActivityDto } from './dto/update-activity.dto';
+import { Proyecto } from '../projects/project.entity';
 
 @Injectable()
 export class ActivitiesService {
@@ -12,24 +13,36 @@ export class ActivitiesService {
   constructor(
     @InjectRepository(Activity)
     private readonly activityRepository: Repository<Activity>,
-    private readonly dataSource: DataSource // Mantener para consultas específicas si es necesario, o eliminar
+    @InjectRepository(Proyecto)
+    private readonly projectRepository: Repository<Proyecto>,
+    private readonly dataSource: DataSource
   ) { }
 
   // Obtener todas las actividades
   async getActivitiesData() {
     try {
       const activities = await this.activityRepository.find({
-        relations: ['monitor', 'proyecto'], // Cargar relación con usuario
+        relations: ['monitor'],
+      });
+
+      const allProjects = await this.projectRepository.find();
+
+      const activitiesWithProjects = activities.map((activity) => {
+        const relatedProjects = allProjects.filter(p =>
+          Array.isArray(p.actividades) && p.actividades.includes(String(activity.id))
+        );
+
+        return {
+          ...activity,
+          monitor: activity.monitor ? activity.monitor.nombre : null,
+          proyectos: relatedProjects.map(p => ({ id: p.idProyecto, nombre: p.nombre })),
+          horaInicio: activity.horaInicio.slice(0, 5),
+          horaFin: activity.horaFin.slice(0, 5),
+        };
       });
 
       return {
-        activities: activities.map((activity) => ({
-          ...activity,
-          monitor: activity.monitor ? activity.monitor.nombre : null,
-          proyecto: activity.proyecto ? activity.proyecto.nombre : null,
-          horaInicio: activity.horaInicio.slice(0, 5), // 'HH:MM:SS' -> 'HH:MM'
-          horaFin: activity.horaFin.slice(0, 5),
-        })),
+        activities: activitiesWithProjects,
       };
     } catch (error) {
       this.handleError('Failed to fetch activities data', error);
@@ -40,25 +53,39 @@ export class ActivitiesService {
   async createActivity(createActivityDto: CreateActivityDto) {
     try {
       this.validateActivity(createActivityDto);
+      const { projectIds, ...rest } = createActivityDto;
 
-      const newActivity = this.activityRepository.create(createActivityDto);
+      const newActivity = this.activityRepository.create(rest);
       const saved = await this.activityRepository.save(newActivity);
+
+      if (projectIds && projectIds.length > 0) {
+        for (const pid of projectIds) {
+          const project = await this.projectRepository.findOne({ where: { idProyecto: pid } });
+          if (project) {
+            const currentActivities = Array.isArray(project.actividades) ? project.actividades : [];
+            if (!currentActivities.includes(String(saved.id))) {
+              project.actividades = [...currentActivities, String(saved.id)];
+              await this.projectRepository.save(project);
+            }
+          }
+        }
+      }
 
       const fullActivity = await this.activityRepository.findOne({
         where: { id: saved.id },
-        relations: ['monitor', 'proyecto']
+        relations: ['monitor']
       });
 
-      if (!fullActivity) {
-        return saved;
-      }
+      const relatedProjects = projectIds && projectIds.length > 0
+        ? await this.projectRepository.find({ where: { idProyecto: In(projectIds) } })
+        : [];
 
       return {
         ...fullActivity,
-        monitor: fullActivity.monitor ? fullActivity.monitor.nombre : null,
-        proyecto: fullActivity.proyecto ? fullActivity.proyecto.nombre : null,
-        horaInicio: fullActivity.horaInicio.slice(0, 5),
-        horaFin: fullActivity.horaFin.slice(0, 5),
+        monitor: fullActivity?.monitor ? fullActivity.monitor.nombre : null,
+        proyectos: relatedProjects.map(p => ({ id: p.idProyecto, nombre: p.nombre })),
+        horaInicio: fullActivity?.horaInicio.slice(0, 5),
+        horaFin: fullActivity?.horaFin.slice(0, 5),
       };
     } catch (error) {
       this.handleError('Failed to create activity', error, createActivityDto);
@@ -68,29 +95,51 @@ export class ActivitiesService {
   // Actualizar actividad por id
   async updateActivity(id: number, updateActivityDto: UpdateActivityDto) {
     try {
-      const activity = await this.activityRepository.findOne({ where: { id } });
+      const activity = await this.activityRepository.findOne({
+        where: { id }
+      });
       if (!activity) throw new NotFoundException('Actividad no encontrada');
 
-      this.validateActivity({ ...activity, ...updateActivityDto } as CreateActivityDto);
+      this.validateActivity({ ...activity, ...updateActivityDto } as any);
 
-      const updated = this.activityRepository.merge(activity, updateActivityDto);
+      const { projectIds, ...rest } = updateActivityDto;
+      const updated = this.activityRepository.merge(activity, rest);
       await this.activityRepository.save(updated);
+
+      if (projectIds) {
+        // Primero quitar esta actividad de todos los proyectos que ya no la tienen
+        const projectsWithActivity = await this.projectRepository.find();
+        for (const p of projectsWithActivity) {
+          const acts = Array.isArray(p.actividades) ? p.actividades : [];
+          const isSelected = projectIds.includes(p.idProyecto);
+          const hasActivity = acts.includes(String(id));
+
+          if (hasActivity && !isSelected) {
+            p.actividades = acts.filter(aid => aid !== String(id));
+            await this.projectRepository.save(p);
+          } else if (!hasActivity && isSelected) {
+            p.actividades = [...acts, String(id)];
+            await this.projectRepository.save(p);
+          }
+        }
+      }
 
       const savedActivity = await this.activityRepository.findOne({
         where: { id },
-        relations: ['monitor', 'proyecto'],
+        relations: ['monitor'],
       });
 
-      if (!savedActivity) {
-        throw new NotFoundException('Error al recuperar la actividad actualizada');
-      }
+      const allProjects = await this.projectRepository.find();
+      const relatedProjects = allProjects.filter(p =>
+        Array.isArray(p.actividades) && p.actividades.includes(String(id))
+      );
 
       return {
         ...savedActivity,
-        monitor: savedActivity.monitor ? savedActivity.monitor.nombre : null,
-        proyecto: savedActivity.proyecto ? savedActivity.proyecto.nombre : null,
-        horaInicio: savedActivity.horaInicio.slice(0, 5),
-        horaFin: savedActivity.horaFin.slice(0, 5),
+        monitor: savedActivity?.monitor ? savedActivity.monitor.nombre : null,
+        proyectos: relatedProjects.map(p => ({ id: p.idProyecto, nombre: p.nombre })),
+        horaInicio: savedActivity?.horaInicio.slice(0, 5),
+        horaFin: savedActivity?.horaFin.slice(0, 5),
       };
     } catch (error) {
       this.handleError('Failed to update activity', error, { id, ...updateActivityDto });

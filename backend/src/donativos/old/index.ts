@@ -1,0 +1,1 @@
+// Archivo movido para centralizar lógica en configuracion

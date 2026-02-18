@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 export const api = axios.create({
-  baseURL: 'http://localhost:3000', // backendURL
+  baseURL: 'http://192.168.1.55:3000', // backendURL
   withCredentials: true, // Lo usamos con HTTPONLY. (seguridad)
 })
 

@@ -53,15 +53,16 @@ export const ActivitySchema = [
         }
       },
       {
-        key: 'hasProject',
-        label: 'Asignar a un proyecto',
-        type: 'checkbox',
-        default: false
+        key: 'asociarProyecto',
+        label: 'Asociar a un proyecto',
+        type: 'checkbox'
       },
       {
-        key: 'idProyecto',
-        label: 'Proyecto',
+        key: 'projectIds',
+        label: 'Proyectos Relacionados',
         type: 'select',
+        multiple: true,
+        showIf: (model: any) => model.asociarProyecto,
         options: async () => {
           const response = await api.get('/activities/Projects');
           const data: { id: number; nombre: string }[] = response.data;

@@ -55,22 +55,28 @@ export class ConfiguracionService {
       this.handleError('Error al guardar datos', error, data);
     }
   }
+  validateDatos(data: any) {
+    if (!data.Nombre || !data.CIF) {
+      throw new BadRequestException('El nombre y el CIF son obligatorios');
+    }
+  }
 
   // --- SECCIÓN: JUNTA DIRECTIVA ---
 
   async getUsuariosParaJunta() {
-    return this.dataSource.query(`SELECT idUsuario, Nombre, Apellidos FROM usuarios`);
+    return this.dataSource.query(`SELECT idUsuario, Nombre, Apellidos FROM usuarios WHERE idUsuario NOT IN  (
+      SELECT idUsuario FROM juntadirectiva)`);
   }
-
   async getCargos() {
     try {
+      // Esta query extrae los valores definidos en el ENUM de la columna 'Categoria'
       const rows: any[] = await this.dataSource.query(`
-      SELECT COLUMN_TYPE
-      FROM INFORMATION_SCHEMA.COLUMNS
-      WHERE TABLE_NAME = 'usuarios'  -- tu tabla real
-        AND COLUMN_NAME = 'Categoria'
-        AND TABLE_SCHEMA = DATABASE()
-    `);
+        SELECT COLUMN_TYPE
+        FROM INFORMATION_SCHEMA.COLUMNS
+        WHERE TABLE_NAME = 'usuarios' 
+          AND COLUMN_NAME = 'Categoria'
+          AND TABLE_SCHEMA = DATABASE()
+      `);
 
       if (!rows.length) return [];
 
@@ -82,7 +88,7 @@ export class ConfiguracionService {
 
       return values.map(v => ({ value: v, label: v }));
     } catch (error) {
-      this.handleError('Error al obtener los cargos de la junta', error);
+      this.handleError('Error al obtener los cargos', error);
     }
   }
 
@@ -128,30 +134,26 @@ export class ConfiguracionService {
   }
 
   // --- SECCIÓN: RELACIONES INSTITUCIONALES ---
-
   async getRelaciones() {
     return this.dataSource.query(`SELECT * FROM relacionesinstitucionales`);
   }
 
   async addRelacion(data: any) {
     try {
-      const asoc = await this.dataSource.query(`SELECT idAsociacion FROM asociacion LIMIT 1`);
-      const idAsoc = asoc.length > 0 ? asoc[0].idAsociacion : 1;
-
+      const idAsoc = await this.getIdAsociacion();
       const result = await this.dataSource.query(`
         INSERT INTO relacionesinstitucionales 
-        (IdAsociacion, Nombre, Direccion, CP, Poblacion, Telefono, Email, Web, Notas)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        ( IdAsociacion, Nombre, Direccion, CP, Poblacion, Provincia, Pais, Telefono, Email, Web, Notas)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           idAsoc, data.Nombre, data.Direccion || '', data.CP || null,
-          data.Poblacion || '', data.Telefono || '', data.Email || '',
-          data.Web || '', data.Notas || ''
+          data.Poblacion || '', data.Provincia || '', data.Pais || '',
+          data.Telefono || '', data.Email || '', data.Web || '', data.Notas || ''
         ]
       );
-
       return { IdInstitucion: result.insertId, ...data };
     } catch (error) {
-      this.handleError('Error al guardar la relación institucional', error, data);
+      this.handleError('Error al guardar relación', error, data);
     }
   }
 
@@ -159,34 +161,130 @@ export class ConfiguracionService {
     try {
       await this.dataSource.query(`
         UPDATE relacionesinstitucionales 
-        SET Nombre = ?, Direccion = ?, CP = ?, Poblacion = ?, Telefono = ?, Email = ?, Web = ?, Notas = ?
+        SET Nombre=?, Direccion=?, CP=?, Poblacion=?, Provincia=?, Pais=?, Telefono=?, Email=?, Web=?, Notas=?
         WHERE IdInstitucion = ?`,
         [
-          data.Nombre, data.Direccion || '', data.CP || null,
-          data.Poblacion || '', data.Telefono || '', data.Email || '',
-          data.Web || '', data.Notas || '', id
+          data.Nombre, data.Direccion || '', data.CP || null, data.Poblacion || '',
+          data.Provincia || '', data.Pais || '', data.Telefono || '',
+          data.Email || '', data.Web || '', data.Notas || '', id
         ]
       );
       return { IdInstitucion: id, ...data };
     } catch (error) {
-      this.handleError('Error al actualizar relación institucional', error);
+      this.handleError('Error al actualizar relación', error);
     }
   }
-
   async deleteRelacion(id: number) {
     return this.dataSource.query(`DELETE FROM relacionesinstitucionales WHERE IdInstitucion = ?`, [id]);
   }
 
-  // --- HELPERS ---
+  // Helper para obtener el ID de la asociación (usado en los inserts)
+  private async getIdAsociacion(): Promise<number> {
+    const res = await this.dataSource.query(`SELECT idAsociacion FROM asociacion LIMIT 1`);
+    return res.length > 0 ? res[0].idAsociacion : 1;
+  }
 
-  private validateDatos(data: any) {
-    if (!data.Nombre || !data.CIF || !data.Email) {
-      throw new BadRequestException('Faltan campos obligatorios: Nombre, CIF o Email');
+  // --- SECCIÓN: BANCOS (Tabla: cuentabancaria) ---
+  async getBancos() {
+    return this.dataSource.query(`SELECT * FROM cuentabancaria`);
+  }
+
+  async addBancos(data: any) {
+    try {
+      const idAsoc = await this.getIdAsociacion();
+      const result = await this.dataSource.query(`
+        INSERT INTO cuentabancaria 
+        (idAsociacion, Nombre, Direccion, CodigoPostal, Poblacion, Pais, Telefono, CodigoNegocio, Referencia_SEPA, IBAN, Swift)
+        VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          idAsoc, data.Nombre, data.Direccion || '', data.CodigoPostal || null,
+          data.Poblacion || '', data.Pais || '', data.Telefono || '',
+          data.CodigoNegocio || '', data.Referencia_SEPA || '', data.IBAN, data.Swift || ''
+        ]
+      );
+      return { ID: result.insertId, ...data };
+    } catch (error) {
+      this.handleError('Error al guardar banco', error, data);
     }
   }
 
-  private handleError(message: string, error: any, context?: any): never {
-    this.logger.error(`${message}: ${error.message}`, error.stack, context ? JSON.stringify(context) : '');
-    throw new InternalServerErrorException(message);
+  async updateBancos(id: number, data: any) {
+    try {
+      await this.dataSource.query(`
+        UPDATE cuentabancaria 
+        SET Nombre=?, Direccion=?, CodigoPostal=?, Poblacion=?, Pais=?, Telefono=?, CodigoNegocio=?, Referencia_SEPA=?, IBAN=?, Swift=?
+        WHERE ID = ?`,
+        [
+          data.Nombre, data.Direccion || '', data.CodigoPostal || null, data.Poblacion || '',
+          data.Pais || '', data.Telefono || '', data.CodigoNegocio || '',
+          data.Referencia_SEPA || '', data.IBAN, data.Swift || '', id
+        ]
+      );
+      return { ID: id, ...data };
+    } catch (error) {
+      this.handleError('Error al actualizar banco', error);
+    }
+  }
+  // Añade estos métodos a tu ConfiguracionService
+  async deleteBancos(id: number) {
+    return this.dataSource.query(`DELETE FROM cuentabancaria WHERE ID = ?`, [id]);
+  }
+
+  // --- SECCIÓN: DONATIVOS Y HERENCIAS (Tabla: donativosherencias) ---
+  async getDonativos() {
+    return this.dataSource.query(`SELECT * FROM donativosherencias`);
+  }
+  async deleteDonativos(id: number) {
+    return this.dataSource.query(`DELETE FROM donativosherencias WHERE idDonativo = ?`, [id]);
+  }
+
+  async addDonativos(data: any) {
+    try {
+      const idAsoc = await this.getIdAsociacion();
+      const result = await this.dataSource.query(`
+        INSERT INTO donativosherencias 
+        (idAsociacion, Nombre, Direccion, Poblacion, CP, Pais, Telefono, NIF, Email, Notas, Tipo)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          idAsoc, data.Nombre, data.Direccion || '', data.Poblacion || '',
+          data.CP || null, data.Pais || '', data.Telefono || '',
+          data.NIF || '', data.Email || '', data.Notas || '', data.Tipo
+        ]
+      );
+      return { idDonativo: result.insertId, ...data };
+    } catch (error) {
+      this.handleError('Error al guardar donativo', error, data);
+    }
+  }
+
+  async updateDonativos(id: number, data: any) {
+    try {
+      await this.dataSource.query(`
+        UPDATE donativosherencias 
+        SET Nombre=?, Direccion=?, Poblacion=?, CP=?, Pais=?, Telefono=?, NIF=?, Email=?, Notas=?, Tipo=?
+        WHERE idDonativo = ?`,
+        [
+          data.Nombre, data.Direccion || '', data.Poblacion || '', data.CP || null,
+          data.Pais || '', data.Telefono || '', data.NIF || '',
+          data.Email || '', data.Notas || '', data.Tipo, id
+        ]
+      );
+      return { idDonativo: id, ...data };
+    } catch (error) {
+      this.handleError('Error al actualizar donativo', error);
+    }
+  }
+
+  // --- MANEJO DE ERRORES ---
+  private handleError(message: string, error: any, data?: any): never {
+    const errorMessage = error?.message || 'Error desconocido';
+    this.logger.error(`${message}: ${errorMessage}`);
+
+    // Si no es un error de validación (BadRequest), lanzamos 500
+    throw new InternalServerErrorException({
+      message: message,
+      detail: errorMessage,
+      data: data // Esto ayuda a ver qué falló en la consola de red
+    });
   }
 }

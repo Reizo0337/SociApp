@@ -1,50 +1,69 @@
 export const bancosSchema = [
   {
-    section: 'Identificación de la Entidad',
+    section: 'Identificación y Asociación',
     fields: [
-      { key: 'bankName', label: 'Nombre del Banco', type: 'text', required: true },
-      { key: 'officeAddress', label: 'Dirección de la Sucursal', type: 'text' },
-      { key: 'accountAlias', label: 'Alias de la cuenta', type: 'text', placeholder: 'Ej: Cuenta Operativa, Fondo Reserva...' }
-    ]
-  },
-  {
-    section: 'Datos Bancarios Técnicos',
-    fields: [
-      { key: 'iban', label: 'IBAN / Número de Cuenta', type: 'text', required: true },
-      { key: 'bicSwift', label: 'BIC / SWIFT', type: 'text' },
       {
-        key: 'accountType',
-        label: 'Tipo de Cuenta',
-        type: 'select',
-        options: ['Cuenta Corriente', 'Ahorro', 'Inversión', 'Línea de Crédito']
-      },
-      { key: 'currency', label: 'Divisa', type: 'select', options: ['EUR (€)', 'USD ($)', 'GBP (£)'] }
-    ]
-  },
-  {
-    section: 'Autorizados y Firmas',
-    fields: [
-      { key: 'signatories', label: 'Personas autorizadas (Firmas)', type: 'text', placeholder: 'Ej: Presidente y Tesorero' },
-      {
-        key: 'signatureType',
-        label: 'Tipo de Firma',
-        type: 'select',
-        options: ['Mancomunada (Conjunta)', 'Solidaria (Indistinta)', 'Apoderado único']
+        label: 'Nombre del Banco',
+        key: 'Nombre',
+        type: 'text',
+        required: true
       }
     ]
   },
   {
-    section: 'Estado y Saldos',
+    section: 'Ubicación y Contacto',
     fields: [
-      { key: 'openingDate', label: 'Fecha de apertura', type: 'date' },
       {
-        key: 'status',
-        label: 'Estado de la cuenta',
-        type: 'select',
-        options: ['Activa', 'Inactiva', 'En proceso de cierre']
+        label: 'Dirección',
+        key: 'Direccion',
+        type: 'text'
       },
-      { key: 'onlineAccess', label: 'Tiene acceso online', type: 'select', options: ['Sí', 'No'] },
-      { key: 'notes', label: 'Observaciones (Comisiones, condiciones...)', type: 'text' }
+      {
+        label: 'Código Postal',
+        key: 'CodigoPostal',
+        type: 'number'
+      },
+      {
+        label: 'Población',
+        key: 'Poblacion',
+        type: 'text'
+      },
+      {
+        label: 'País',
+        key: 'Pais',
+        type: 'text'
+      },
+      {
+        label: 'Teléfono',
+        key: 'Telefono',
+        type: 'text'
+      }
+    ]
+  },
+  {
+    section: 'Datos Técnicos Bancarios',
+    fields: [
+      {
+        label: 'Código de Negocio',
+        key: 'CodigoNegocio',
+        type: 'text'
+      },
+      {
+        label: 'Referencia SEPA',
+        key: 'Referencia_SEPA',
+        type: 'text'
+      },
+      {
+        label: 'IBAN',
+        key: 'IBAN',
+        type: 'text',
+        required: true
+      },
+      {
+        label: 'BIC / SWIFT',
+        key: 'Swift',
+        type: 'text'
+      }
     ]
   }
-]
+];

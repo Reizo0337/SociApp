@@ -47,11 +47,11 @@ onMounted(async () => {
 })
 
 const chartData = computed(() => ({
-  labels: stats.value.map(stat => stat.title),
+  labels: stats.value.map((stat: any) => stat.title),
   datasets: [
     {
       label: 'Estadísticas',
-      data: stats.value.map(stat => stat.data),
+      data: stats.value.map((stat: any) => stat.data),
       borderColor: '#20a8d8',
       backgroundColor: 'rgba(32,168,216,0.2)',
       tension: 0.4,
@@ -94,6 +94,10 @@ const chartOptions = computed(() => {
         },
       },
     },
+    animation: {
+      duration: 2000,
+      easing: 'easeOutQuart'
+    }
   }
 })
 </script>
@@ -103,10 +107,13 @@ const chartOptions = computed(() => {
     <Title title="Estadisticas" icon="bar_chart" />
     <div class="statistics-container">
       <StatisticsCard
-        v-for="stat in stats"
+        v-for="(stat, index) in stats"
         :key="stat.title"
         type="stats"
         v-bind="stat"
+        :animate="true"
+        class="animate-card"
+        :style="{ animationDelay: `${index * 0.1}s` }"
       />
 
     </div>
@@ -149,12 +156,31 @@ main {
   width: 100% !important;
   margin-bottom: 0;
   height: 160px;
+  background-image: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0));
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(255,255,255,0.1) !important;
 }
 
 .statistics-container > *:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 6px 14px var(--card-shadow-hover);
-  transition: all 0.3s ease;
+  transform: translateY(-8px);
+  box-shadow: 0 12px 24px var(--card-shadow-hover);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.animate-card {
+  opacity: 0;
+  animation: fadeInUp 0.6s ease-out forwards;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .chart-container {

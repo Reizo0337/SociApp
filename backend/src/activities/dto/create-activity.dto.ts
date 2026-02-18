@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsOptional, IsNumber } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsNumber, IsArray } from 'class-validator';
 
 export class CreateActivityDto {
     @IsString()
@@ -25,9 +25,10 @@ export class CreateActivityDto {
     @IsOptional()
     idMonitor?: number;
 
-    @IsNumber()
+    @IsArray()
+    @IsNumber({}, { each: true })
     @IsOptional()
-    idProyecto?: number;
+    projectIds?: number[];
 
     @IsString()
     @IsOptional()
