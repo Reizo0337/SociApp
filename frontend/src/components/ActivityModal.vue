@@ -209,6 +209,11 @@ const setToday = (key: string) => {
 <style scoped>
 @import '../assets/modals.css';
 
+@keyframes bounceTick {
+  0% { transform: translate(-50%, -50%) scale(0); }
+  60% { transform: translate(-50%, -50%) scale(1.3); }
+  100% { transform: translate(-50%, -50%) scale(1); }
+}
 .checkbox-wrapper {
   display: flex;
   align-items: center;
@@ -217,14 +222,41 @@ const setToday = (key: string) => {
 }
 
 .checkbox-wrapper input[type="checkbox"] {
-  width: auto;
-  margin: 0;
+  appearance: none;
+  width: 24px;
+  height: 24px;
+  border: 2px solid #6366f1;
+  border-radius: 6px;
   cursor: pointer;
+  position: relative;
+  transition: 0.3s ease;
+}
+
+.checkbox-wrapper input[type="checkbox"]::after {
+  content: "";
+  position: absolute;
+  left: 8px;
+  top: 0px;
+  width: 6px;
+  height: 14px;
+  border: solid #6366f1;
+  border-width: 0 3px 3px 0;
+  transform: rotate(45deg) scale(0);
+  transition: 0.25s ease;
+}
+
+.checkbox-wrapper input[type="checkbox"]:checked {
+  background: #6366f1;
+}
+
+.checkbox-wrapper input[type="checkbox"]:checked::after {
+  border-color: white;
+  transform: rotate(45deg) scale(1);
 }
 
 .checkbox-wrapper label {
-  margin: 0;
   cursor: pointer;
-  font-weight: normal;
+  font-weight: 500;
+  font-size: 16px;
 }
 </style>
