@@ -1,5 +1,16 @@
 import { api } from '@/api'
 
+export interface ActivityFormData {
+  name?: string
+  place?: string
+  diaSemana?: string
+  horaInicio?: string
+  horaFin?: string
+  idMonitor?: number
+  hasProject?: boolean
+  idProyecto?: number
+}
+
 export const ActivitySchema = [
   {
     section: 'Datos de la actividad',
@@ -42,6 +53,12 @@ export const ActivitySchema = [
         }
       },
       {
+        key: 'hasProject',
+        label: 'Asignar a un proyecto',
+        type: 'checkbox',
+        default: false
+      },
+      {
         key: 'idProyecto',
         label: 'Proyecto',
         type: 'select',
@@ -49,7 +66,8 @@ export const ActivitySchema = [
           const response = await api.get('/activities/Projects');
           const data: { id: number; nombre: string }[] = response.data;
           return data.map((project) => ({ value: project.id, label: project.nombre }));
-        }
+        },
+        visibleIf: (formData: ActivityFormData) => formData.hasProject
       }
     ],
   },

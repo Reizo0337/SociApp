@@ -3,9 +3,8 @@
 import StatisticsCard from '@/components/StatisticsCard.vue'
 import { ref, onMounted, computed, watch } from 'vue'
 import Title from '../components/Title.vue'
-import ModalForm from '../components/ModalForm.vue'
+import ActivityModal from '../components/ActivityModal.vue'
 import ModalDelete from '../components/ModalDelete.vue'
-import ModalEdit from '../components/ModalEdit.vue'
 import ExpandableListItem from '../components/ExpandableListItem.vue'
 import ActionButtons from '../components/ActionButtons.vue'
 import DataDisplay from '../components/DataDisplay.vue'
@@ -24,6 +23,7 @@ const activityToDelete = ref(null)
 const showEditModal = ref(false)
 const editingActivity = ref(null)
 const editError = ref('')
+const isSubmitting = ref(false)
 const expandedActivity = ref([])
 const currentPage = ref(1)
 const itemsPerPage = 20
@@ -80,6 +80,8 @@ const addActivities = () => {
   showAddActivitiesModal.value = true
 }
 const saveActivity = async (newActivity) => {
+  if (isSubmitting.value) return;
+  isSubmitting.value = true;
   try {
     if (!newActivity.horaInicio || !newActivity.horaFin) {
       throw new Error('Debe seleccionar hora de inicio y fin');
@@ -92,6 +94,8 @@ const saveActivity = async (newActivity) => {
     console.error(error);
     const errMsg = error.response?.data?.message || error.response?.data?.error || error?.message || 'No se pudo guardar la actividad';
     formError.value = Array.isArray(errMsg) ? errMsg.join(', ') : errMsg;
+  } finally {
+    isSubmitting.value = false;
   }
 }
 const editActivity = (activity) => {
@@ -100,6 +104,8 @@ const editActivity = (activity) => {
 }
 
 const saveEdit = async (payload) => {
+  if (isSubmitting.value) return;
+  isSubmitting.value = true;
   try {
     if (!payload.horaInicio || !payload.horaFin) {
       throw new Error('Debe seleccionar hora de inicio y fin');
@@ -115,6 +121,8 @@ const saveEdit = async (payload) => {
   } catch (e) {
     const errMsg = e.response?.data?.message || e.response?.data?.error || e?.message || String(e) || 'No se pudo actualizar la actividad';
     editError.value = Array.isArray(errMsg) ? errMsg.join(', ') : errMsg;
+  } finally {
+    isSubmitting.value = false;
   }
 }
 
@@ -163,8 +171,8 @@ const formatDate = (date) => (date ? new Date(date).toLocaleDateString() : '')
             </button>
           </div>
           <PrimaryButton @click="addActivities">Agregar Actividad</PrimaryButton>
-          <ModalForm :schema="ActivitySchema" :error="formError" @submit="saveActivity" v-if="showAddActivitiesModal" @close="() => { showAddActivitiesModal = false; formError = '' }"/>
-          <ModalEdit :schema="ActivitySchema" :initial="editingActivity" :error="editError" @submit="saveEdit" v-if="showEditModal" @close="() => { showEditModal = false; editingActivity = null; editError = '' }"/>
+          <ActivityModal :schema="ActivitySchema" :error="formError" :loading="isSubmitting" @submit="saveActivity" v-if="showAddActivitiesModal" @close="() => { showAddActivitiesModal = false; formError = '' }"/>
+          <ActivityModal :title="'Editar Actividad'" :schema="ActivitySchema" :initial="editingActivity" :error="editError" :loading="isSubmitting" @submit="saveEdit" v-if="showEditModal" @close="() => { showEditModal = false; editingActivity = null; editError = '' }"/>
           <ModalDelete :title="'Eliminar Actividad'" :message="'¿Está seguro de que desea eliminar esta actividad? Esta acción no se puede deshacer.'" :itemName="activityToDelete?.name" @confirm="confirmDelete" @close="() => { showDeleteModal = false; activityToDelete = null }" v-if="showDeleteModal"/>
           <SearchInput placeholder="Buscando por actividad..." v-model="searchQuery"/>
         </div>

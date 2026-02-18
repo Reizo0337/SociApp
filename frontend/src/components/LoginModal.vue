@@ -1,5 +1,10 @@
 <template>
-  <div class="modal-overlay" @click.self="$emit('close')">
+  <div 
+    class="modal-overlay" 
+    @mousedown.self="isBackdropClick = true" 
+    @mouseup.self="isBackdropClick && $emit('close'); isBackdropClick = false"
+    @mouseup="isBackdropClick = false"
+  >
     <div class="modal-content">
       <button class="close-btn" @click="$emit('close')">
         <span class="material-symbols-outlined">close</span>
@@ -44,6 +49,7 @@ const auth = useAuthStore();
 const router = useRouter();
 const notificationStore = useNotificationStore();
 const isLoading = ref(false);
+const isBackdropClick = ref(false);
 
 const submit = async () => {
   if (isLoading.value) return;

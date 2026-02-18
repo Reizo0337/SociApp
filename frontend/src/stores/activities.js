@@ -32,7 +32,11 @@ export const useActivityStore = defineStore('activities', {
         async addActivity(newActivity) {
             const response = await api.post('/activities', newActivity)
             const savedActivity = response.data
-            this.activities.push(savedActivity)
+            // Evitar duplicados si por algún motivo ya existe en el estado local
+            const exists = this.activities.some(a => a.id === savedActivity.id)
+            if (!exists) {
+                this.activities.push(savedActivity)
+            }
             return savedActivity
         },
 

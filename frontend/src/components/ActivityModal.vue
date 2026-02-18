@@ -1,26 +1,31 @@
 <script lang="ts" setup>
-import { reactive, onMounted } from 'vue'
+import { reactive, onMounted, ref } from 'vue'
 import { useNotificationStore } from '../stores/notification'
+import type { ActivityFormData } from '@/formSchemas/Activity.schema'
 
 const props = defineProps<{
   schema: any[]
   title?: string
   initial?: Record<string, any>
   error?: string
+  loading?: boolean
 }>()
 const emit = defineEmits(['submit', 'close'])
 const notificationStore = useNotificationStore()
-
-
+const isBackdropClick = ref(false)
 
 const model = reactive<Record<string, any>>({})
 const resolvedOptions = reactive<Record<string, any[]>>({})
 
 // Inicializar model basado en el schema
-console.log(Array.isArray(props.schema), props.schema)
 props.schema.forEach((section: any) => {
   section.fields.forEach((field: any) => {
-    model[field.key] = props.initial ? (props.initial[field.key] || '') : ''
+    let defaultValue = '';
+    if (field.type === 'checkbox') {
+      defaultValue = field.default !== undefined ? field.default : false;
+    }
+    
+    model[field.key] = props.initial ? (props.initial[field.key] ?? defaultValue) : defaultValue
   })
 })
 
@@ -49,7 +54,11 @@ onMounted(async () => {
 const submit = () => {
   // Validar campos requeridos
   const missingFields = props.schema.flatMap((section: any) =>
-    section.fields.filter((field: any) => field.required && !model[field.key]),
+    section.fields.filter((field: any) => {
+      // Solo validar si es visible
+      const isVisible = !field.visibleIf || field.visibleIf(model as ActivityFormData)
+      return isVisible && field.required && !model[field.key]
+    }),
   )
 
   if (missingFields.length > 0) {
@@ -57,15 +66,35 @@ const submit = () => {
     return
   }
   
-  const payload = { ...model };
-  // Asegurar tipos
-  if (payload.dni) payload.dni = String(payload.dni);
+  // Limpiar payload para el backend
+  const payload: Record<string, any> = {};
+  
+  props.schema.forEach((section: any) => {
+    section.fields.forEach((field: any) => {
+      // Solo enviar campos visibles
+      const isVisible = !field.visibleIf || field.visibleIf(model as ActivityFormData);
+      if (isVisible) {
+        let value = model[field.key];
+        
+        // Convertir strings vacíos a null para campos opcionales
+        if (value === '' && !field.required) {
+          value = null;
+        }
+        
+        // No enviar campos solo para la UI
+        if (field.key === 'hasProject') return;
+        
+        payload[field.key] = value;
+      }
+    });
+  });
+
+  // Asegurar tipos y limpiar campos innecesarios
   if (payload.id) delete payload.id;
 
   emit('submit', payload)
 }
 
-// Fecha actual
 const setToday = (key: string) => {
   const today = new Date()
   model[key] = today.toISOString().split('T')[0]
@@ -73,33 +102,52 @@ const setToday = (key: string) => {
 </script>
 
 <template>
-  <div class="modal">
+  <div 
+    class="modal" 
+    @mousedown.self="isBackdropClick = true" 
+    @mouseup.self="isBackdropClick && $emit('close'); isBackdropClick = false"
+    @mouseup="isBackdropClick = false"
+  >
     <div class="modal-content">
       <!-- HEADER -->
       <div class="modal-header">
-        <h2>{{ title || 'Agregar' }}</h2>
+        <h2>{{ title || 'Actividad' }}</h2>
         <button class="close-button" @click="$emit('close')">&times;</button>
       </div>
 
       <form @submit.prevent="submit">
         <div v-if="props.error" class="form-error">{{ props.error }}</div>
-        <!-- FILA SUPERIOR: Dos columnas -->
+        
         <div class="grid-2">
-          <!-- Columna izquierda: Datos personales -->
-          <section class="card" v-for="value in schema">
+          <section class="card" v-for="value in schema" :key="value.section">
             <h3>{{ value.section }}</h3>
             <div
               v-for="field in value.fields"
-              :key="value.section"
+              :key="field.key"
               class="form-group"
+              v-show="!field.visibleIf || field.visibleIf(model as ActivityFormData)"
             >
-              <label>{{ field.label }}</label>
+              <label v-if="field.type !== 'checkbox'">{{ field.label }}</label>
+              
+              <!-- Checkbox -->
+              <div v-if="field.type === 'checkbox'" class="checkbox-wrapper">
+                <input
+                  type="checkbox"
+                  v-model="model[field.key]"
+                  :id="field.key"
+                />
+                <label :for="field.key">{{ field.label }}</label>
+              </div>
+
+              <!-- Input text/number/etc -->
               <input
-                v-if="field.type !== 'select' && field.type !== 'date' && field.type !== 'file'"
+                v-else-if="field.type !== 'select' && field.type !== 'date' && field.type !== 'file'"
                 :type="field.type"
                 v-model="model[field.key]"
                 :required="field.required"
               />
+
+              <!-- File -->
               <div v-else-if="field.type === 'file'" class="file-upload-wrapper">
                 <input
                   type="file"
@@ -117,6 +165,8 @@ const setToday = (key: string) => {
                   {{ (model[field.key] as any).name || 'Archivo seleccionado' }}
                 </div>
               </div>
+
+              <!-- Select -->
               <select
                 v-else-if="field.type === 'select'"
                 v-model="model[field.key]"
@@ -132,6 +182,8 @@ const setToday = (key: string) => {
                   {{ opt.label || opt }}
                 </option>
               </select>
+
+              <!-- Date -->
               <div v-else-if="field.type === 'date'" class="inline">
                 <input
                   type="date"
@@ -144,9 +196,10 @@ const setToday = (key: string) => {
           </section>
         </div>
 
-        <!-- BOTÓN SUBMIT -->
         <div class="actions">
-          <button type="submit">GUARDAR</button>
+          <button type="submit" :disabled="loading">
+            {{ loading ? 'GUARDANDO...' : 'GUARDAR' }}
+          </button>
         </div>
       </form>
     </div>
@@ -155,4 +208,23 @@ const setToday = (key: string) => {
 
 <style scoped>
 @import '../assets/modals.css';
+
+.checkbox-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+}
+
+.checkbox-wrapper input[type="checkbox"] {
+  width: auto;
+  margin: 0;
+  cursor: pointer;
+}
+
+.checkbox-wrapper label {
+  margin: 0;
+  cursor: pointer;
+  font-weight: normal;
+}
 </style>
