@@ -20,9 +20,15 @@ import { Usuarios as User } from './users/user.entity';
 // Throttler
 import { ThrottlerModule } from '@nestjs/throttler';
 import { ConfiguracionModule } from './configuracion/configuracion.module';
+import { CacheModule } from '@nestjs/cache-manager';
 
 @Module({
   imports: [
+    CacheModule.register({
+      ttl: 60000, // 60 segundos
+      max: 100,
+      isGlobal: true,
+    }),
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: path.resolve(__dirname, '../../.env')

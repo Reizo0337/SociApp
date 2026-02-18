@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
-import { computed } from 'vue'
+import { computed, ref, watch, onMounted } from 'vue'
 
 const props = defineProps<{
   type: 'activity' | 'project' | 'user' | 'task' | 'stats'
@@ -11,9 +11,40 @@ const props = defineProps<{
   color?: string
   localizacion?: string
   background?: string
+  animate?: boolean
 }>()
 
-const typeClass = computed(() => (props.type ? `type-${props.type}` : ''))
+const typeClass = computed(() => (props.type ? `  type-${props.type}` : ''))
+const displayValue = ref<string | number>(0)
+
+const animateValue = (start: number, end: number, duration: number) => {
+  let startTimestamp: number | null = null;
+  const step = (timestamp: number) => {
+    if (!startTimestamp) startTimestamp = timestamp;
+    const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+    displayValue.value = Math.floor(progress * (end - start) + start);
+    if (progress < 1) {
+      window.requestAnimationFrame(step);
+    }
+  };
+  window.requestAnimationFrame(step);
+};
+
+watch(() => props.data, (newVal) => {
+  if (props.animate && typeof newVal === 'number') {
+    animateValue(Number(displayValue.value) || 0, newVal, 1000);
+  } else {
+    displayValue.value = newVal ?? 0;
+  }
+}, { immediate: false });
+
+onMounted(() => {
+  if (props.animate && typeof props.data === 'number') {
+    animateValue(0, props.data, 1000);
+  } else {
+    displayValue.value = props.data ?? 0;
+  }
+});
 </script>
 
 <template>
@@ -34,7 +65,7 @@ const typeClass = computed(() => (props.type ? `type-${props.type}` : ''))
     </div>
     <div class="unify">
       <div class="data">
-        <p v-if="data !== undefined && data !== null">{{ data }}</p>
+        <p v-if="props.data !== undefined && props.data !== null">{{ displayValue }}</p>
         <slot name="content"></slot>
       </div>
       <div class="localizacion" v-if="localizacion">

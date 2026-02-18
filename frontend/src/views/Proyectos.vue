@@ -38,7 +38,8 @@ interface Proyecto {
   notas?: string
   subproyectos?: string[]
   actividades?: string[]
-  pdfPath?: string
+  pdfPath?: string[]
+  detallesActividades?: { id: number; nombre: string }[]
 }
 
 // Variables reactivas
@@ -54,17 +55,23 @@ const showDeleteProjectModal = ref(false)
 const editingProject = ref<Proyecto | null>(null)
 const projectToDelete = ref<Proyecto | null>(null)
 const editError = ref('')
+const currentPdfIndex = ref(0)
+
+// Reiniciar el índice del PDF cuando se cambia de proyecto
+watch(selectedProject, () => {
+  currentPdfIndex.value = 0
+})
 
 // Computed properties
 const totalProyectos = computed(() => projects.value.length)
-const proyectosActivos = computed(() => projects.value.filter(p => p.estado === 'Activo').length)
-const proyectosPendientes = computed(() => projects.value.filter(p => p.estado === 'Pendiente').length)
+const proyectosActivos = computed(() => (projects.value as any[]).filter((p: any) => p.estado === 'Activo').length)
+const proyectosPendientes = computed(() => (projects.value as any[]).filter((p: any) => p.estado === 'Pendiente').length)
 
 const filteredProyectos = computed(() => {
   if (!searchQuery.value) return projects.value
   const query = searchQuery.value.toLowerCase().trim()
-  return projects.value.filter(p =>
-    Object.values(p).some(val =>
+  return projects.value.filter((p: any) =>
+    Object.values(p).some((val: any) =>
       String(val).toLowerCase().includes(query)
     )
   )
@@ -73,7 +80,7 @@ const filteredProyectos = computed(() => {
 const paginatedProyectos = computed(() => {
   const start = (currentPage.value - 1) * itemsPerPage
   const end = start + itemsPerPage
-  return filteredProyectos.value.slice(start, end)
+  return (filteredProyectos.value as any[]).slice(start, end)
 })
 
 const totalPages = computed(() => Math.ceil(filteredProyectos.value.length / itemsPerPage))
@@ -93,23 +100,63 @@ const fetchProjects = async () => {
 const buildFormData = (data: any) => {
   const formData = new FormData()
   Object.keys(data).forEach(key => {
-    if (data[key] !== undefined && data[key] !== null) {
-      if (key === 'subproyectos' || key === 'actividades') {
-        // Enviar arrays como campos repetidos o JSON si el backend lo espera así
-        // El entity usa simple-array que TypeORM maneja de forma especial, 
-        // pero aquí los enviamos como strings separados por comas si es FormData
-        formData.append(key, data[key].join(','))
-      } else {
-        formData.append(key, data[key])
+    const value = data[key]
+    if (value === undefined || value === null || value === '') return
+
+    if (key === 'pdf') {
+      if (Array.isArray(value)) {
+        value.forEach(file => {
+          if (file instanceof File) formData.append('pdf', file)
+        })
+      } else if (value instanceof File) {
+        formData.append('pdf', value)
       }
+    } else if (Array.isArray(value)) {
+      // Para enviar arrays en FormData, añadimos cada elemento con la misma clave
+      value.forEach(v => {
+        if (v !== undefined && v !== null && v !== '') {
+          formData.append(key, v)
+        }
+      })
+    } else {
+      formData.append(key, value)
     }
   })
   return formData
 }
 
+const hasFiles = (data: any) => {
+  if (data.pdf instanceof File) return true
+  if (Array.isArray(data.pdf)) return data.pdf.some((f: any) => f instanceof File)
+  return false
+}
+
+const cleanProjectData = (data: any) => {
+  const allowed = [
+    'nombre', 'descripcion', 'estado', 'responsableId', 
+    'presupuesto', 'fuenteFinanciacion', 'startDate', 
+    'endDate', 'notas', 'subproyectos', 'actividades', 
+    'pdfPath', 'idProyecto', 'pdf' // 'pdf' se permite aquí temporalmente para detectarlo
+  ];
+  const cleaned: any = {};
+  Object.keys(data).forEach(key => {
+    if (allowed.includes(key) && data[key] !== undefined && data[key] !== null) {
+      cleaned[key] = data[key];
+    }
+  });
+  return cleaned;
+};
+
 const createProject = async (newProject: any) => {
   try {
-    const data = newProject.pdf ? buildFormData(newProject) : newProject
+    const cleaned = cleanProjectData(newProject)
+    let data;
+    if (hasFiles(cleaned)) {
+      data = buildFormData(cleaned)
+    } else {
+      data = { ...cleaned }
+      delete data.pdf
+    }
     await projectStore.addProject(data)
     showAddProjectModal.value = false
   } catch (error: any) {
@@ -125,10 +172,17 @@ const editProject = (proyecto: Proyecto) => {
 
 const saveEdit = async (updatedProject: any) => {
   try {
-    const idToUpdate = updatedProject.idProyecto || editingProject.value?.idProyecto
+    const cleaned = cleanProjectData(updatedProject)
+    const idToUpdate = cleaned.idProyecto || editingProject.value?.idProyecto
     if (!idToUpdate) throw new Error('ID de proyecto no encontrado')
     
-    const data = updatedProject.pdf ? buildFormData(updatedProject) : updatedProject
+    let data;
+    if (hasFiles(cleaned)) {
+      data = buildFormData(cleaned)
+    } else {
+      data = { ...cleaned }
+      delete data.pdf
+    }
     await projectStore.updateProject(idToUpdate, data)
 
     showEditProjectModal.value = false
@@ -327,17 +381,34 @@ onMounted(() => {
             <p class="description-text">{{ selectedProject.descripcion || 'Sin descripción' }}</p>
           </div>
 
-          <div class="info-section box-item" v-if="selectedProject.pdfPath">
+          <div class="info-section box-item" v-if="selectedProject.pdfPath && selectedProject.pdfPath.length > 0">
             <h3>
               <span class="material-symbols-outlined">attachment</span>
-              Documentación
+              Documentación ({{ selectedProject.pdfPath.length }})
             </h3>
-            <a :href="`http://localhost:3000${selectedProject.pdfPath}`" target="_blank" class="pdf-link">
-              <span class="material-symbols-outlined">open_in_new</span>
-              Abrir PDF en pestaña nueva
-            </a>
-            <div class="pdf-preview-wrapper">
-              <PdfPreview :pdf-url="`http://localhost:3000${selectedProject.pdfPath}`" />
+            
+            <div v-if="selectedProject.pdfPath.length > 1" class="pdf-selector">
+              <label>Seleccionar archivo:</label>
+              <select v-model="currentPdfIndex">
+                <option v-for="(path, index) in selectedProject.pdfPath" :key="index" :value="index">
+                  Archivo {{ index + 1 }} - {{ path.split('/').pop() }}
+                </option>
+              </select>
+            </div>
+
+            <div class="pdf-actions" v-if="selectedProject?.pdfPath && selectedProject.pdfPath[currentPdfIndex]">
+              <a 
+                :href="`http://192.168.1.55:3000${selectedProject.pdfPath[currentPdfIndex]?.trim()}`" 
+                target="_blank" 
+                class="pdf-link"
+              >
+                <span class="material-symbols-outlined">open_in_new</span>
+                Abrir en pestaña nueva
+              </a>
+            </div>
+
+            <div class="pdf-preview-wrapper" v-if="selectedProject?.pdfPath && selectedProject.pdfPath[currentPdfIndex]">
+              <PdfPreview :pdf-url="`http://192.168.1.55:3000${selectedProject.pdfPath[currentPdfIndex]?.trim()}`" />
             </div>
           </div>
 
@@ -360,11 +431,21 @@ onMounted(() => {
                 <span class="stat-label">Subproyectos</span>
               </div>
               <div class="mini-stat">
-                <RouterLink to="/actividades">
-                  <span class="stat-num">{{ selectedProject.actividades?.length || 0 }}</span>
-                  <span class="stat-label">Actividades</span>
-                </RouterLink>
+                <span class="stat-num">{{ selectedProject.actividades?.length || 0 }}</span>
+                <span class="stat-label">Actividades</span>
               </div>
+            </div>
+            
+            <div v-if="selectedProject.detallesActividades?.length" class="activities-linked-list">
+              <p class="linked-title">Actividades asignadas:</p>
+              <ul>
+                <li v-for="act in selectedProject.detallesActividades" :key="act.id">
+                  <RouterLink :to="`/actividades?search=${act.nombre}`" class="activity-link">
+                    <span class="material-symbols-outlined">event_available</span>
+                    {{ act.nombre }}
+                  </RouterLink>
+                </li>
+              </ul>
             </div>
           </div>
         </div>
@@ -789,6 +870,72 @@ onMounted(() => {
   grid-column: span 2;
 }
 
+/* PDF Selector & Actions */
+.pdf-selector {
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pdf-selector label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.pdf-selector select {
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  outline: none;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.pdf-selector select:focus {
+  border-color: var(--button-primary);
+  box-shadow: 0 0 0 3px rgba(var(--button-primary-rgb, 37, 99, 235), 0.2);
+}
+
+.pdf-actions {
+  margin-bottom: 15px;
+  display: flex;
+  gap: 12px;
+}
+
+.pdf-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--text-primary);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: all 0.2s;
+}
+
+.pdf-link:hover {
+  background: var(--button-primary);
+  color: white;
+  border-color: var(--button-primary);
+  transform: translateY(-2px);
+}
+
+.pdf-link span {
+  font-size: 1.2rem;
+}
+
 .description-text, .notes-text {
   line-height: 1.6;
   color: var(--text-primary);
@@ -919,5 +1066,62 @@ main h2 {
     font-size: 1rem;
     margin-bottom: 12px;
   }
+}
+
+.activities-linked-list {
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 1px solid var(--border-color);
+}
+
+.linked-title {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-bottom: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.activities-linked-list ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.activity-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--text-primary);
+  text-decoration: none;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+}
+
+:global(.dark) .activity-link {
+  background: #111112;
+}
+
+.activity-link:hover {
+  background: var(--button-primary);
+  color: white;
+  border-color: var(--button-primary);
+  transform: translateX(5px);
+}
+
+.activity-link span {
+  font-size: 1.2rem;
+  color: var(--button-primary);
+}
+
+.activity-link:hover span {
+  color: white;
 }
 </style>

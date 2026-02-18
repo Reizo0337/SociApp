@@ -1,5 +1,6 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, ManyToMany } from 'typeorm';
 import { Usuarios } from '../users/user.entity';
+import { Activity } from '../activities/activity.entity';
 
 @Entity('proyectos')
 export class Proyecto {
@@ -40,6 +41,6 @@ export class Proyecto {
     @Column('simple-array', { nullable: true })
     actividades: string[];
 
-    @Column({ length: 255, nullable: true })
-    pdfPath: string;
+    @Column('simple-array', { nullable: true })
+    pdfPath: string[];
 }

@@ -44,10 +44,11 @@ export class CreateProjectDto {
     subproyectos?: string[];
 
     @IsArray()
+    @IsNumber({}, { each: true })
     @IsOptional()
-    actividades?: string[];
+    activityIds?: number[];
 
-    @IsString()
+    @IsArray()
     @IsOptional()
-    pdfPath?: string;
+    pdfPath?: string[];
 }

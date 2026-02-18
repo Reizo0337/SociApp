@@ -2,6 +2,7 @@
 
 import StatisticsCard from '@/components/StatisticsCard.vue'
 import { ref, onMounted, computed, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import Title from '../components/Title.vue'
 import ModalForm from '../components/ModalForm.vue'
 import ModalDelete from '../components/ModalDelete.vue'
@@ -14,6 +15,7 @@ import SearchInput from '../components/SearchInput.vue'
 import { ActivitySchema } from '@/formSchemas/Activity.schema'
 import { useActivityStore } from '@/stores/activities'
 
+const route = useRoute()
 const activityStore = useActivityStore()
 const activities = computed(() => activityStore.activities)
 const searchQuery = ref('')
@@ -52,6 +54,9 @@ const prevPage = () => {
 }
 
 onMounted(async () => {
+  if (route.query.search) {
+    searchQuery.value = route.query.search
+  }
   await activityStore.fetchActivities()
 })
 const filteredActivities = computed(() => {
@@ -85,7 +90,13 @@ const saveActivity = async (newActivity) => {
       throw new Error('Debe seleccionar hora de inicio y fin');
     }
 
-    await activityStore.addActivity(newActivity);
+    const dataToSend = { ...newActivity };
+    if (!dataToSend.asociarProyecto) {
+      dataToSend.projectIds = [];
+    }
+    delete dataToSend.asociarProyecto;
+
+    await activityStore.addActivity(dataToSend);
     showAddActivitiesModal.value = false;
     formError.value = '';
   } catch (error) {
@@ -95,7 +106,11 @@ const saveActivity = async (newActivity) => {
   }
 }
 const editActivity = (activity) => {
-  editingActivity.value = { ...activity }; // Crear una copia para evitar mutaciones
+  editingActivity.value = { 
+    ...activity,
+    projectIds: activity.proyectos ? activity.proyectos.map(p => p.id) : [],
+    asociarProyecto: activity.proyectos && activity.proyectos.length > 0
+  };
   showEditModal.value = true
 }
 
@@ -108,7 +123,13 @@ const saveEdit = async (payload) => {
     const id = payload.id || editingActivity.value.id;
     if (!id) throw new Error('ID de la actividad no encontrado');
 
-    await activityStore.updateActivity(id, payload);
+    const dataToSend = { ...payload };
+    if (!dataToSend.asociarProyecto) {
+      dataToSend.projectIds = [];
+    }
+    delete dataToSend.asociarProyecto;
+
+    await activityStore.updateActivity(id, dataToSend);
     showEditModal.value = false;
     editingActivity.value = null;
     editError.value = '';
@@ -188,7 +209,7 @@ const formatDate = (date) => (date ? new Date(date).toLocaleDateString() : '')
                   { label: 'Hora de inicio', value: activity.horaInicio },
                   { label: 'Hora de fin', value: activity.horaFin },
                   { label: 'Monitor', value: activity.monitor },
-                  { label: 'Proyecto', value: activity.proyecto?.nombre} 
+                  { label: 'Proyectos', value: activity.proyectos?.map(p => p.nombre).join(', ') } 
                 ]"
               />
               <ActionButtons

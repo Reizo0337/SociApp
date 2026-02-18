@@ -1,0 +1,1 @@
+// Archivos DTO movidos para centralizar lógica en configuracion

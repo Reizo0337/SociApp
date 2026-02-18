@@ -20,16 +20,18 @@ props.schema.forEach((section: any) => {
   section.fields.forEach((field: any) => {
     if (field.type === 'select' && field.multiple) {
       model[field.key] = props.initial?.[field.key] || []
+    } else if (field.type === 'checkbox') {
+      model[field.key] = props.initial?.[field.key] || false
     } else {
       model[field.key] = props.initial?.[field.key] || ''
     }
   })
 })
 
-const handleFileChange = (event: Event, key: string) => {
+const handleFileChange = (event: Event, key: string, multiple: boolean) => {
   const target = event.target as HTMLInputElement
   if (target.files && target.files.length > 0) {
-    model[key] = target.files[0]
+    model[key] = multiple ? Array.from(target.files) : target.files[0]
   }
 }
 
@@ -72,7 +74,6 @@ const submit = () => {
   const payload = { ...model };
   // Asegurar tipos
   if (payload.dni) payload.dni = String(payload.dni);
-  if (payload.id) delete payload.id;
 
   emit('submit', payload)
 }
@@ -113,25 +114,39 @@ const toggleCheckbox = (key: string, value: any) => {
           <!-- Columna izquierda: Datos personales -->
           <section class="card" v-for="value in schema">
             <h3>{{ value.section }}</h3>
-            <div
-              v-for="field in value.fields"
-              :key="value.section"
-              class="form-group"
-            >
-              <label>{{ field.label }}</label>
-              <input
-                v-if="field.type !== 'select' && field.type !== 'date' && field.type !== 'file'"
-                :type="field.type"
-                v-model="model[field.key]"
-                :required="field.required"
-              />
-              <div v-else-if="field.type === 'file'" class="file-upload-wrapper">
+            <template v-for="field in value.fields" :key="field.key">
+              <div
+                v-if="!field.showIf || field.showIf(model)"
+                class="form-group"
+              >
+                <label v-if="field.type !== 'checkbox'">{{ field.label }}</label>
+                <input
+                  v-if="field.type !== 'select' && field.type !== 'date' && field.type !== 'file' && field.type !== 'checkbox'"
+                  :type="field.type"
+                  v-model="model[field.key]"
+                  :required="field.required"
+                />
+                <!-- SINGLE CHECKBOX -->
+                <div 
+                  v-else-if="field.type === 'checkbox'" 
+                  class="checkbox-option"
+                  @click="model[field.key] = !model[field.key]"
+                >
+                  <input
+                    type="checkbox"
+                    v-model="model[field.key]"
+                    @click.stop
+                  />
+                  <span>{{ field.label }}</span>
+                </div>
+                <div v-else-if="field.type === 'file'" class="file-upload-wrapper">
                 <input
                   type="file"
                   class="file-input-custom"
-                  @change="handleFileChange($event, field.key)"
+                  @change="handleFileChange($event, field.key, field.multiple || false)"
                   :accept="field.accept"
                   :required="field.required"
+                  :multiple="field.multiple"
                 />
                 <div class="file-upload-btn">
                   <span class="material-symbols-outlined">cloud_upload</span>
@@ -139,7 +154,12 @@ const toggleCheckbox = (key: string, value: any) => {
                 </div>
                 <div v-if="model[field.key]" class="file-selected-name">
                   <span class="material-symbols-outlined">check_circle</span>
-                  {{ (model[field.key] as any).name || 'Archivo seleccionado' }}
+                  <span v-if="Array.isArray(model[field.key])">
+                    {{ model[field.key].length }} archivos seleccionados
+                  </span>
+                  <span v-else>
+                    {{ (model[field.key] as any).name || 'Archivo seleccionado' }}
+                  </span>
                 </div>
               </div>
               <!-- SELECT MÚLTIPLE (checkboxes) -->
@@ -189,7 +209,8 @@ const toggleCheckbox = (key: string, value: any) => {
                 />
                 <button type="button" @click="setToday(field.key)">Hoy</button>
               </div>
-            </div>
+              </div>
+            </template>
           </section>
         </div>
 
@@ -204,60 +225,6 @@ const toggleCheckbox = (key: string, value: any) => {
 
 <style scoped>
 @import '../assets/modals.css';
-.checkbox-option {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 14px;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  border: 1px solid #2c2c2c;
-  background: #1e1e1e;
-}
 
-.checkbox-option:hover {
-  background: #2a2a2a;
-  border-color: #3a3a3a;
-}
-
-.checkbox-option input[type="checkbox"] {
-  appearance: none;
-  width: 18px;
-  height: 18px;
-  border-radius: 4px;
-  border: 2px solid #555;
-  display: grid;
-  place-content: center;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.checkbox-option input[type="checkbox"]::before {
-  content: "";
-  width: 10px;
-  height: 10px;
-  transform: scale(0);
-  transition: transform 0.15s ease-in-out;
-  background-color: #4ade80; /* verde bonito */
-  border-radius: 2px;
-}
-
-.checkbox-option input[type="checkbox"]:checked {
-  border-color: #4ade80;
-  background-color: #4ade80;
-}
-
-.checkbox-option input[type="checkbox"]:checked::before {
-  transform: scale(1);
-  background: white;
-}
-
-.checkbox-option label {
-  cursor: pointer;
-  flex: 1;
-  color: #e5e5e5;
-  font-size: 14px;
-}
 
 </style>

@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, ManyToMany, JoinTable } from 'typeorm';
 import { Usuarios } from '../users/user.entity';
 import { Proyecto } from '../projects/project.entity';
 
@@ -32,10 +32,5 @@ export class Activity {
     @JoinColumn({ name: 'idMonitor' })
     monitor: Usuarios;
 
-    @Column({ name: 'idProyecto', nullable: true })
-    idProyecto: number;
 
-    @ManyToOne(() => Proyecto)
-    @JoinColumn({ name: 'idProyecto' })
-    proyecto: Proyecto;
 }
