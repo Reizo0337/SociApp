@@ -106,7 +106,7 @@ const saveActivity = async (newActivity) => {
   }
 }
 const editActivity = (activity) => {
-  editingActivity.value = { 
+  editingActivity.value = {
     ...activity,
     projectIds: activity.proyectos ? activity.proyectos.map(p => p.id) : [],
     asociarProyecto: activity.proyectos && activity.proyectos.length > 0
@@ -209,7 +209,7 @@ const formatDate = (date) => (date ? new Date(date).toLocaleDateString() : '')
                   { label: 'Hora de inicio', value: activity.horaInicio },
                   { label: 'Hora de fin', value: activity.horaFin },
                   { label: 'Monitor', value: activity.monitor },
-                  { label: 'Proyectos', value: activity.proyectos?.map(p => p.nombre).join(', ') } 
+                  { label: 'Proyectos', value: activity.proyectos?.map(p => p.nombre).join(', ') }
                 ]"
               />
               <ActionButtons

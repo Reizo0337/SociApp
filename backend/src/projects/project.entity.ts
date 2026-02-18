@@ -38,8 +38,8 @@ export class Proyecto {
     @Column('simple-array', { nullable: true })
     subproyectos: string[];
 
-    @Column('simple-array', { nullable: true })
-    actividades: string[];
+    @OneToMany('Activity', 'proyecto')
+    actividadesList: any[];
 
     @Column('simple-array', { nullable: true })
     pdfPath: string[];
