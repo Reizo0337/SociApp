@@ -57,7 +57,7 @@ const confirm = () => {
   border-radius: 12px;
   width: 100%;
   position: relative;
-  max-height: 40vh;
+  max-height: auto;
   max-width: 350px;
   padding: 24px;
   box-shadow: 0 10px 40px var(--card-shadow);
