@@ -1,54 +1,46 @@
-export const juntaDirectivaSchema = [
+import { api } from '@/api'
+
+export const juntaDirectivaSchema = [ // Ahora es un Array
   {
-    section: 'Datos personales',
+    section: 'Información de la Junta',
     fields: [
-      { key: 'name', label: 'Nombre', type: 'text', required: true },
-      { key: 'surname', label: 'Apellido', type: 'text', required: true },
-      { key: 'dni', label: 'DNI', type: 'text', required: true },
-      { key: 'email', label: 'Email', type: 'email', required: true },
-      { key: 'phone', label: 'Teléfono', type: 'text' },
-      { key: 'birthDate', label: 'Fecha de nacimiento', type: 'date' }
+      {
+        label: 'Seleccionar Usuario',
+        key: 'idUsuario',
+        type: 'select',
+        options: async () => {
+          try {
+            const response = await api.get('/users')
+            const data = response.data
+            // El backend devuelve { users: [...] } en get()
+            const users = Array.isArray(data) ? data : (data.users || [])
+            return users.map((user: any) => ({
+              value: user.id,
+              label: `${user.nombre} ${user.apellidos || ''}`.trim()
+            }))
+          } catch (error) {
+            console.error('Error fetching users for schema:', error)
+            return []
+          }
+        },
+        required: true
+      },
     ]
   },
   {
-    section: 'Ubicación y Domicilio',
-    fields: [
-      { key: 'street', label: 'Calle', type: 'text' },
-      { key: 'city', label: 'Ciudad', type: 'text' },
-      { key: 'postalCode', label: 'CP', type: 'text' },
-      { key: 'country', label: 'País', type: 'text' }
-    ]
-  },
-  {
-    section: 'Cargo y Responsabilidad',
+    section: 'Información de la Junta',
     fields: [
       {
-        key: 'rol',
-        label: 'Cargo en la junta',
+        label: 'Cargo en la Junta',
+        key: 'cargo',          // Cambia 'model' por 'key'
         type: 'select',
-        required:true,
-        options: ['Presidente/a', 'Vicepresidente/a', 'Secretario/a', 'Tesorero/a', 'Director/a Ejecutivo/a']
-      },
-      {
-        key: 'status',
-        label: 'Estado actual',
-        type: 'select',
-        options: ['Activo', 'En periodo de cese', 'Honorífico']
-      },
-      { key: 'fechaNombramiento', label: 'Fecha de nombramiento', type: 'date', required:true },
-      { key: 'fechaVencimiento', label: 'Fin de mandato', type: 'date' }
-    ]
-  },
-  {
-    section: 'Información Adicional',
-    fields: [
-      {
-        key: 'comite',
-        label: 'Comité asignado',
-        type: 'select',
-        options: ['Finanzas', 'Eventos', 'Relaciones Públicas', 'Ética']
-      },
-      { key: 'observations', label: 'Observaciones internas', type: 'text' }
+        options: async () => {
+          const response = await api.get('/configuracion/junta/cargos');
+          console.log(response.data);
+          return response.data; // ya viene en formato {value,label}
+        },
+        required: true
+      }
     ]
   }
-]
+];

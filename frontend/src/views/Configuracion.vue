@@ -5,14 +5,14 @@
     <header v-if="!selectedSection" class="profile-header">
       <div class="association-card">
         <div class="avatar-circle">
-          {{ asociacionData?.legalName?.charAt(0) || 'S' }}
+          {{ asociacionData?.Nombre?.charAt(0) || 'S' }}
         </div>
         <div class="header-info">
           <h2 class="association-name">
-            {{ asociacionData?.legalName || 'Agregue datos de la asociación' }}
+            {{ asociacionData?.Nombre || 'Agregue datos de la asociación' }}
           </h2>
           <p v-if="asociacionData" class="sub-label">
-            {{ asociacionData.cif }} • {{ asociacionData.generalEmail }}
+            {{ asociacionData.CIF }} • {{ asociacionData.Email }}
           </p>
           <p v-else class="sub-label">PANEL DE CONTROL GENERAL</p>
         </div>
@@ -52,7 +52,8 @@
       <div class="view-header">
         <h2 class="view-title">{{ sectionTitle[selectedSection] }}</h2>
         <div class="options">
-          <button class="btn-primary" @click="showAddUserModal = true">
+          <button class="btn-primary" @click="selectedSection === 'datos' ? openEditDatos() : openModal()"
+>
             {{ selectedSection === 'datos' && asociacionData ? '📝 EDITAR' : '➕ AGREGAR' }}
           </button>
         </div>
@@ -60,106 +61,160 @@
 
       <div class="content-placeholder">
         <div v-if="selectedSection === 'datos' && asociacionData" class="data-preview">
-          <p><strong>Nombre Legal:</strong> {{ asociacionData.legalName }}</p>
-          <p><strong>CIF:</strong> {{ asociacionData.cif }}</p>
+          <p><strong>Nombre Legal:</strong> {{ asociacionData.Nombre }}</p>
+          <p><strong>CIF:</strong> {{ asociacionData.CIF }}</p>
         </div>
 
         <div v-if="selectedSection === 'junta' && listaJunta.length > 0" class="records-list">
           <h3 class="list-title">Miembros de la Junta</h3>
-          <StatisticsCard
-            v-for="(miembro, index) in listaJunta"
-            :key="index"
-            class="record-card"
-          >
-            <template #content>
-              <div class="record-icon">👤</div>
-              <div class="record-details">
-                <p class="record-main">{{ miembro.nombre }} {{ miembro.apellidos }}</p>
-                <p class="record-sub">{{ miembro.cargo || 'Miembro' }}</p>
-              </div>
-            </template>
-            <template #actions>
-              <div class="action-buttons">
-                <button @click="editMiembro(index)" class="edit-icon">
-                  <span class="material-symbols-outlined">edit</span>
-                </button>
-                <button @click="deleteItem(listaJunta, index)" class="delete-icon">
-                  <span class="material-symbols-outlined">delete</span>
-                </button>
-              </div>
-            </template>
-          </StatisticsCard>
+            <ExpandableListItem
+          v-for="(miembro, index) in listaJunta"
+          :key="index"
+          :expanded="expandedActivity.includes(miembro)"
+          @toggle="toggleDetails(miembro)"
+        >
+          <template #summary-left>
+            <span class="activity-name">{{ miembro.Nombre + miembro.Apellidos }}</span>
+          </template>
+          <template #details>
+            <div class="card-body box-item between">
+              <DataDisplay
+                :items="[
+                  { label: 'Nombre', value: miembro.Nombre },
+                  { label: 'Apellido', value: miembro.Apellidos },
+                  { label: 'Cargo', value: miembro.cargo },
+                ]"
+              />
+              <ActionButtons
+                showEdit
+                showDelete
+                @edit="editItem(listaJunta, index)"
+                @delete="deleteItem(listaJunta, index)"
+              />
+            </div>
+          </template>
+        </ExpandableListItem>
+          
         </div>
 
         <div v-if="selectedSection === 'relaciones' && listaRelaciones.length > 0" class="records-list">
           <h3 class="list-title">Convenios y Relaciones</h3>
-          <StatisticsCard v-for="(rel, index) in listaRelaciones" :key="index" class="record-card">
-            <template #content>
-              <div class="record-icon">🤝</div>
-              <div class="record-details">
-                <p class="record-main">{{ rel.entidad || rel.nombreInstitucion }}</p>
-                <p class="record-sub">{{ rel.tipoRelacion || 'Convenio' }}</p>
+
+          <ExpandableListItem
+            v-for="(rel, index) in listaRelaciones"
+            :key="index"
+            :expanded="expandedActivity.includes(rel)"
+            @toggle="toggleDetails(rel)"
+          >
+            <template #summary-left>
+              <span class="activity-name">{{ rel.Nombre }}</span>
+            </template>
+
+            <template #details>
+              <div class="card-body box-item">
+                <DataDisplay
+                  :items="[
+                    { label: 'Nombre', value: rel.Nombre },
+                    { label: 'Email', value: rel.Email },
+                    { label: 'Teléfono', value: rel.Telefono }
+                  ]"
+                />
+                <ActionButtons
+                  showEdit
+                  showDelete
+                  @edit="editItem(listaRelaciones, index)"
+                  @delete="deleteItem(listaRelaciones, index)"
+                />
               </div>
             </template>
-            <template #actions>
-              <div class="action-buttons">
-                <button @click="editItem(listaRelaciones, index)" class="edit-icon"><span class="material-symbols-outlined">edit</span></button>
-                <button @click="deleteItem(listaRelaciones, index)" class="delete-icon"><span class="material-symbols-outlined">delete</span></button>
-              </div>
-            </template>
-          </StatisticsCard>
+          </ExpandableListItem>
         </div>
+
 
         <div v-if="selectedSection === 'donativos' && listaDonativos.length > 0" class="records-list">
           <h3 class="list-title">Registros de Donativos</h3>
-          <StatisticsCard v-for="(item, index) in listaDonativos" :key="index" class="record-card">
-            <template #content>
-              <div class="record-icon">🎁</div>
-              <div class="record-details">
-                <p class="record-main">{{ item.donante || 'Donativo Anónimo' }}</p>
-                <p class="record-sub">{{ item.tipo || 'General' }} • {{ item.cuantía || item.monto || '' }}</p>
+
+          <ExpandableListItem
+            v-for="(item, index) in listaDonativos"
+            :key="index"
+            :expanded="expandedActivity.includes(item)"
+            @toggle="toggleDetails(item)"
+          >
+            <template #summary-left>
+              <span class="activity-name">
+                {{ item.donante || 'Donativo Anónimo' }}
+              </span>
+            </template>
+
+            <template #details>
+              <div class="card-body box-item">
+                <DataDisplay
+                  :items="[
+                    { label: 'Donante', value: item.donante || 'Anónimo' },
+                    { label: 'Tipo', value: item.tipo },
+                    { label: 'Monto', value: item.cuantía || item.monto }
+                  ]"
+                />
+                <ActionButtons
+                  showEdit
+                  showDelete
+                  @edit="editItem(listaDonativos, index)"
+                  @delete="deleteItem(listaDonativos, index)"
+                />
               </div>
             </template>
-            <template #actions>
-              <div class="action-buttons">
-                <button @click="editItem(listaDonativos, index)" class="edit-icon"><span class="material-symbols-outlined">edit</span></button>
-                <button @click="deleteItem(listaDonativos, index)" class="delete-icon"><span class="material-symbols-outlined">delete</span></button>
-              </div>
-            </template>
-          </StatisticsCard>
+          </ExpandableListItem>
         </div>
+
 
         <div v-if="selectedSection === 'bancos' && listaBancos.length > 0" class="records-list">
           <h3 class="list-title">Cuentas Registradas</h3>
-          <StatisticsCard
+
+          <ExpandableListItem
             v-for="(banco, index) in listaBancos"
             :key="index"
-            class="record-card"
+            :expanded="expandedActivity.includes(banco)"
+            @toggle="toggleDetails(banco)"
           >
-            <template #content>
-              <div class="record-icon">🏛️</div>
-              <div class="record-details">
-                <p class="record-main">{{ banco.entidad }}</p>
-                <p class="record-sub">{{ banco.iban }}</p>
+            <template #summary-left>
+              <span class="activity-name">{{ banco.entidad }}</span>
+            </template>
+
+            <template #details>
+              <div class="card-body box-item">
+                <DataDisplay
+                  :items="[
+                    { label: 'Entidad', value: banco.entidad },
+                    { label: 'IBAN', value: banco.iban }
+                  ]"
+                />
+                <ActionButtons
+                  showDelete
+                  @delete="deleteBanco(index)"
+                />
               </div>
             </template>
-            <template #actions>
-               <button @click="deleteBanco(index)" class="delete-icon">
-                <span class="material-symbols-outlined">delete</span>
-              </button>
-            </template>
-          </StatisticsCard>
+          </ExpandableListItem>
         </div>
       </div>
+
 
       <ModalForm
         v-if="showAddUserModal && sectionForm[selectedSection]"
         :schema="sectionForm[selectedSection]"
         :title="sectionTitle[selectedSection]"
-        :initialData="selectedSection === 'datos' ? asociacionData : editingData"
+        :initial="selectedSection === 'datos' ? asociacionData : editingData"
         @submit="handleSave"
         @close="showAddUserModal = false"
       />
+      <ModalEdit
+        v-if="showEditModal"
+        :data="editDatos"
+        title="Editar Datos Asociación"
+        @save="saveDatosEdit"
+        @close="showEditModal = false"
+      />
+
     </div>
   </main>
 </template>
@@ -174,19 +229,45 @@ import { RelacionesInstitucionalesSchema } from '@/formSchemas/RelacionesInstitu
 import { datosSchema } from '@/formSchemas/datos.schema'
 import { donativosSchema } from '@/formSchemas/donativos.schema'
 import StatisticsCard from '@/components/StatisticsCard.vue'
+import ModalEdit from '@/components/ModalEdit.vue'
+import ExpandableListItem from '@/components/ExpandableListItem.vue'
+import DataDisplay from '@/components/DataDisplay.vue'
+import ActionButtons from '@/components/ActionButtons.vue'
+
 
 const selectedSection = ref(null)
 const showAddUserModal = ref(false)
 const editingData = ref(null)
+const showEditModal = ref(false)
 const editingIndex = ref(null)
+const editDatos = ref(null)
 const loading = ref(false) // Para feedback visual
+const expandedActivity = ref([])
 
 //estados de datos
 const asociacionData = ref(null)
 const listaBancos = ref([])
 const listaJunta = ref([])
 const listaDonativos = ref([])
+const listaUsuariosParaSelect = ref([])
 const listaRelaciones = ref([])
+
+// 3. Modificamos el selectSection para que cargue los usuarios si entramos en 'junta'
+const selectSection = (section) => {
+  selectedSection.value = section;
+  
+  // Limpiamos datos anteriores para que no se mezclen
+  editingIndex.value = null;
+  editingData.value = null;
+
+  // Carga automática al entrar en la sección
+  if (section === 'junta') {
+    fetchUsuariosSelect();
+    fetchJunta();
+  } else {
+    fetchSection(section);
+  }
+};
 
 const fetchConfiguracion = async () => {
   try {
@@ -199,10 +280,6 @@ const fetchConfiguracion = async () => {
     console.error('Error cargando configuración:', error);
   }
 };
-
-onMounted(() => {
-  fetchConfiguracion();
-});
 
 const sectionTitle = {
   datos: 'Datos Asociación',
@@ -226,6 +303,22 @@ const getColorClass = (key) => {
   const colors = { datos: 'yellow', junta: 'green', relaciones: 'purple', bancos: 'blue', donativos: 'red' }
   return colors[key] || ''
 }
+const toggleDetails = (miembro) => {
+  if (expandedActivity.value.includes(miembro) && expandedActivity.value.length === 1) {
+    expandedActivity.value = []
+  } else {
+    expandedActivity.value = [miembro]
+  }
+}
+
+const fetchJunta = async () => {
+  const res = await fetch('http://localhost:3000/configuracion/junta');
+  listaJunta.value = await res.json();
+};
+onMounted(() => {
+  fetchConfiguracion();
+  fetchJunta();
+});
 
 const sectionForm = {
   junta: juntaDirectivaSchema,
@@ -235,24 +328,56 @@ const sectionForm = {
   donativos: donativosSchema
 }
 
-function openModal() {
-  editingIndex.value = null
-  if (selectedSection.value === 'datos') {
-    editingData.value = asociacionData.value
-  } else {
-    editingData.value = null
+const fetchUsuariosSelect = async () => {
+  try {
+    const res = await fetch('http://localhost:3000/configuracion/junta/usuarios-lista');
+    const data = await res.json();
+    
+    const opcionesMapeadas = data.map(u => ({
+      label: `${u.Nombre} ${u.Apellidos}`,
+      value: u.idUsuario
+    }));
+
+    // Accedemos al primer elemento del array (la sección) y buscamos el campo
+    const seccion = sectionForm.junta[0]; 
+    const campo = seccion.fields.find(f => f.key === 'idUsuario');
+    
+    if (campo) {
+      campo.options = opcionesMapeadas;
+    }
+  } catch (error) {
+    console.error("Error cargando usuarios:", error);
   }
-  showAddUserModal.value = true
+};
+
+async function openModal() {
+  editingIndex.value = null;
+  editingData.value = null;
+
+  if (selectedSection.value === 'junta') {
+    // Abrimos el modal PRIMERO para dar feedback visual, 
+    // o aseguramos que la carga no bloquee la interfaz
+    try {
+      await fetchUsuariosSelect();
+      showAddUserModal.value = true;
+    } catch (error) {
+      console.error("Error al preparar el formulario de junta:", error);
+      alert("Error al cargar la lista de usuarios");
+    }
+  } else {
+    showAddUserModal.value = true;
+  }
+}
+function openEditDatos() {
+  editDatos.value = { ...asociacionData.value } // copia editable
+  showEditModal.value = true
 }
 
 function editMiembro(index) {
   editingIndex.value = index
-  editingData.value = { ...listaJunta.value[index] }
+  const miembro = listaJunta.value[index]
+  editingData.value = { ...miembro }
   showAddUserModal.value = true
-}
-
-function selectSection(section) {
-  selectedSection.value = section
 }
 
 function editItem(list, index) {
@@ -264,52 +389,158 @@ function editItem(list, index) {
 function deleteBanco(index) {
   listaBancos.value.splice(index, 1)
 }
-function deleteItem(list, index) {
-  list.splice(index, 1)
-}
-async function handleSave(data) {
-  const section = selectedSection.value
-
-  if (section === 'datos') {
-    try {
-      loading.value = true;
-      const response = await fetch('http://localhost:3000/configuracion/datos', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-      });
-
-      if (!response.ok) throw new Error('Error al guardar');
-
-      const updatedData = await response.json();
-      asociacionData.value = updatedData; // Actualizamos el estado local
-      showAddUserModal.value = false;
-      alert('¡Configuración guardada con éxito!');
-    } catch (error) {
-      alert('Error al conectar con el servidor');
-      console.error(error);
-    } finally {
-      loading.value = false;
-    }
-  } else {
-    // Lógica para listas dinámicas
-    const listMap = {
-      bancos: listaBancos.value,
-      junta: listaJunta.value,
-      donativos: listaDonativos.value,
-      relaciones: listaRelaciones.value
-    }
-
-    const targetList = listMap[section]
-    if (targetList) {
-      if (editingIndex.value !== null) {
-        targetList[editingIndex.value] = data
-      } else {
-        targetList.push(data)
-      }
-    }
+async function deleteItem(list, index) {
+  if (!confirm('¿Estás seguro de eliminar este registro?')) return;
+  
+  const section = selectedSection.value;
+  const item = list[index];
+  
+  // Determine the ID field based on section
+  let id;
+  if (section === 'junta') {
+    id = item.id;
+  } else if (section === 'relaciones') {
+    id = item.IdInstitucion;
+  } else if (section === 'donativos') {
+    id = item.id;
+  } else if (section === 'bancos') {
+    id = item.id;
   }
-  showAddUserModal.value = false
+  
+  if (!id) {
+    alert('No se pudo identificar el ID del registro');
+    return;
+  }
+  
+  try {
+    const response = await fetch(`http://localhost:3000/configuracion/${endpoints[section]}/${id}`, {
+      method: 'DELETE'
+    });
+    
+    if (!response.ok) throw new Error('Error al eliminar');
+    
+    // Refresh the list
+    await fetchSection(section);
+    alert('Registro eliminado con éxito ✅');
+  } catch (error) {
+    console.error(error);
+    alert('Error al eliminar el registro');
+  }
+}
+
+async function saveDatosEdit(updatedData) {
+  try {
+    const res = await fetch('http://localhost:3000/configuracion/datos', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updatedData)
+    })
+
+    const data = await res.json()
+
+    asociacionData.value = data
+    showEditModal.value = false
+
+    alert('Datos actualizados ✅')
+  } catch (err) {
+    console.error(err)
+    alert('Error al guardar')
+  }
+}
+
+async function deleteJunta(id) {
+  await fetch(`/configuracion/junta/${id}`, {
+    method: 'DELETE'
+  });
+
+  fetchJunta();
+}
+const endpoints = {
+  datos: 'datos',
+  junta: 'junta',
+  bancos: 'bancos',
+  relaciones: 'relaciones',
+  donativos: 'donativos'
+};
+
+async function fetchSection(section) {
+  try {
+    const res = await fetch(`http://localhost:3000/configuracion/${endpoints[section]}`);
+    const data = await res.json();
+    
+    // Mapeo dinámico para evitar tantos 'if'
+    const listMap = {
+      junta: listaJunta,
+      bancos: listaBancos,
+      relaciones: listaRelaciones,
+      donativos: listaDonativos
+    };
+    
+    if (listMap[section]) {
+      listMap[section].value = data;
+    }
+  } catch (error) {
+    console.error(`Error cargando ${section}:`, error);
+  }
+}
+
+async function handleSave(data) {
+  console.log("Datos a enviar:", data);
+  const section = selectedSection.value;
+  const isEditing = editingIndex.value !== null;
+  
+  try {
+    loading.value = true;
+    
+    let url = `http://localhost:3000/configuracion/${endpoints[section]}`;
+    let method = 'POST';
+    
+    // If editing, use PUT and append the ID
+    if (isEditing) {
+      method = 'PUT';
+      const item = editingData.value;
+      
+      // Determine the ID field based on section
+      let id;
+      if (section === 'junta') {
+        id = item.id;
+      } else if (section === 'relaciones') {
+        id = item.IdInstitucion;
+      } else if (section === 'donativos') {
+        id = item.id;
+      } else if (section === 'bancos') {
+        id = item.id;
+      }
+      
+      if (!id) {
+        throw new Error('No se pudo identificar el ID del registro');
+      }
+      
+      url = `${url}/${id}`;
+    }
+    
+    const response = await fetch(url, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+
+    if (!response.ok) throw new Error('Error en la base de datos');
+
+    // Refresh the list
+    await fetchSection(section); 
+
+    showAddUserModal.value = false;
+    editingIndex.value = null;
+    editingData.value = null;
+    
+    alert(isEditing ? '¡Registro actualizado con éxito! ✅' : '¡Registro agregado con éxito! 🎉');
+  } catch (error) {
+    console.error(error);
+    alert('No se pudo guardar en la base de datos. Revisa la consola del servidor.');
+  } finally {
+    loading.value = false;
+  }
 }
 </script>
 
@@ -499,8 +730,6 @@ async function handleSave(data) {
   transition: color 0.3s ease;
 }
 
-/* Los estilos de modo oscuro ahora se manejan con variables CSS */
-
 .view-panel {
   padding: 20px;
   border-radius: 20px;
@@ -513,5 +742,11 @@ async function handleSave(data) {
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+.between {
+  display: flex;
+  justify-content: space-between;
+  
 }
 </style>

@@ -35,7 +35,7 @@ export class Activity {
     @Column({ name: 'idProyecto', nullable: true })
     idProyecto: number;
 
-    @ManyToOne(() => Proyecto, (proyecto) => proyecto.actividadesList)
+    @ManyToOne(() => Proyecto)
     @JoinColumn({ name: 'idProyecto' })
     proyecto: Proyecto;
 }

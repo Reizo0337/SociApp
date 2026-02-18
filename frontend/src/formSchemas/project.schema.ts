@@ -26,6 +26,33 @@ export const projectSchema = [
     ]
   },
   {
+    section: 'Actividades',
+    fields: [
+      {
+        key: 'actividades',
+        label: 'Actividades',
+        // multiple
+        type: 'select',
+        multiple: true,
+        options: async () => {
+          try {
+            const response = await api.get('/activities')
+            const data = response.data
+            // El backend devuelve { activities: [...] } en get()
+            const activities = Array.isArray(data) ? data : (data.activities || [])
+            return activities.map((activity: any) => ({
+              value: activity.id,
+              label: activity.name
+            }))
+          } catch (error) {
+            console.error('Error fetching activities for schema:', error)
+            return []
+          }
+        },
+      }
+    ]
+  },
+  {
     section: 'Responsables y organización',
     fields: [
       {

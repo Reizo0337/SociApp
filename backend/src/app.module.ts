@@ -19,6 +19,7 @@ import { Usuarios as User } from './users/user.entity';
 
 // Throttler
 import { ThrottlerModule } from '@nestjs/throttler';
+import { ConfiguracionModule } from './configuracion/configuracion.module';
 
 @Module({
   imports: [
@@ -63,6 +64,7 @@ import { ThrottlerModule } from '@nestjs/throttler';
     ActivitiesModule,
     ProjectModule,
     AuthModule,
+    ConfiguracionModule,
     MailModule,
     ServeStaticModule.forRoot({
       rootPath: join(process.cwd(), 'uploads'),

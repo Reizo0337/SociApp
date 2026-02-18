@@ -19,7 +19,7 @@ export class ActivitiesService {
   async getActivitiesData() {
     try {
       const activities = await this.activityRepository.find({
-        relations: ['monitor', 'proyecto'], // Cargar relaciones
+        relations: ['monitor', 'proyecto'], // Cargar relación con usuario
       });
 
       return {
@@ -122,11 +122,10 @@ export class ActivitiesService {
     }
   }
 
-  // Obtener solo los nombres de los proyectos (Helper)
   async getProjects() {
     try {
       return this.dataSource.query(
-        `SELECT idProyecto AS id, nombre FROM proyectos`
+        `SELECT idProyecto AS id, nombre AS nombre FROM proyectos`
       );
     } catch (error) {
       this.handleError('Failed to fetch projects', error);
