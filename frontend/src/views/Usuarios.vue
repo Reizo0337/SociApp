@@ -29,7 +29,7 @@ const editingUsers = ref(null)
 const route = useRoute()
 const expandedUser = ref([])
 const currentPage = ref(1)
-const itemsPerPage = 20
+const itemsPerPage = 10
 
 // Selección de usuarios para correo
 const selectedUserEmails = ref([])

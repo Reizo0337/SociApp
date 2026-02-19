@@ -28,7 +28,7 @@ const editError = ref('')
 const isSubmitting = ref(false)
 const expandedActivity = ref([])
 const currentPage = ref(1)
-const itemsPerPage = 20
+const itemsPerPage = 10
 
 const paginatedActivities = computed(() => {
   const start = (currentPage.value - 1) * itemsPerPage
