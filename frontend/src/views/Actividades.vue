@@ -207,7 +207,10 @@ const formatDate = (date) => (date ? new Date(date).toLocaleDateString() : '')
           @toggle="toggleDetails(activity)"
         >
           <template #summary-left>
-            <span class="activity-name">{{ activity.name }}</span>
+            <div class="project-info">
+              <span class="project-name">{{ proyecto.nombre }}</span>
+              <span class="project-responsable">{{ proyecto.responsable?.nombre || 'Sin asignar' }}</span>
+            </div>
           </template>
           <template #details>
             <div class="card-body box-item">
@@ -226,6 +229,18 @@ const formatDate = (date) => (date ? new Date(date).toLocaleDateString() : '')
                 @edit="editActivity(activity)"
                 @delete="openDeleteModal(activity)"
               />
+            </div>
+          </template>
+          <template #summary-right>
+            <div class="project-actions">
+              <span class="status-badge" :class="proyecto.estado.toLowerCase()">{{ proyecto.estado }}</span>
+              <ActionButtons
+                showEdit
+                showDelete
+                @edit="editActivity(activity)"
+                @delete="openDeleteModal(activity)"
+              />
+              <span class="material-symbols-outlined arrow">chevron_right</span>
             </div>
           </template>
         </ExpandableListItem>

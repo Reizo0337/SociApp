@@ -46,6 +46,7 @@ export const ActivitySchema = [
         key: 'idMonitor',          // <-- clave en model
         label: 'Monitor',
         type: 'select',
+        required: true,
         options: async () => {
           const response = await api.get('/activities/Monitors');
           const data: { id: number; nombre: string }[] = response.data;

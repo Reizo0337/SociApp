@@ -387,8 +387,7 @@ onMounted(() => {
               Responsable
             </h3>
             <div class="detail-item">
-              <p class="detail-value primary">{{ selectedProject.responsable?.nombre || 'Sin asignar' }}</p>
-              <p class="detail-sub">{{ selectedProject.responsable?.apellidos || '' }}</p>
+              <p class="detail-value primary">{{ selectedProject.responsable?.nombre || 'Sin asignar' }} {{ selectedProject.responsable?.apellidos || '' }}</p>
             </div>
           </div>
 
@@ -457,10 +456,10 @@ onMounted(() => {
               Capacidad y Vínculos
             </h3>
             <div class="stat-mini-grid">
-              <div class="mini-stat">
+              <!--<div class="mini-stat">
                 <span class="stat-num">{{ selectedProject.subproyectos?.length || 0 }}</span>
                 <span class="stat-label">Subproyectos</span>
-              </div>
+              </div>-->
               <div class="mini-stat">
                 <span class="stat-num">{{ selectedProject.actividades?.length || 0 }}</span>
                 <span class="stat-label">Actividades</span>
