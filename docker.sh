@@ -55,8 +55,7 @@ while true; do
             1)
                 echo "Reconstruyendo y arrancando ${SELECTED_CONTAINERS[@]}..."
                 for c in "${SELECTED_CONTAINERS[@]}"; do
-                    docker-compose build $c
-                    docker-compose up -d $c
+                    docker-compose up -d --build
                 done
                 ;;
             2)
