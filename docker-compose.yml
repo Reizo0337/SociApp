@@ -12,7 +12,7 @@ services:
       - FRONTEND_URL=http://16.171.57.244/
     networks:
       - app-network
-    ports:
+    expose:
       - "3000"
       - "3001"
 
