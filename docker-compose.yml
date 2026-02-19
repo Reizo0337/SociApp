@@ -13,18 +13,18 @@ services:
     networks:
       - app-network
     ports:
-      - "3000:3000"
-      - "3001:3001"
+      - "3000"
+      - "3001"
 
   frontend:
     build:
       context: ./frontend
       args:
-        - VITE_API_URL=http://16.171.57.244:3000   # apunta al backend interno
+        - VITE_API_URL=http://16.171.57.244:3000 # apunta al backend interno
     container_name: vue-frontend
     restart: always
     ports:
-      - "80:80"        # puerto 80 accesible desde Internet
+      - "80:80" # puerto 80 accesible desde Internet
     depends_on:
       - backend
     networks:
@@ -33,4 +33,3 @@ services:
 networks:
   app-network:
     driver: bridge
-

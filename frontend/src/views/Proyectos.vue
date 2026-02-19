@@ -691,6 +691,7 @@ onMounted(() => {
   cursor: pointer;
   padding: 8px 0;
   transition: transform 0.2s;
+  font-size: 18px;
 }
 
 .back-btn:hover {
