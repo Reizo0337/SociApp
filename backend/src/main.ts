@@ -19,7 +19,7 @@ async function bootstrap() {
 
   // ⚠️ SEGURIDAD: CORS configurado - en producción usar variable de entorno para origin
   app.enableCors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+    origin: 'http://16.171.57.244',
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],

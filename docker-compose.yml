@@ -5,21 +5,32 @@ services:
     build: ./backend
     container_name: nest-backend
     restart: always
-    ports:
-      - "3001:3000"
+    # ⚠️ No exponemos puerto al host para que sea solo interno
     env_file:
       - ./backend/.env
     environment:
-      - FRONTEND_URL=http://localhost:8080
+      - FRONTEND_URL=http://16.171.57.244/
+    networks:
+      - app-network
+    ports:
+      - "3000:3000"
+      - "3001:3001"
 
   frontend:
     build:
       context: ./frontend
       args:
-        - VITE_API_URL=http://localhost:3001
+        - VITE_API_URL=http://16.171.57.244:3000   # apunta al backend interno
     container_name: vue-frontend
     restart: always
     ports:
-      - "8080:80"
+      - "80:80"        # puerto 80 accesible desde Internet
     depends_on:
       - backend
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
