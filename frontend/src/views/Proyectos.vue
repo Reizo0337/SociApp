@@ -38,6 +38,7 @@ interface Proyecto {
   notas?: string
   subproyectos?: string[]
   actividades?: string[]
+  activityIds?: number[]
   pdfPath?: string[]
   detallesActividades?: { id: number; nombre: string }[]
 }
@@ -166,7 +167,7 @@ const cleanProjectData = (data: any) => {
     'nombre', 'descripcion', 'estado', 'responsableId', 
     'presupuesto', 'fuenteFinanciacion', 'startDate', 
     'endDate', 'notas', 'subproyectos', 'actividades', 
-    'pdfPath', 'idProyecto', 'pdf' // 'pdf' se permite aquí temporalmente para detectarlo
+    'activityIds', 'pdfPath', 'idProyecto', 'pdf'
   ];
   const cleaned: any = {};
   Object.keys(data).forEach(key => {
@@ -196,7 +197,10 @@ const createProject = async (newProject: any) => {
 }
 
 const editProject = (proyecto: Proyecto) => {
-  editingProject.value = { ...proyecto }
+  editingProject.value = { 
+    ...proyecto,
+    activityIds: proyecto.actividades ? proyecto.actividades.map(id => Number(id)) : []
+  }
   showEditProjectModal.value = true
 }
 
