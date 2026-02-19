@@ -398,7 +398,7 @@ onMounted(() => {
 
             <div class="pdf-actions" v-if="selectedProject?.pdfPath && selectedProject.pdfPath[currentPdfIndex]">
               <a 
-                :href="`http://192.168.1.55:3000${selectedProject.pdfPath[currentPdfIndex]?.trim()}`" 
+                :href="`http://localhost:3000${selectedProject.pdfPath[currentPdfIndex]?.trim()}`" 
                 target="_blank" 
                 class="pdf-link"
               >
@@ -408,7 +408,7 @@ onMounted(() => {
             </div>
 
             <div class="pdf-preview-wrapper" v-if="selectedProject?.pdfPath && selectedProject.pdfPath[currentPdfIndex]">
-              <PdfPreview :pdf-url="`http://192.168.1.55:3000${selectedProject.pdfPath[currentPdfIndex]?.trim()}`" />
+              <PdfPreview :pdf-url="`http://localhost:3000${selectedProject.pdfPath[currentPdfIndex]?.trim()}`" />
             </div>
           </div>
 
