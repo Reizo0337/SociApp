@@ -30,7 +30,6 @@ interface Proyecto {
   responsableId?: number
   estado: string
   presupuesto: number
-  departamento?: string
   fuenteFinanciacion?: string
   startDate: string
   endDate?: string
@@ -360,8 +359,6 @@ onMounted(() => {
             <span class="material-symbols-outlined project-hero-icon">folder_open</span>
             <div class="title-text-group">
               <h1>{{ selectedProject.nombre }}</h1>
-              <p class="project-subtitle">{{ selectedProject.departamento || 'Sin departamento' }}</p>
-            </div>
           </div>
           <span class="status-badge large" :class="selectedProject.estado.toLowerCase()">{{ selectedProject.estado }}</span>
         </div>
