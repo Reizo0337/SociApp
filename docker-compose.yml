@@ -1,0 +1,25 @@
+version: "3.8"
+
+services:
+  backend:
+    build: ./backend
+    container_name: nest-backend
+    restart: always
+    ports:
+      - "3001:3000"
+    env_file:
+      - ./backend/.env
+    environment:
+      - FRONTEND_URL=http://localhost:8080
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        - VITE_API_URL=http://localhost:3001
+    container_name: vue-frontend
+    restart: always
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
