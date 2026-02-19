@@ -5,13 +5,14 @@ CONTAINERS=("sociapp_frontend" "sociapp_backend")
 
 show_main_menu() {
     echo "============================"
-    echo "   SociApp Control Script    "
+    echo "   SociAPP Control Script    "
     echo "============================"
     echo "Elige el contenedor:"
     for i in "${!CONTAINERS[@]}"; do
         echo "$((i+1))) ${CONTAINERS[$i]}"
     done
-    echo "$(( ${#CONTAINERS[@]} + 1 ))) Exit"
+    echo "$(( ${#CONTAINERS[@]} + 1 ))) Ambos"
+    echo "$(( ${#CONTAINERS[@]} + 2 ))) Exit"
     echo -n "Opción: "
 }
 
@@ -31,8 +32,10 @@ while true; do
     read cont_option
 
     if [[ $cont_option -ge 1 && $cont_option -le ${#CONTAINERS[@]} ]]; then
-        CONTAINER_NAME="${CONTAINERS[$((cont_option-1))]}"
+        SELECTED_CONTAINERS=("${CONTAINERS[$((cont_option-1))]}")
     elif [[ $cont_option -eq $(( ${#CONTAINERS[@]} + 1 )) ]]; then
+        SELECTED_CONTAINERS=("${CONTAINERS[@]}")  # Ambos
+    elif [[ $cont_option -eq $(( ${#CONTAINERS[@]} + 2 )) ]]; then
         echo "Saliendo..."
         exit 0
     else
@@ -41,25 +44,40 @@ while true; do
     fi
 
     while true; do
-        show_action_menu $CONTAINER_NAME
+        if [[ ${#SELECTED_CONTAINERS[@]} -eq 1 ]]; then
+            cname="${SELECTED_CONTAINERS[0]}"
+        else
+            cname="Ambos contenedores"
+        fi
+        show_action_menu "$cname"
         read action_option
         case $action_option in
             1)
-                echo "Reconstruyendo y arrancando $CONTAINER_NAME..."
-                docker-compose build $CONTAINER_NAME
-                docker-compose up -d $CONTAINER_NAME
+                echo "Reconstruyendo y arrancando ${SELECTED_CONTAINERS[@]}..."
+                for c in "${SELECTED_CONTAINERS[@]}"; do
+                    docker-compose build $c
+                    docker-compose up -d $c
+                done
                 ;;
             2)
-                echo "Reiniciando $CONTAINER_NAME..."
-                docker restart $CONTAINER_NAME
+                echo "Reiniciando ${SELECTED_CONTAINERS[@]}..."
+                for c in "${SELECTED_CONTAINERS[@]}"; do
+                    docker restart $c
+                done
                 ;;
             3)
-                echo "Deteniendo $CONTAINER_NAME..."
-                docker stop $CONTAINER_NAME
+                echo "Deteniendo ${SELECTED_CONTAINERS[@]}..."
+                for c in "${SELECTED_CONTAINERS[@]}"; do
+                    docker stop $c
+                done
                 ;;
             4)
-                echo "Mostrando logs de $CONTAINER_NAME (Ctrl+C para salir)..."
-                docker logs -f $CONTAINER_NAME
+                if [[ ${#SELECTED_CONTAINERS[@]} -eq 1 ]]; then
+                    echo "Mostrando logs de ${SELECTED_CONTAINERS[0]} (Ctrl+C para salir)..."
+                    docker logs -f "${SELECTED_CONTAINERS[0]}"
+                else
+                    echo "No se pueden mostrar logs de ambos al mismo tiempo. Elige un contenedor individual."
+                fi
                 ;;
             5)
                 break
