@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Contenedores definidos en docker-compose.yml
-CONTAINERS=("sociapp_frontend" "sociapp_backend")
+CONTAINERS=("vue-frontend" "nest-backend")
 
 show_main_menu() {
     echo "============================"
