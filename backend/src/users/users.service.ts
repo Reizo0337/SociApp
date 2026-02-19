@@ -81,7 +81,15 @@ export class UsersService {
 
   async createUser(dto: CreateUserDto) {
     try {
-      const user = this.userRepository.create(dto);
+      const { password, ...rest } = dto;
+      const bcrypt = require('bcrypt');
+      const hashedPassword = await bcrypt.hash(password, 12);
+
+      const user = this.userRepository.create({
+        ...rest,
+        password: hashedPassword,
+        isVerified: true, // Usuarios creados por admin se consideran verificados
+      });
       return await this.userRepository.save(user);
     } catch (err) {
       this.logger.error('Failed to create user', err);

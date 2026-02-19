@@ -53,10 +53,26 @@ export const useUserStore = defineStore('users', {
             delete payload.fechadealta;
             delete payload.localidad;
 
+            if (!payload.password) {
+                // Usamos el DNI como password inicial o uno por defecto
+                payload.password = payload.dni || 'sociapp123';
+            }
+
             // Asegurar fecha de alta válida (CreateUserDto la requiere y no es opcional)
             if (!payload.fechaalta || payload.fechaalta === '') {
                 payload.fechaalta = new Date().toISOString().split('T')[0];
             }
+
+            // Asegurar valores por defecto para campos obligatorios del DTO
+            if (payload.cuota === undefined || payload.cuota === null || payload.cuota === '') {
+                payload.cuota = 0;
+            } else {
+                payload.cuota = Number(payload.cuota);
+            }
+
+            if (!payload.formadepago) payload.formadepago = 'Efectivo';
+            if (!payload.categoria) payload.categoria = 'Voluntario';
+            if (!payload.socio) payload.socio = 'NoSocio';
 
             const response = await api.post('/users', payload)
             const savedUser = response.data
