@@ -46,6 +46,9 @@ defineEmits(['toggle'])
   cursor: pointer;
   transition: all 0.3s ease;
   border: 1px solid var(--border-color);
+  transform: translateY(0);
+  
+
 }
 
 .list-item:hover,
