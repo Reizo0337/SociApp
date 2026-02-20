@@ -309,5 +309,13 @@
 .between {
     display: flex;
     justify-content: space-between;
+}
 
+.no-results {
+    color: var(--text-secondary);
+    font-size: 14px;
+    font-style: italic;
+    text-align: center;
+    padding: 20px 0;
+    transition: color 0.3s ease;
 }

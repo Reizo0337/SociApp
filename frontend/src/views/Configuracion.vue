@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useConfiguracionStore } from '@/stores/configuracion'
 import ModalForm from '@/components/ModalForm.vue'
@@ -16,6 +16,7 @@ import DataDisplay from '@/components/DataDisplay.vue'
 import ActionButtons from '@/components/ActionButtons.vue'
 import { useNotificationStore } from '../stores/notification';
 import ModalDelete from '@/components/ModalDelete.vue'
+import SearchInput from '@/components/SearchInput.vue'
 
 const notificationStore = useNotificationStore()
 const store = useConfiguracionStore()
@@ -38,6 +39,24 @@ const editDatos = ref(null)
 const expandedActivity = ref([])
 const showDeleteModal = ref(false)
 const itemToDelete = ref(null)
+const searchQuery = ref('')
+
+// Filtered computed lists para las secciones con buscador
+const filteredRelaciones = computed(() => {
+  if (!searchQuery.value) return listaRelaciones.value
+  const q = searchQuery.value.toLowerCase()
+  return listaRelaciones.value.filter((rel) =>
+    Object.values(rel).some((v) => String(v).toLowerCase().includes(q))
+  )
+})
+
+const filteredDonativos = computed(() => {
+  if (!searchQuery.value) return listaDonativos.value
+  const q = searchQuery.value.toLowerCase()
+  return listaDonativos.value.filter((item) =>
+    Object.values(item).some((v) => String(v).toLowerCase().includes(q))
+  )
+})
 
 const sectionTitle = {
   junta: 'Junta Directiva',
@@ -68,6 +87,7 @@ const selectSection = async (section) => {
   selectedSection.value = section;
   editingIndex.value = null;
   editingData.value = null;
+  searchQuery.value = ''; // Reset búsqueda al cambiar de sección
 
   if (section === 'junta') {
     await fetchUsuariosSelect();
@@ -256,6 +276,11 @@ async function handleSave(data) {
       <div class="view-header">
         <h2 class="view-title">{{ sectionTitle[selectedSection] }}</h2>
         <div class="options">
+          <SearchInput
+            v-if="selectedSection === 'relaciones' || selectedSection === 'donativos'"
+            placeholder="Buscar..."
+            v-model="searchQuery"
+          />
           <button class="btn-primary" @click="openModal()">
             ➕ AGREGAR
           </button>
@@ -300,7 +325,7 @@ async function handleSave(data) {
           <h3 class="list-title">Convenios y Relaciones</h3>
 
           <ExpandableListItem
-            v-for="(rel, index) in listaRelaciones"
+            v-for="(rel, index) in filteredRelaciones"
             :key="index"
             :expanded="expandedActivity.includes(rel)"
             @toggle="toggleDetails(rel)"
@@ -321,12 +346,13 @@ async function handleSave(data) {
                 <ActionButtons
                   showEdit
                   showDelete
-                  @edit="editItem(listaRelaciones, index)"
-                  @delete="deleteItem(listaRelaciones, index)"
+                  @edit="editItem(listaRelaciones, listaRelaciones.indexOf(rel))"
+                  @delete="deleteItem(listaRelaciones, listaRelaciones.indexOf(rel))"
                 />
               </div>
             </template>
           </ExpandableListItem>
+          <p v-if="filteredRelaciones.length === 0" class="no-results">Sin resultados para "{{ searchQuery }}"</p>
         </div>
 
         <div v-if="selectedSection === 'bancos' && listaBancos.length > 0" class="records-list">
@@ -365,7 +391,7 @@ async function handleSave(data) {
           <h3 class="list-title">Registros de Donativos</h3>
 
           <ExpandableListItem
-            v-for="(item, index) in listaDonativos"
+            v-for="(item, index) in filteredDonativos"
             :key="index"
             :expanded="expandedActivity.includes(item)"
             @toggle="toggleDetails(item)"
@@ -386,12 +412,13 @@ async function handleSave(data) {
                 <ActionButtons
                   showEdit
                   showDelete
-                  @edit="editItem(listaDonativos, index)"
-                  @delete="deleteItem(listaDonativos, index)"
+                  @edit="editItem(listaDonativos, listaDonativos.indexOf(item))"
+                  @delete="deleteItem(listaDonativos, listaDonativos.indexOf(item))"
                 />
               </div>
             </template>
           </ExpandableListItem>
+          <p v-if="filteredDonativos.length === 0" class="no-results">Sin resultados para "{{ searchQuery }}"</p>
         </div>
       </div>
     </div>
