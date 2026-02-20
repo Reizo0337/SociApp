@@ -8,31 +8,38 @@ defineProps({
 })
 import { nextTick } from 'vue'
 
-const enter = async (el) => {
-  el.style.height = '0px'
+const enter = (el) => {
+  el.style.height = '0'
   el.style.opacity = '0'
+  el.style.overflow = 'hidden'
+  el.style.transition = 'height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease'
   
-  await nextTick()
-
-  const height = el.scrollHeight
-  el.style.transition = 'height 0.35s cubic-bezier(.4,0,.2,1), opacity 0.25s ease'
-  el.style.height = height + 'px'
+  // Force reflow
+  el.offsetHeight
+  
+  el.style.height = el.scrollHeight + 'px'
   el.style.opacity = '1'
-
-  setTimeout(() => {
-    el.style.height = 'auto'
-  }, 350)
+  
+  const onTransitionEnd = (e) => {
+    if (e.propertyName === 'height') {
+      el.style.height = 'auto'
+      el.removeEventListener('transitionend', onTransitionEnd)
+    }
+  }
+  el.addEventListener('transitionend', onTransitionEnd)
 }
 
 const leave = (el) => {
   el.style.height = el.scrollHeight + 'px'
   el.style.opacity = '1'
-
-  requestAnimationFrame(() => {
-    el.style.transition = 'height 0.3s cubic-bezier(.4,0,.2,1), opacity 0.2s ease'
-    el.style.height = '0px'
-    el.style.opacity = '0'
-  })
+  el.style.overflow = 'hidden'
+  el.style.transition = 'height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease'
+  
+  // Force reflow
+  el.offsetHeight
+  
+  el.style.height = '0'
+  el.style.opacity = '0'
 }
 defineEmits(['toggle'])
 </script>
@@ -59,18 +66,20 @@ defineEmits(['toggle'])
     </div>
 
     <transition
-  @enter="enter"
-  @leave="leave"
->
-  <div
-    v-show="expanded"
-    class="details-card"
-    ref="details"
-    @click.stop
-  >
-    <slot name="details"></slot>
-  </div>
-</transition>
+      :css="false"
+      @enter="enter"
+      @leave="leave"
+    >
+      <div
+        v-if="expanded"
+        class="details-card"
+        @click.stop
+      >
+        <div class="details-content">
+          <slot name="details"></slot>
+        </div>
+      </div>
+    </transition>
   </div>
 </template>
 
@@ -79,52 +88,17 @@ defineEmits(['toggle'])
   position: relative;
   background-color: var(--card-bg);
   padding: 15px 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 5px var(--card-shadow);
+  border-radius: 12px;
+  box-shadow: 0 2px 8px var(--card-shadow);
   cursor: pointer;
   border: 1px solid var(--border-color);
-  transform: translateY(0);
-
-  transition: 
-    transform 0.3s ease,
-    box-shadow 0.3s ease;
-}
-.content {
-  max-height: 0;
-  overflow: hidden;
-  opacity: 0;
-  transition: 
-    max-height 0.4s ease,
-    opacity 0.3s ease;
-}
-.expand-enter-active,
-.expand-leave-active {
-  transition: 
-    max-height 0.4s cubic-bezier(.4,0,.2,1),
-    opacity 0.3s ease;
-  overflow: hidden;
-}
-
-.expand-enter-from,
-.expand-leave-to {
-  max-height: 0;
-  opacity: 0;
-}
-
-.expand-enter-to,
-.expand-leave-from {
-  max-height: 500px;
-  opacity: 1;
-}
-.list-item.open .content {
-  max-height: 500px; /* más grande que el contenido real */
-  opacity: 1;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .list-item:hover,
 .list-item.expanded {
   transform: translateY(-2px);
-  box-shadow: 0 4px 10px var(--card-shadow-hover);
+  box-shadow: 0 8px 20px var(--card-shadow-hover);
   z-index: 10;
   border-color: var(--button-primary);
 }
@@ -134,7 +108,7 @@ defineEmits(['toggle'])
   justify-content: space-between;
   align-items: center;
   gap: 15px;
-  flex-wrap: wrap;
+  transition: padding 0.3s ease;
 }
 
 @media (max-width: 480px) {
@@ -158,23 +132,27 @@ defineEmits(['toggle'])
 }
 
 .arrow-icon {
-  transition:
-    transform 0.3s ease,
-    color 0.3s ease;
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   color: var(--text-secondary);
+  font-size: 24px;
 }
 
 .arrow-icon.rotated {
   transform: rotate(180deg);
+  color: var(--button-primary);
 }
 
 .details-card {
   border-top: 1px solid var(--border-color);
   cursor: default;
-  transition: all 0.3s ease;
   overflow: hidden;
-  padding: 15px;
   margin-top: 10px;
-  border-radius: 6px;
 }
+
+.details-content {
+  padding: 15px 5px;
+  opacity: 1;
+}
+
+/* Animations are handled via JS hooks for height: auto support */
 </style>
