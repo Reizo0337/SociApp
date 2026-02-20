@@ -103,6 +103,9 @@ const isNotHome = computed(() => {
   .main-content.expanded {
     margin-left: 0;
   }
+  .main-content {
+    padding-bottom: 75px; /* Espacio para el menú inferior */
+  }
 }
 
 .main-content {
@@ -150,7 +153,7 @@ const isNotHome = computed(() => {
 
 @media (max-width: 768px) {
   .floating-home-btn {
-    bottom: 20px;
+    bottom: 85px; /* Subirlo para que no tape el menú */
     right: 20px;
     width: 44px;
     height: 44px;

@@ -282,6 +282,7 @@ onMounted(() => {
 
     <div v-if="!selectedProject">
       <div class="projects-header">
+        <h2>Lista de Proyectos</h2>
         <div class="options">
           <div class="pagination-controls" v-if="filteredProyectos.length > 0">
             <span>{{ showingRange }} de {{ filteredProyectos.length }}</span>
@@ -295,8 +296,8 @@ onMounted(() => {
           <PrimaryButton @click="showAddProjectModal = true">
             Agregar Proyecto
           </PrimaryButton>
+          <SearchInput placeholder="Buscar proyecto..." v-model="searchQuery"/>
         </div>
-        <SearchInput placeholder="Buscar proyecto..." v-model="searchQuery"/>
       </div>
 
       <div class="projects-list">
@@ -510,6 +511,13 @@ onMounted(() => {
   align-items: center;
   margin-bottom: 25px;
   gap: 20px;
+}
+
+.projects-header h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
 }
 
 @media (max-width: 768px) {

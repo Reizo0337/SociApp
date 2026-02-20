@@ -129,6 +129,26 @@ const handleMouseLeave = () => {
     class="sidebar-overlay" 
     @click="toggleMenu"
   ></div>
+
+  <!-- Menú inferior para móviles (Sticky Bottom Nav) -->
+  <nav class="mobile-bottom-nav" v-if="auth.isAuthenticated && auth.isAdmin">
+    <RouterLink to="/proyectos" class="mobile-nav-link">
+      <span class="material-symbols-outlined">work</span>
+      <span class="mobile-nav-text">Proyectos</span>
+    </RouterLink>
+    <RouterLink to="/actividades" class="mobile-nav-link">
+      <span class="material-symbols-outlined">task</span>
+      <span class="mobile-nav-text">Actividades</span>
+    </RouterLink>
+    <RouterLink to="/usuarios" class="mobile-nav-link">
+      <span class="material-symbols-outlined">group</span>
+      <span class="mobile-nav-text">Usuarios</span>
+    </RouterLink>
+    <RouterLink to="/configuracion" class="mobile-nav-link">
+      <span class="material-symbols-outlined">settings</span>
+      <span class="mobile-nav-text">Ajustes</span>
+    </RouterLink>
+  </nav>
 </template>
 
 <style scoped>
@@ -413,5 +433,65 @@ const handleMouseLeave = () => {
   justify-content: center;
   align-items: center;
   margin-right: 10px;
+}
+
+/* Mobile Bottom Nav Styles */
+.mobile-bottom-nav {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .mobile-bottom-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 65px;
+    background: var(--bg-secondary);
+    border-top: 1px solid var(--border-color);
+    z-index: 1005;
+    justify-content: space-around;
+    align-items: center;
+    padding: 0 5px;
+    box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.1);
+  }
+
+  .mobile-nav-link {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    color: var(--text-secondary);
+    gap: 4px;
+    flex: 1;
+    height: 100%;
+    transition: all 0.3s ease;
+  }
+
+  .mobile-nav-link .material-symbols-outlined {
+    font-size: 24px;
+    transition: transform 0.2s ease;
+  }
+
+  .mobile-nav-text {
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  .mobile-nav-link.router-link-active {
+    color: var(--button-primary);
+  }
+
+  .mobile-nav-link.router-link-active .material-symbols-outlined {
+    transform: translateY(-2px);
+    font-variation-settings: 'FILL' 1;
+  }
+
+  /* Ocultar el burger menu en móvil para usar el bottom nav */
+  .menu-toggle {
+    display: none;
+  }
 }
 </style>
