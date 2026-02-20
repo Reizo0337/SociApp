@@ -20,11 +20,12 @@ const resolvedOptions = reactive<Record<string, any[]>>({})
 // Inicializar model basado en el schema
 props.schema.forEach((section: any) => {
   section.fields.forEach((field: any) => {
-    let defaultValue = '';
+    let defaultValue: any = '';
     if (field.type === 'checkbox') {
       defaultValue = field.default !== undefined ? field.default : false;
+    } else if (field.multiple) {
+      defaultValue = [];
     }
-    
     model[field.key] = props.initial ? (props.initial[field.key] ?? defaultValue) : defaultValue
   })
 })
@@ -82,7 +83,7 @@ const submit = () => {
         }
         
         // No enviar campos solo para la UI
-        if (field.key === 'hasProject') return;
+        if (field.key === 'hasProject' || field.key === 'asociarProyecto') return;
         
         payload[field.key] = value;
       }
@@ -166,13 +167,15 @@ const setToday = (key: string) => {
                 </div>
               </div>
 
-              <!-- Select -->
+              <!-- Select (simple o múltiple) -->
               <select
                 v-else-if="field.type === 'select'"
                 v-model="model[field.key]"
-                :required="field.required"
+                :required="field.required && !field.multiple"
+                :multiple="field.multiple || false"
+                :class="{ 'select-multiple': field.multiple }"
               >
-                <option disabled value="">-- Selecciona una opción --</option>
+                <option v-if="!field.multiple" disabled value="">-- Selecciona una opción --</option>
                 <option
                   v-for="opt in resolvedOptions[field.key] ||
                   (Array.isArray(field.options) ? field.options : [])"
@@ -208,6 +211,33 @@ const setToday = (key: string) => {
 
 <style scoped>
 @import '../assets/modals.css';
+
+.select-multiple {
+  width: 90%;
+  min-height: 130px;
+  padding: 6px;
+  border-radius: 8px;
+  border: 1px solid var(--input-border);
+  background-color: var(--input-bg);
+  color: var(--text-primary);
+  font-size: 14px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.select-multiple option {
+  padding: 8px 10px;
+  border-radius: 4px;
+  margin: 1px 0;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.select-multiple option:checked,
+.select-multiple option:hover {
+  background-color: var(--button-primary);
+  color: white;
+}
 
 @keyframes bounceTick {
   0% { transform: translate(-50%, -50%) scale(0); }
