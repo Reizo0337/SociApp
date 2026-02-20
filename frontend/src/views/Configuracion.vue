@@ -226,16 +226,18 @@ async function handleSave(data) {
     <header class="profile-header">
       <div class="association-card">
         <div class="avatar-circle">
-          {{ asociacionData?.Nombre?.charAt(0) || 'S' }}
+          <span v-if="loading" class="material-symbols-outlined animation-spin">sync</span>
+          <span v-else>{{ asociacionData?.Nombre?.charAt(0) || 'S' }}</span>
         </div>
         <div class="header-info">
           <h2 class="association-name">
-            {{ await asociacionData?.Nombre || 'Agregue datos de la asociación' }}
+            <template v-if="loading">Cargando...</template>
+            <template v-else>{{ asociacionData?.Nombre || 'Agregue datos de la asociación' }}</template>
           </h2>
-          <p v-if="asociacionData" class="sub-label">
+          <p v-if="asociacionData && !loading" class="sub-label">
             {{ asociacionData.CIF }} • {{ asociacionData.Email }}
           </p>
-          <p v-else class="sub-label">PANEL DE CONTROL GENERAL</p>
+          <p v-else-if="!loading" class="sub-label">PANEL DE CONTROL GENERAL</p>
         </div>
         <button class="edit-btn-header" @click="openEditDatos" title="Editar datos de asociación">
           <span class="material-symbols-outlined">edit_square</span>
