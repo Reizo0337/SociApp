@@ -30,9 +30,15 @@ defineEmits(['toggle'])
       </div>
     </div>
 
-    <div class="details-card" v-if="expanded" @click.stop>
-      <slot name="details"></slot>
-    </div>
+    <transition name="expand">
+  <div
+    v-show="expanded"
+    class="details-card"
+    @click.stop
+  >
+    <slot name="details"></slot>
+  </div>
+</transition>
   </div>
 </template>
 
@@ -46,14 +52,41 @@ defineEmits(['toggle'])
   cursor: pointer;
   border: 1px solid var(--border-color);
   transform: translateY(0);
+
   transition: 
-    transform 0.35s ease,
-    box-shadow 0.35s ease,
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
+}
+.content {
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: 
     max-height 0.4s ease,
     opacity 0.3s ease;
-  
+}
+.expand-enter-active,
+.expand-leave-active {
+  transition: 
+    max-height 0.4s cubic-bezier(.4,0,.2,1),
+    opacity 0.3s ease;
   overflow: hidden;
-  max-height: 80px; 
+}
+
+.expand-enter-from,
+.expand-leave-to {
+  max-height: 0;
+  opacity: 0;
+}
+
+.expand-enter-to,
+.expand-leave-from {
+  max-height: 500px;
+  opacity: 1;
+}
+.list-item.open .content {
+  max-height: 500px; /* más grande que el contenido real */
+  opacity: 1;
 }
 
 .list-item:hover,
