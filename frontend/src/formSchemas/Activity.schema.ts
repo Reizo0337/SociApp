@@ -7,8 +7,9 @@ export interface ActivityFormData {
   horaInicio?: string
   horaFin?: string
   idMonitor?: number
-  hasProject?: boolean
-  idProyecto?: number
+  asociarProyecto?: boolean
+  projectIds?: number[]
+  [key: string]: any
 }
 
 export const ActivitySchema = [
@@ -63,13 +64,12 @@ export const ActivitySchema = [
         label: 'Proyectos Relacionados',
         type: 'select',
         multiple: true,
-        showIf: (model: any) => model.asociarProyecto,
+        showIf: (model: ActivityFormData) => !!model.asociarProyecto,
         options: async () => {
           const response = await api.get('/activities/Projects');
           const data: { id: number; nombre: string }[] = response.data;
           return data.map((project) => ({ value: project.id, label: project.nombre }));
         },
-        visibleIf: (formData: ActivityFormData) => formData.hasProject
       }
     ],
   },
