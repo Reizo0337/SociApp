@@ -230,7 +230,7 @@ async function handleSave(data) {
         </div>
         <div class="header-info">
           <h2 class="association-name">
-            {{ asociacionData?.Nombre || 'Agregue datos de la asociación' }}
+            {{ await asociacionData?.Nombre || 'Agregue datos de la asociación' }}
           </h2>
           <p v-if="asociacionData" class="sub-label">
             {{ asociacionData.CIF }} • {{ asociacionData.Email }}
