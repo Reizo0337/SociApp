@@ -20,6 +20,11 @@ export const RelacionesInstitucionalesSchema = [
         type: 'text',
         required: true
       },
+    ],
+  },
+  {
+    section: 'Direccion',
+    fields: [
       {
         label: 'Dirección',
         key: 'Direccion',
@@ -45,6 +50,11 @@ export const RelacionesInstitucionalesSchema = [
         key: 'Pais',
         type: 'text'
       },
+    ],
+  },
+  {
+    section: 'Contacto',
+    fields: [
       {
         label: 'Teléfono',
         key: 'Telefono',
@@ -65,6 +75,6 @@ export const RelacionesInstitucionalesSchema = [
         key: 'Notas',
         type: 'text'
       }
-    ]
+    ],
   }
 ];
