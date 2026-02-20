@@ -26,11 +26,32 @@
     border-radius: 0 16px 16px 0;
     background-color: var(--bg-secondary);
     transition: background-color 0.3s ease, border-color 0.3s ease;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.association-card {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
 }
 
 .association-name {
     color: var(--text-primary);
     transition: color 0.3s ease;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+.header-info {
+    min-width: 0;
+    overflow: hidden;
+    flex: 1;
 }
 
 .avatar-circle {
@@ -115,21 +136,22 @@
     margin-bottom: 20px;
 }
 
-.btn-back {
+.back-btn {
     background: none;
     border: none;
     color: var(--button-primary);
-    font-weight: 700;
+    font-weight: 600;
     display: flex;
     align-items: center;
     gap: 8px;
     cursor: pointer;
-    padding: 5px 0;
-    transition: opacity 0.2s, color 0.3s ease;
+    padding: 8px 0;
+    transition: transform 0.2s, color 0.3s ease;
+    font-size: 18px;
 }
 
-.btn-back:hover {
-    opacity: 0.7;
+.back-btn:hover {
+    transform: translateX(-5px);
 }
 
 .view-header {
@@ -318,4 +340,75 @@
     text-align: center;
     padding: 20px 0;
     transition: color 0.3s ease;
+}
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+    .config-app {
+        padding: 10px 15px;
+    }
+
+    .profile-header {
+        padding: 10px;
+        flex-direction: column;
+        align-items: stretch;
+        border-radius: 12px;
+        border-right: none;
+        border-left: 4px solid var(--button-primary);
+    }
+
+    .association-card {
+        flex-direction: column;
+        text-align: center;
+        gap: 10px;
+    }
+
+    .header-info {
+        margin-left: 0;
+        width: 100%;
+    }
+
+    .association-name {
+        white-space: normal;
+        word-break: break-word;
+        font-size: 1.2rem;
+    }
+
+    .edit-btn-header {
+        margin: 10px auto 0;
+    }
+
+    .view-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 15px;
+    }
+
+    .view-header .options {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .settings-list {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .setting-item {
+        width: 100%;
+        height: auto;
+        min-height: 80px;
+    }
+}
+
+@media (max-width: 480px) {
+    .avatar-circle {
+        width: 50px;
+        height: 50px;
+        font-size: 20px;
+    }
+
+    .association-name {
+        font-size: 1.1rem;
+    }
 }

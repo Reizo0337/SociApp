@@ -63,9 +63,19 @@ body {
   padding: 0;
   font-family: 'Inter', sans-serif;
   color: var(--text-primary);
+  user-select: none;
   transition:
     background-color 0.3s ease,
     color 0.3s ease;
+}
+
+/* Permitir selección solo en elementos interactivos */
+input,
+textarea,
+select,
+[contenteditable],
+.selectable {
+  user-select: text;
 }
 
 /* Global Dark Mode Inputs */

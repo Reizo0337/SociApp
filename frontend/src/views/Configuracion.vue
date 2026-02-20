@@ -267,7 +267,7 @@ async function handleSave(data) {
 
     <div v-else class="view-panel">
       <div class="view-navigation">
-        <button class="btn-back" @click="selectedSection = null">
+        <button class="back-btn" @click="selectedSection = null">
           <span class="material-symbols-outlined">arrow_back</span>
           VOLVER AL MENÚ
         </button>
@@ -300,6 +300,16 @@ async function handleSave(data) {
           <template #summary-left>
             <span class="activity-name">{{ miembro.Nombre + ' ' + miembro.Apellidos }}</span>
           </template>
+          <template #summary-right>
+            <div @click.stop>
+              <ActionButtons
+                showEdit
+                showDelete
+                @edit="editItem(listaJunta, index)"
+                @delete="deleteItem(listaJunta, index)"
+              />
+            </div>
+          </template>
           <template #details>
             <div class="card-body box-item between">
               <DataDisplay
@@ -308,12 +318,6 @@ async function handleSave(data) {
                   { label: 'Apellido', value: miembro.Apellidos },
                   { label: 'Cargo', value: miembro.cargo },
                 ]"
-              />
-              <ActionButtons
-                showEdit
-                showDelete
-                @edit="editItem(listaJunta, index)"
-                @delete="deleteItem(listaJunta, index)"
               />
             </div>
           </template>
@@ -333,6 +337,16 @@ async function handleSave(data) {
             <template #summary-left>
               <span class="activity-name">{{ rel.Nombre }}</span>
             </template>
+            <template #summary-right>
+              <div @click.stop>
+                <ActionButtons
+                  showEdit
+                  showDelete
+                  @edit="editItem(listaRelaciones, listaRelaciones.indexOf(rel))"
+                  @delete="deleteItem(listaRelaciones, listaRelaciones.indexOf(rel))"
+                />
+              </div>
+            </template>
 
             <template #details>
               <div class="card-body box-item">
@@ -342,12 +356,6 @@ async function handleSave(data) {
                     { label: 'Email', value: rel.Email },
                     { label: 'Web', value: rel.Web }
                   ]"
-                />
-                <ActionButtons
-                  showEdit
-                  showDelete
-                  @edit="editItem(listaRelaciones, listaRelaciones.indexOf(rel))"
-                  @delete="deleteItem(listaRelaciones, listaRelaciones.indexOf(rel))"
                 />
               </div>
             </template>
@@ -367,6 +375,16 @@ async function handleSave(data) {
             <template #summary-left>
               <span class="activity-name">{{ banco.Nombre }}</span>
             </template>
+            <template #summary-right>
+              <div @click.stop>
+                <ActionButtons
+                  showEdit
+                  showDelete
+                  @edit="editItem(listaBancos, index)"
+                  @delete="deleteItem(listaBancos, index)"
+                />
+              </div>
+            </template>
 
             <template #details>
               <div class="card-body box-item">
@@ -376,12 +394,6 @@ async function handleSave(data) {
                     { label: 'IBAN', value: banco.IBAN },
                     { label: 'SWIFT', value: banco.Swift }
                   ]"
-                />
-                <ActionButtons
-                  showEdit
-                  showDelete
-                  @edit="editItem(listaBancos, index)"
-                  @delete="deleteItem(listaBancos, index)"
                 />
               </div>
             </template>
@@ -399,6 +411,16 @@ async function handleSave(data) {
             <template #summary-left>
               <span class="activity-name">{{ item.Nombre }}</span>
             </template>
+            <template #summary-right>
+              <div @click.stop>
+                <ActionButtons
+                  showEdit
+                  showDelete
+                  @edit="editItem(listaDonativos, listaDonativos.indexOf(item))"
+                  @delete="deleteItem(listaDonativos, listaDonativos.indexOf(item))"
+                />
+              </div>
+            </template>
 
             <template #details>
               <div class="card-body box-item">
@@ -408,12 +430,6 @@ async function handleSave(data) {
                     { label: 'Tipo', value: item.Tipo },
                     { label: 'NIF/DNI', value: item.NIF }
                   ]"
-                />
-                <ActionButtons
-                  showEdit
-                  showDelete
-                  @edit="editItem(listaDonativos, listaDonativos.indexOf(item))"
-                  @delete="deleteItem(listaDonativos, listaDonativos.indexOf(item))"
                 />
               </div>
             </template>

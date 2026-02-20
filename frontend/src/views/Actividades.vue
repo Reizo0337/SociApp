@@ -227,6 +227,7 @@ const formatDate = (date) => (date ? new Date(date).toLocaleDateString() : '')
               <DataDisplay
                 :items="[
                   { label: 'Lugar de la actividad', value: activity.place },
+                  { label: 'Dia de la actividad', value: activity.diaSemana }
                   { label: 'Hora de inicio', value: activity.horaInicio },
                   { label: 'Hora de fin', value: activity.horaFin },
                   { label: 'Monitor', value: activity.monitor },
@@ -268,7 +269,6 @@ main {
 }
 
 .box-item {
-  background: var(--bg-secondary);
   padding: 16px;
   border-radius: 10px;
   border: 1px solid var(--border-color);
