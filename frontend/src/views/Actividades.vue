@@ -207,9 +207,19 @@ const formatDate = (date) => (date ? new Date(date).toLocaleDateString() : '')
           @toggle="toggleDetails(activity)"
         >
           <template #summary-left>
-            <div class="project-info">
-              <span class="project-name">{{ proyecto.nombre }}</span>
-              <span class="project-responsable">{{ proyecto.responsable?.nombre || 'Sin asignar' }}</span>
+            <div class="activity-info">
+              <span class="activity-name">{{ activity.name }}</span>
+              <span class="activity-monitor">{{ activity.monitor || 'Sin monitor' }}</span>
+            </div>
+          </template>
+          <template #summary-right>
+            <div class="activity-actions">
+              <ActionButtons
+                showEdit
+                showDelete
+                @edit.stop="editActivity(activity)"
+                @delete.stop="openDeleteModal(activity)"
+              />
             </div>
           </template>
           <template #details>
@@ -223,24 +233,6 @@ const formatDate = (date) => (date ? new Date(date).toLocaleDateString() : '')
                   { label: 'Proyectos', value: activity.proyectos?.map(p => p.nombre).join(', ') }
                 ]"
               />
-              <ActionButtons
-                showEdit
-                showDelete
-                @edit="editActivity(activity)"
-                @delete="openDeleteModal(activity)"
-              />
-            </div>
-          </template>
-          <template #summary-right>
-            <div class="project-actions">
-              <span class="status-badge" :class="proyecto.estado.toLowerCase()">{{ proyecto.estado }}</span>
-              <ActionButtons
-                showEdit
-                showDelete
-                @edit="editActivity(activity)"
-                @delete="openDeleteModal(activity)"
-              />
-              <span class="material-symbols-outlined arrow">chevron_right</span>
             </div>
           </template>
         </ExpandableListItem>
@@ -255,6 +247,32 @@ main {
   min-height: 100vh;
   background-color: var(--bg-primary);
   transition: background-color 0.3s ease;
+}
+
+.activity-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.activity-monitor {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  transition: color 0.3s ease;
+}
+
+.activity-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.box-item {
+  background: var(--bg-secondary);
+  padding: 16px;
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 @media (max-width: 768px) {

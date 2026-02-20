@@ -465,6 +465,7 @@ onMounted(() => {
                 <span class="stat-label">Actividades</span>
               </div>
             </div>
+            </div>
             
             <div v-if="selectedProject.detallesActividades?.length" class="activities-linked-list">
               <p class="linked-title">Actividades asignadas:</p>
