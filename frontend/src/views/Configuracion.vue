@@ -269,7 +269,7 @@ async function handleSave(data) {
       <div class="view-navigation">
         <button class="back-btn" @click="selectedSection = null">
           <span class="material-symbols-outlined">arrow_back</span>
-          VOLVER AL MENÚ
+          Volver
         </button>
       </div>
 
