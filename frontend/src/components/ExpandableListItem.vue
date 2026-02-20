@@ -44,11 +44,16 @@ defineEmits(['toggle'])
   border-radius: 8px;
   box-shadow: 0 2px 5px var(--card-shadow);
   cursor: pointer;
-  transition: all 0.3s ease;
   border: 1px solid var(--border-color);
   transform: translateY(0);
+  transition: 
+    transform 0.35s ease,
+    box-shadow 0.35s ease,
+    max-height 0.4s ease,
+    opacity 0.3s ease;
   
-
+  overflow: hidden;
+  max-height: 80px; 
 }
 
 .list-item:hover,
