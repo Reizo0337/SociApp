@@ -359,8 +359,9 @@ onMounted(() => {
             <span class="material-symbols-outlined project-hero-icon">folder_open</span>
             <div class="title-text-group">
               <h1>{{ selectedProject.nombre }}</h1>
+            </div>
+            <span class="status-badge large" :class="selectedProject.estado.toLowerCase()">{{ selectedProject.estado }}</span>
           </div>
-          <span class="status-badge large" :class="selectedProject.estado.toLowerCase()">{{ selectedProject.estado }}</span>
         </div>
 
         <div class="detail-metrics">
@@ -480,7 +481,6 @@ onMounted(() => {
           </div>
         </div>
       </div>
-    </div>
     </div>
 
     <ModalEdit
