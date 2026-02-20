@@ -213,12 +213,12 @@ const formatDate = (date) => (date ? new Date(date).toLocaleDateString() : '')
             </div>
           </template>
           <template #summary-right>
-            <div class="activity-actions">
+            <div class="activity-actions" @click.stop>
               <ActionButtons
                 showEdit
                 showDelete
-                @edit.stop="editActivity(activity)"
-                @delete.stop="openDeleteModal(activity)"
+                @edit="editActivity(activity)"
+                @delete="openDeleteModal(activity)"
               />
             </div>
           </template>
