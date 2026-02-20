@@ -630,7 +630,7 @@ onMounted(() => {
 
 @media (max-width: 480px) {
   .project-name {
-    max-width: 100%;
+    max-width: 130px;
   }
 }
 
@@ -724,6 +724,13 @@ onMounted(() => {
   margin: 0;
   font-size: 2.5rem;
   color: var(--text-primary);
+  word-break: break-word;
+}
+
+@media (max-width: 768px) {
+  .detail-title-section h1 {
+    font-size: 1.8rem;
+  }
 }
 
 .detail-grid {
@@ -750,6 +757,13 @@ onMounted(() => {
   margin: 0;
   font-size: 2.2rem;
   color: var(--text-primary);
+  word-break: break-word;
+}
+
+@media (max-width: 768px) {
+  .title-text-group h1 {
+    font-size: 1.6rem;
+  }
 }
 
 .project-subtitle {
@@ -764,6 +778,13 @@ onMounted(() => {
   grid-template-columns: repeat(2, 1fr);
   gap: 20px;
   margin-bottom: 40px;
+}
+
+@media (max-width: 600px) {
+  .detail-metrics {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
 }
 
 .metric-card {

@@ -104,7 +104,7 @@ watch(searchQuery, () => {
 
 watch(filteredUsers, (newUsers) => {
   if (searchQuery.value) {
-    expandedUser.value = newUsers.map(u => u.dni)
+    expandedUser.value = [...newUsers]
   } else {
     expandedUser.value = []
   }
@@ -172,11 +172,11 @@ const confirmDelete = async () => {
   showDeleteModal.value = false
 }
 
-const toggleDetails = (dni) => {
-  if (expandedUser.value.includes(dni) && expandedUser.value.length === 1) {
+const toggleDetails = (user) => {
+  if (expandedUser.value.includes(user) && expandedUser.value.length === 1) {
     expandedUser.value = []
   } else {
-    expandedUser.value = [dni]
+    expandedUser.value = [user]
   }
 }
 
@@ -221,8 +221,8 @@ const formatDate = (date) => date ? new Date(date).toLocaleDateString() : ''
         <ExpandableListItem
           v-for="user in paginatedUsers"
           :key="user.dni"
-          :expanded="expandedUser.includes(user.dni)"
-          @toggle="toggleDetails(user.dni)"
+          :expanded="expandedUser.includes(user)"
+          @toggle="toggleDetails(user)"
         >
           <template #summary-left>
             <div class="user-info-summary">
@@ -289,6 +289,15 @@ main {
   font-size: 1.1rem;
   color: var(--text-primary);
   transition: color 0.3s ease;
+}
+
+@media (max-width: 480px) {
+  .user-name {
+    max-width: 150px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 }
 
 .role {

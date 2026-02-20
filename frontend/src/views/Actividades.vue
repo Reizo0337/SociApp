@@ -288,6 +288,15 @@ main {
   transition: color 0.3s ease;
 }
 
+@media (max-width: 480px) {
+  .activity-name {
+    max-width: 150px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
 .between {
   display: flex;
   justify-content: space-between;
