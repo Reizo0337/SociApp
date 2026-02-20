@@ -87,9 +87,6 @@ const submit = () => {
     section.fields.forEach((field: any) => {
       const isVisible = !field.showIf || field.showIf(model as ActivityFormData)
       if (!isVisible) return
-      // Campos solo UI, no se envían al backend
-      if (field.key === 'asociarProyecto') return
-
       let value = model[field.key]
       if (value === '' && !field.required) value = null
       payload[field.key] = value

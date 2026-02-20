@@ -60,7 +60,7 @@ export class ActivitiesService {
 
       if (projectIds && projectIds.length > 0) {
         for (const pid of projectIds) {
-          const project = await this.projectRepository.findOne({ where: { idProyecto: pid } });
+          const project = await this.projectRepository.findOne({ where: { idProyecto: Number(pid) } });
           if (project) {
             const currentActivities = Array.isArray(project.actividades) ? project.actividades : [];
             if (!currentActivities.includes(String(saved.id))) {
@@ -107,11 +107,14 @@ export class ActivitiesService {
       await this.activityRepository.save(updated);
 
       if (projectIds) {
+        // Normalizamos los IDs a números por si vienen como strings
+        const selectedProjectIds = projectIds.map(pid => Number(pid));
+
         // Primero quitar esta actividad de todos los proyectos que ya no la tienen
         const projectsWithActivity = await this.projectRepository.find();
         for (const p of projectsWithActivity) {
           const acts = Array.isArray(p.actividades) ? p.actividades : [];
-          const isSelected = projectIds.includes(p.idProyecto);
+          const isSelected = selectedProjectIds.includes(Number(p.idProyecto));
           const hasActivity = acts.includes(String(id));
 
           if (hasActivity && !isSelected) {
