@@ -6,6 +6,34 @@ defineProps({
     default: true
   }
 })
+import { nextTick } from 'vue'
+
+const enter = async (el) => {
+  el.style.height = '0px'
+  el.style.opacity = '0'
+  
+  await nextTick()
+
+  const height = el.scrollHeight
+  el.style.transition = 'height 0.35s cubic-bezier(.4,0,.2,1), opacity 0.25s ease'
+  el.style.height = height + 'px'
+  el.style.opacity = '1'
+
+  setTimeout(() => {
+    el.style.height = 'auto'
+  }, 350)
+}
+
+const leave = (el) => {
+  el.style.height = el.scrollHeight + 'px'
+  el.style.opacity = '1'
+
+  requestAnimationFrame(() => {
+    el.style.transition = 'height 0.3s cubic-bezier(.4,0,.2,1), opacity 0.2s ease'
+    el.style.height = '0px'
+    el.style.opacity = '0'
+  })
+}
 defineEmits(['toggle'])
 </script>
 
@@ -30,10 +58,14 @@ defineEmits(['toggle'])
       </div>
     </div>
 
-    <transition name="expand">
+    <transition
+  @enter="enter"
+  @leave="leave"
+>
   <div
     v-show="expanded"
     class="details-card"
+    ref="details"
     @click.stop
   >
     <slot name="details"></slot>
@@ -138,10 +170,11 @@ defineEmits(['toggle'])
 
 .details-card {
   border-top: 1px solid var(--border-color);
+  cursor: default;
+  transition: all 0.3s ease;
+  overflow: hidden;
   padding: 15px;
   margin-top: 10px;
   border-radius: 6px;
-  cursor: default;
-  transition: all 0.3s ease;
 }
 </style>
