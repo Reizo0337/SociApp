@@ -282,7 +282,7 @@ async function handleSave(data) {
             v-model="searchQuery"
           />
           <button class="btn-primary" @click="openModal()">
-            ➕ AGREGAR
+            Agregar
           </button>
         </div>
       </div>
