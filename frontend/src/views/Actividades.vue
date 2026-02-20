@@ -268,13 +268,6 @@ main {
   gap: 8px;
 }
 
-.box-item {
-  padding: 16px;
-  border-radius: 10px;
-  border: 1px solid var(--border-color);
-  transition: background-color 0.3s ease, border-color 0.3s ease;
-}
-
 @media (max-width: 768px) {
   main {
     padding: 20px 15px;
