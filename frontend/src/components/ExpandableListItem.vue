@@ -8,38 +8,45 @@ defineProps({
 })
 import { nextTick } from 'vue'
 
-const enter = (el) => {
+const enter = (el, done) => {
   el.style.height = '0'
   el.style.opacity = '0'
   el.style.overflow = 'hidden'
-  el.style.transition = 'height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease'
   
   // Force reflow
   el.offsetHeight
   
+  el.style.transition = 'height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease'
   el.style.height = el.scrollHeight + 'px'
   el.style.opacity = '1'
   
   const onTransitionEnd = (e) => {
     if (e.propertyName === 'height') {
       el.style.height = 'auto'
-      el.removeEventListener('transitionend', onTransitionEnd)
+      done()
     }
   }
-  el.addEventListener('transitionend', onTransitionEnd)
+  el.addEventListener('transitionend', onTransitionEnd, { once: true })
 }
 
-const leave = (el) => {
+const leave = (el, done) => {
+  // Aseguramos que tenga una altura fija antes de transicionar a 0
   el.style.height = el.scrollHeight + 'px'
   el.style.opacity = '1'
   el.style.overflow = 'hidden'
-  el.style.transition = 'height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease'
   
   // Force reflow
   el.offsetHeight
   
+  el.style.transition = 'height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease'
   el.style.height = '0'
   el.style.opacity = '0'
+  
+  el.addEventListener('transitionend', (e) => {
+    if (e.propertyName === 'height') {
+      done()
+    }
+  }, { once: true })
 }
 defineEmits(['toggle'])
 </script>
