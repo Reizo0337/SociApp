@@ -129,7 +129,7 @@ export class AuthService {
   // 🔹 GENERATE TOKENS
   async generateTokens(user: User) {
     const payload = {
-      sub: user.IdUsuario, // 🔥 AQUÍ ESTÁ EL FIX
+      sub: user.IdUsuario,
       email: user.email,
     };
 
@@ -163,11 +163,17 @@ export class AuthService {
       const user = await this.usersService.findById(payload.sub);
 
       if (!user) {
-        throw new UnauthorizedException();
+        throw new UnauthorizedException('User no longer exists');
+      }
+
+      // ⚠️ SEGURIDAD: Verificar email para evitar colisiones de ID recicladas
+      if (user.email !== payload.email) {
+        throw new UnauthorizedException('Identity mismatch');
       }
 
       return this.generateTokens(user);
     } catch (error) {
+      if (error instanceof UnauthorizedException) throw error;
       throw new UnauthorizedException('Invalid refresh token');
     }
   }
