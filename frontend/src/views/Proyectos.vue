@@ -69,42 +69,65 @@ const proyectosPendientes = computed(() => (projects.value as any[]).filter((p: 
 
 const filteredProyectos = computed(() => {
   let base = projects.value
-  if (searchQuery.value) {
-    const query = searchQuery.value.toLowerCase().trim()
-    base = projects.value.filter((p: any) =>
-      Object.values(p).some((val: any) =>
-        String(val).toLowerCase().includes(query)
-      )
-    )
+  const query = searchQuery.value.toLowerCase().trim()
+  
+  let scoredResults = base.map((p: any) => {
+    let score = 0
+    if (!query) return { project: p, score: 0 }
+
+    const fields = {
+      nombre: p.nombre?.toString().toLowerCase() || '',
+      responsable: p.responsable?.nombre?.toString().toLowerCase() || '',
+      descripcion: p.descripcion?.toString().toLowerCase() || '',
+    }
+
+    if (fields.nombre === query) score += 100
+    else if (fields.nombre.startsWith(query)) score += 50
+    else if (fields.nombre.includes(query)) score += 10
+
+    if (fields.responsable.includes(query)) score += 5
+    if (fields.descripcion.includes(query)) score += 2
+
+    // Check other fields
+    Object.values(p).forEach(val => {
+      if (typeof val === 'string' && val.toLowerCase().includes(query)) score += 1
+    })
+
+    return { project: p, score }
+  })
+
+  if (query) {
+    scoredResults = scoredResults.filter(item => item.score > 0)
   }
 
-  return [...base].sort((a: any, b: any) => {
-    const aFinalizado = a.estado?.toLowerCase() === 'finalizado'
-    const bFinalizado = b.estado?.toLowerCase() === 'finalizado'
+  return scoredResults.sort((a, b) => {
+    // Si hay búsqueda, el score es lo más importante
+    if (query && a.score !== b.score) {
+      return b.score - a.score
+    }
 
-    // 1. Los finalizados van al final
+    // De lo contrario (o si hay empate en score), aplicar la lógica original de estado y fecha
+    const aProj = a.project
+    const bProj = b.project
+    const aFinalizado = aProj.estado?.toLowerCase() === 'finalizado'
+    const bFinalizado = bProj.estado?.toLowerCase() === 'finalizado'
+
     if (aFinalizado !== bFinalizado) {
       return aFinalizado ? 1 : -1
     }
 
-    // 2. Proximidad de finalización (endDate)
-    // Si no tienen fecha de fin, se consideran con menor prioridad de visualización
-    if (a.endDate && b.endDate) {
-      const dateA = new Date(a.endDate).getTime()
-      const dateB = new Date(b.endDate).getTime()
-      
-      // Si están terminados, los más recientes arriba dentro del grupo finalizados
+    if (aProj.endDate && bProj.endDate) {
+      const dateA = new Date(aProj.endDate).getTime()
+      const dateB = new Date(bProj.endDate).getTime()
       if (aFinalizado) return dateB - dateA
-      
-      // Si están activos/pendientes, los que terminan antes arriba
       return dateA - dateB
     }
 
-    if (a.endDate) return -1
-    if (b.endDate) return 1
+    if (aProj.endDate) return -1
+    if (bProj.endDate) return 1
 
     return 0
-  })
+  }).map(item => item.project)
 })
 
 const paginatedProyectos = computed(() => {

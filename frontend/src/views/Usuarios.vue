@@ -67,20 +67,47 @@ const filteredUsers = computed(() => {
   const query = searchQuery.value.toLowerCase().trim()
   if (!query) return users.value
 
-  return users.value.filter(user =>
-    ['nombre', 'apellidos', 'dni', 'email', 'categoria', 'socio'].some(key => {
-      const value = user[key]?.toString().toLowerCase()
-      if (!value) return false;
-
-      if (key === 'socio') {
-        return value === query
-      }
-      else {
-        return value.includes(query)
-      }
+  const results = users.value.map(user => {
+    let score = 0
+    const fields = {
+      nombre: user.nombre?.toString().toLowerCase() || '',
+      apellidos: user.apellidos?.toString().toLowerCase() || '',
+      dni: user.dni?.toString().toLowerCase() || '',
+      email: user.email?.toString().toLowerCase() || '',
+      categoria: user.categoria?.toString().toLowerCase() || '',
+      socio: user.socio?.toString().toLowerCase() || ''
     }
-    )
-  )
+
+    // Priorizar coincidencias exactas y al inicio en Nombre y Apellidos
+    if (fields.nombre === query) score += 100
+    else if (fields.nombre.startsWith(query)) score += 50
+    else if (fields.nombre.includes(query)) score += 10
+
+    if (fields.apellidos === query) score += 90
+    else if (fields.apellidos.startsWith(query)) score += 45
+    else if (fields.apellidos.includes(query)) score += 9
+
+    // DNI y Email también son importantes
+    if (fields.dni === query) score += 80
+    else if (fields.dni.startsWith(query)) score += 40
+    else if (fields.dni.includes(query)) score += 8
+
+    if (fields.email === query) score += 70
+    else if (fields.email.startsWith(query)) score += 35
+    else if (fields.email.includes(query)) score += 5
+
+    // Caso especial socio (originalmente exact match)
+    if (fields.socio === query) score += 100
+
+    if (fields.categoria.includes(query)) score += 2
+
+    return { user, score }
+  }).filter(item => item.score > 0)
+
+  // Ordenar por score descendente
+  return results
+    .sort((a, b) => b.score - a.score)
+    .map(item => item.user)
 })
 
 const paginatedUsers = computed(() => {
@@ -103,9 +130,10 @@ watch(searchQuery, () => {
 })
 
 watch(filteredUsers, (newUsers) => {
-  if (searchQuery.value) {
+  // Solo auto-expandir si hay 1 o 2 resultados para evitar saturar la interfaz
+  if (searchQuery.value && newUsers.length > 0 && newUsers.length <= 2) {
     expandedUser.value = [...newUsers]
-  } else {
+  } else if (!searchQuery.value) {
     expandedUser.value = []
   }
 })

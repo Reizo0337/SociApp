@@ -43,19 +43,47 @@ const searchQuery = ref('')
 
 // Filtered computed lists para las secciones con buscador
 const filteredRelaciones = computed(() => {
-  if (!searchQuery.value) return listaRelaciones.value
-  const q = searchQuery.value.toLowerCase()
-  return listaRelaciones.value.filter((rel) =>
-    Object.values(rel).some((v) => String(v).toLowerCase().includes(q))
-  )
+  const query = searchQuery.value.toLowerCase().trim()
+  if (!query) return listaRelaciones.value
+
+  const results = listaRelaciones.value.map(rel => {
+    let score = 0
+    const nombre = rel.Nombre?.toString().toLowerCase() || ''
+    
+    if (nombre === query) score += 100
+    else if (nombre.startsWith(query)) score += 50
+    else if (nombre.includes(query)) score += 10
+
+    Object.values(rel).forEach(v => {
+      if (typeof v === 'string' && v.toLowerCase().includes(query)) score += 1
+    })
+
+    return { rel, score }
+  }).filter(item => item.score > 0)
+
+  return results.sort((a, b) => b.score - a.score).map(item => item.rel)
 })
 
 const filteredDonativos = computed(() => {
-  if (!searchQuery.value) return listaDonativos.value
-  const q = searchQuery.value.toLowerCase()
-  return listaDonativos.value.filter((item) =>
-    Object.values(item).some((v) => String(v).toLowerCase().includes(q))
-  )
+  const query = searchQuery.value.toLowerCase().trim()
+  if (!query) return listaDonativos.value
+
+  const results = listaDonativos.value.map(item => {
+    let score = 0
+    const nombre = item.Nombre?.toString().toLowerCase() || ''
+
+    if (nombre === query) score += 100
+    else if (nombre.startsWith(query)) score += 50
+    else if (nombre.includes(query)) score += 10
+
+    Object.values(item).forEach(v => {
+      if (typeof v === 'string' && v.toLowerCase().includes(query)) score += 1
+    })
+
+    return { item, score }
+  }).filter(i => i.score > 0)
+
+  return results.sort((a, b) => b.score - a.score).map(i => i.item)
 })
 
 const sectionTitle = {

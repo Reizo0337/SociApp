@@ -2,8 +2,7 @@
   <input
     type="text"
     :placeholder="placeholder"
-    :value="modelValue"
-    @input="handleInput"
+    v-model="localValue"
     class="search-input"
   />
 </template>
@@ -20,10 +19,21 @@ const emit = defineEmits<{
   'update:modelValue': [value: string]
 }>()
 
-const handleInput = (event: Event) => {
-  const target = event.target as HTMLInputElement
-  emit('update:modelValue', target.value)
-}
+const localValue = ref(props.modelValue)
+let timeout: any = null
+
+watch(localValue, (newVal) => {
+  if (timeout) clearTimeout(timeout)
+  timeout = setTimeout(() => {
+    emit('update:modelValue', newVal)
+  }, 300)
+})
+
+watch(() => props.modelValue, (newVal) => {
+  if (newVal !== localValue.value) {
+    localValue.value = newVal
+  }
+})
 </script>
 
 <style scoped>

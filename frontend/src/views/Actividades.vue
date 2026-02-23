@@ -60,18 +60,48 @@ onMounted(async () => {
   await activityStore.fetchActivities()
 })
 const filteredActivities = computed(() => {
-  if (!searchQuery.value) return activities.value
-  return activities.value.filter(activity =>
-    Object.values(activity).some(val =>
-      String(val).toLowerCase().includes(searchQuery.value.toLowerCase())
-    )
-  )
+  const query = searchQuery.value.toLowerCase().trim()
+  if (!query) return activities.value
+
+  const results = activities.value.map(activity => {
+    let score = 0
+    const fields = {
+      name: activity.name?.toString().toLowerCase() || '',
+      monitor: activity.monitor?.toString().toLowerCase() || '',
+      place: activity.place?.toString().toLowerCase() || '',
+      diaSemana: activity.diaSemana?.toString().toLowerCase() || ''
+    }
+
+    if (fields.name === query) score += 100
+    else if (fields.name.startsWith(query)) score += 50
+    else if (fields.name.includes(query)) score += 10
+
+    if (fields.monitor === query) score += 80
+    else if (fields.monitor.startsWith(query)) score += 40
+    else if (fields.monitor.includes(query)) score += 8
+
+    if (fields.place.includes(query)) score += 5
+    if (fields.diaSemana.includes(query)) score += 5
+
+    // Búsqueda general por si hay otros campos
+    Object.values(activity).forEach(val => {
+      if (typeof val === 'string' && val.toLowerCase().includes(query)) {
+        score += 1
+      }
+    })
+
+    return { activity, score }
+  }).filter(item => item.score > 0)
+
+  return results
+    .sort((a, b) => b.score - a.score)
+    .map(item => item.activity)
 })
 
 watch(filteredActivities, (newActivities) => {
-  if (searchQuery.value) {
+  if (searchQuery.value && newActivities.length > 0 && newActivities.length <= 2) {
     expandedActivity.value = [...newActivities]
-  } else {
+  } else if (!searchQuery.value) {
     expandedActivity.value = []
   }
 })
