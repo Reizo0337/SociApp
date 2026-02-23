@@ -259,14 +259,14 @@
 }
 
 .label {
-    font-size: 15x;
+    font-size: 14x;
     color: var(--button-primary);
     font-weight: 700;
     transition: color 0.3s ease;
 }
 
 .value {
-    font-size: 14px;
+    font-size: 13px;
     color: var(--text-secondary);
     transition: color 0.3s ease;
 }
