@@ -2,9 +2,8 @@
 import { ref, onMounted, watch } from 'vue'
 import * as pdfjsLib from 'pdfjs-dist'
 
-// Configurar el worker de pdf.js usando la versión local empaquetada
-import pdfWorker from 'pdfjs-dist/build/pdf.worker.mjs?url'
-pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker
+// Configurar el worker de pdf.js usando un CDN para evitar problemas de MIME type en el servidor
+pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@5.4.624/build/pdf.worker.min.mjs`
 
 const props = defineProps<{
   pdfUrl: string
