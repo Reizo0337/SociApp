@@ -14,6 +14,7 @@ export class CreateProjectDto {
     @IsNotEmpty()
     estado: string;
 
+    @Type(() => Number)
     @IsNumber()
     @IsNotEmpty()
     responsableId: number; // Recibe ID de Usuario para la relación
@@ -44,6 +45,7 @@ export class CreateProjectDto {
     subproyectos?: string[];
 
     @IsArray()
+    @Type(() => Number)
     @IsNumber({}, { each: true })
     @IsOptional()
     activityIds?: number[];
