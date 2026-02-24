@@ -119,6 +119,12 @@ const handleMouseLeave = () => {
             <span class="text" v-show="isOpen">Mensajería</span>
           </RouterLink>
         </li>
+        <li>
+          <a href="/help/index.html" target="_blank" class="nav-link">
+            <span class="material-symbols-outlined icon"> help </span>
+            <span class="text" v-show="isOpen">Ayuda</span>
+          </a>
+        </li>
       </ul>
     </nav>
   </aside>
@@ -148,6 +154,10 @@ const handleMouseLeave = () => {
       <span class="material-symbols-outlined">settings</span>
       <span class="mobile-nav-text">Ajustes</span>
     </RouterLink>
+    <a href="/help/index.html" target="_blank" class="mobile-nav-link">
+      <span class="material-symbols-outlined">help</span>
+      <span class="mobile-nav-text">Ayuda</span>
+    </a>
   </nav>
 </template>
 
