@@ -18,8 +18,12 @@ async function bootstrap() {
   app.use(cookieParser());
 
   // ⚠️ SEGURIDAD: CORS configurado - adaptable según el entorno
+  const allowedOrigins = process.env.FRONTEND_URL
+    ? process.env.FRONTEND_URL.split(',').map(url => url.trim().replace(/\/$/, ''))
+    : ['http://localhost:5173', 'http://16.171.57.244'];
+
   app.enableCors({
-    origin: process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split(',') : ['http://localhost:5173', 'http://16.171.57.244'],
+    origin: allowedOrigins,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
