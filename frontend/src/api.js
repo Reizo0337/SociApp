@@ -1,8 +1,10 @@
 import axios from 'axios'
 
+export const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+
 export const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000', // backendURL
-  withCredentials: true, // Lo usamos con HTTPONLY. (seguridad)
+  baseURL: BASE_URL,
+  withCredentials: true,
 })
 
 // Configurar el token si ya existe en localStorage (por si el usuario ya estaba logueado)

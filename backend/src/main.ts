@@ -17,9 +17,9 @@ async function bootstrap() {
   const cookieParser = require('cookie-parser');
   app.use(cookieParser());
 
-  // ⚠️ SEGURIDAD: CORS configurado - en producción usar variable de entorno para origin
+  // ⚠️ SEGURIDAD: CORS configurado - adaptable según el entorno
   app.enableCors({
-    origin: 'http://16.171.57.244',
+    origin: process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split(',') : ['http://localhost:5173', 'http://16.171.57.244'],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],

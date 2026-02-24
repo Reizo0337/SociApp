@@ -12,6 +12,7 @@ import PrimaryButton from '../components/PrimaryButton.vue'
 import SearchInput from '../components/SearchInput.vue'
 import ExpandableListItem from '../components/ExpandableListItem.vue'
 import PdfPreview from '@/components/PdfPreview.vue'
+import { api, BASE_URL } from '../api'
 import { useRoute } from 'vue-router'
 import { useProjectStore } from '@/stores/projects'
 
@@ -450,10 +451,9 @@ onMounted(() => {
                 </option>
               </select>
             </div>
-
             <div class="pdf-actions" v-if="selectedProject?.pdfPath && selectedProject.pdfPath[currentPdfIndex]">
               <a 
-                :href="`http://localhost:3000${selectedProject.pdfPath[currentPdfIndex]?.trim()}`" 
+                :href="`${BASE_URL}${selectedProject.pdfPath[currentPdfIndex]?.trim()}`" 
                 target="_blank" 
                 class="pdf-link"
               >
@@ -463,7 +463,7 @@ onMounted(() => {
             </div>
 
             <div class="pdf-preview-wrapper" v-if="selectedProject?.pdfPath && selectedProject.pdfPath[currentPdfIndex]">
-              <PdfPreview :pdf-url="`http://localhost:3000${selectedProject.pdfPath[currentPdfIndex]?.trim()}`" />
+              <PdfPreview :pdf-url="`${BASE_URL}${selectedProject.pdfPath[currentPdfIndex]?.trim()}`" />
             </div>
           </div>
 
