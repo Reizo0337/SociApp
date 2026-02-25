@@ -10,46 +10,48 @@ export class ConfiguracionService {
   // --- SECCIÓN: DATOS ASOCIACIÓN ---
 
   async getDatosAsociacion() {
-    try {
-      const data = await this.dataSource.query(`SELECT * FROM asociacion LIMIT 1`);
-      if (!data.length) return null;
+  try {
+    const data = await this.dataSource.query(`SELECT * FROM asociacion LIMIT 1`);
+    if (!data.length) return null;
 
-      const a = data[0];
-      return {
-        Nombre: a.Nombre,
-        CIF: a.CIF,
-        Direccion: a.Direccion,
-        CP: a.CP,
-        Telefono: a.Telefono,
-        Email: a.Email,
-        Web: a.Web,
-        nrRegistro: a.nrRegistro,
-        Logo: a.Logo
-      };
-    } catch (error) {
-      this.handleError('Error al obtener datos de la asociación', error);
-    }
+    const a = data[0];
+    return {
+      Nombre: a.Nombre,
+      CIF: a.CIF,
+      Direccion: a.Direccion,
+      CP: a.CP,
+      Telefono: a.Telefono,
+      Email: a.Email,
+      Web: a.Web,
+      nrRegistro: a.nrRegistro,
+      Logo: a.Logo
+    };
+  } catch (error) {
+    this.handleError('Error al obtener datos de la asociación', error);
   }
+}
 
   async upsertDatosAsociacion(data: any) {
     try {
       this.validateDatos(data);
       const existing = await this.dataSource.query(`SELECT idAsociacion FROM asociacion LIMIT 1`);
+      
+      const nrRegistro = data.nrRegistro || '';
 
       if (existing.length > 0) {
         await this.dataSource.query(
           `UPDATE asociacion SET 
-            Nombre = ?, CIF = ?, Direccion = ?, CP = ?, Telefono = ?, Email = ?, Web = ? 
+            Nombre = ?, CIF = ?, Direccion = ?, CP = ?, Telefono = ?, Email = ?, Web = ?, nrRegistro = ? 
           WHERE idAsociacion = ?`,
-          [data.Nombre, data.CIF, data.Direccion, data.CP, data.Telefono, data.Email, data.Web, existing[0].idAsociacion]
+        [data.Nombre, data.CIF, data.Direccion || '', data.CP || null, data.Telefono || '', data.Email || '', data.Web || '', nrRegistro, existing[0].idAsociacion]
         );
-        return { ...data };
+        return { ...data, nrRegistro };
       } else {
         const result = await this.dataSource.query(
-          `INSERT INTO asociacion (Nombre, CIF, Direccion, CP, Telefono, Email, Web) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-          [data.Nombre, data.CIF, data.Direccion, data.CP, data.Telefono, data.Email, data.Web]
+          `INSERT INTO asociacion (Nombre, CIF, Direccion, CP, Telefono, Email, Web, nrRegistro) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [data.Nombre, data.CIF, data.Direccion || '', data.CP || null, data.Telefono || '', data.Email || '', data.Web || '', nrRegistro]
         );
-        return { idAsociacion: result.insertId, ...data };
+        return { idAsociacion: result.insertId, ...data, nrRegistro };
       }
     } catch (error) {
       this.handleError('Error al guardar datos', error, data);

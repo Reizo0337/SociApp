@@ -204,23 +204,63 @@ async function confirmDelete() {
 }
 
 async function saveDatosEdit(updatedData) {
+  console.log("DATA QUE ENVÍO:", updatedData)
   try {
     await store.updateConfiguracion(updatedData);
     showEditModal.value = false
     notificationStore.success('Datos actualizados')
   } catch (err) {
     notificationStore.error('Error al guardar')
+    console.error("ERROR:", err)
+    console.error("BACKEND:", err.response?.data)
   }
+}
+
+function validateRequiredFields(data, schema) {
+  // Busca campos obligatorios en el schema y verifica que estén completos
+  for (const section of schema) {
+    for (const field of section.fields) {
+      if (field.required && (data[field.key] === undefined || data[field.key] === '' || data[field.key] === null)) {
+        return field.label || field.key;
+      }
+    }
+  }
+  return null;
+}
+
+function cleanDataForSection(data, schema, section) {
+  // Solo envía los campos definidos en el schema
+  const allowedKeys = schema.flatMap(s => s.fields.map(f => f.key));
+  const cleaned = {};
+  for (const key of allowedKeys) {
+    if (data[key] !== undefined) cleaned[key] = data[key];
+  }
+  // Elimina campos como IdInstitucion, IdAsociacion si no son requeridos
+  if (section === 'relaciones') {
+    delete cleaned.IdInstitucion;
+    delete cleaned.IdAsociacion;
+  }
+  return cleaned;
 }
 
 async function handleSave(data) {
   const section = selectedSection.value;
   const isEditing = editingIndex.value !== null;
+  // Validación de campos obligatorios
+  const schema = sectionForm[section];
+  const missingField = schema ? validateRequiredFields(data, schema) : null;
+  if (missingField) {
+    notificationStore.error(`Falta completar el campo obligatorio: ${missingField}`);
+    return;
+  }
+
+  // Limpiar datos antes de enviar
+  const cleanedData = schema ? cleanDataForSection(data, schema, section) : data;
 
   try {
     // Si la data viene del modal de edición general (datos de asociación)
     if (section === 'datos' || !section) {
-       await saveDatosEdit(data);
+       await saveDatosEdit(cleanedData);
        return;
     }
 
@@ -230,10 +270,10 @@ async function handleSave(data) {
 
       if (!id) throw new Error('ID no encontrado');
       // Aseguramos que el id esté en el payload si la sección lo requiere
-      const payload = { ...data, [idKey]: id };
+      const payload = { ...cleanedData, [idKey]: id };
       await store.updateItem(section, id, payload);
     } else {
-      await store.createItem(section, data);
+      await store.createItem(section, cleanedData);
     }
 
     showAddUserModal.value = false;
@@ -242,7 +282,9 @@ async function handleSave(data) {
     editingData.value = null;
     notificationStore.success(isEditing ? '¡Actualizado con éxito!' : '¡Agregado con éxito!');
   } catch (error) {
-    notificationStore.error('Error al guardar los datos.');
+    // Mostrar error detallado del backend si existe
+    const detail = error?.response?.data?.detail || error?.message || 'Error desconocido';
+    notificationStore.error(`Error al guardar los datos: ${detail}`);
   }
 }
 </script>
