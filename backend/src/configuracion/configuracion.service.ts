@@ -23,9 +23,7 @@ export class ConfiguracionService {
       Telefono: a.Telefono,
       Email: a.Email,
       Web: a.Web,
-      nrRegistro: a.nrRegistro,
-      Logo: a.Logo
-    };
+      };
   } catch (error) {
     this.handleError('Error al obtener datos de la asociación', error);
   }
@@ -36,22 +34,20 @@ export class ConfiguracionService {
       this.validateDatos(data);
       const existing = await this.dataSource.query(`SELECT idAsociacion FROM asociacion LIMIT 1`);
       
-      const nrRegistro = data.nrRegistro || '';
-
       if (existing.length > 0) {
         await this.dataSource.query(
           `UPDATE asociacion SET 
-            Nombre = ?, CIF = ?, Direccion = ?, CP = ?, Telefono = ?, Email = ?, Web = ?, nrRegistro = ? 
+            Nombre = ?, CIF = ?, Direccion = ?, CP = ?, Telefono = ?, Email = ?, Web = ? 
           WHERE idAsociacion = ?`,
-        [data.Nombre, data.CIF, data.Direccion || '', data.CP || null, data.Telefono || '', data.Email || '', data.Web || '', nrRegistro, existing[0].idAsociacion]
+        [data.Nombre, data.CIF, data.Direccion || '', data.CP || null, data.Telefono || '', data.Email || '', data.Web, existing[0].idAsociacion]
         );
-        return { ...data, nrRegistro };
+        return { ...data };
       } else {
         const result = await this.dataSource.query(
-          `INSERT INTO asociacion (Nombre, CIF, Direccion, CP, Telefono, Email, Web, nrRegistro) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-        [data.Nombre, data.CIF, data.Direccion || '', data.CP || null, data.Telefono || '', data.Email || '', data.Web || '', nrRegistro]
+          `INSERT INTO asociacion (Nombre, CIF, Direccion, CP, Telefono, Email, Web) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [data.Nombre, data.CIF, data.Direccion || '', data.CP || null, data.Telefono || '', data.Email || '', data.Web]
         );
-        return { idAsociacion: result.insertId, ...data, nrRegistro };
+        return { idAsociacion: result.insertId, ...data };
       }
     } catch (error) {
       this.handleError('Error al guardar datos', error, data);
